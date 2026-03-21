@@ -1,0 +1,785 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		0968A4682ABAC1DCE96CE653 /* ShortcutsCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F092DBDA7FAF38A0B178EAC8 /* ShortcutsCore.framework */; };
+		0B43F7472B6F5915A5794281 /* EngineModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FF17C0DDF8A9D298EF716A6 /* EngineModels.swift */; };
+		0C0D1518C19F8FA71AC6F36C /* ShortcutsCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = F092DBDA7FAF38A0B178EAC8 /* ShortcutsCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		2FD628DF8D8665D1FE044337 /* SharedConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01EF0C5C530CE082E8B2B547 /* SharedConstants.swift */; };
+		36E203BD2236F80809D0EC88 /* KeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 291E600BE0B8ACFC5051E150 /* KeychainStore.swift */; };
+		3A586AEBE7938898ED428330 /* legacy.py in Resources */ = {isa = PBXBuildFile; fileRef = FFFD6CB2C8B194A34B30A8B7 /* legacy.py */; };
+		3FD5AFFDDE11483A0B8A7AD3 /* NotificationHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A097660C4E07FDE236F3F60 /* NotificationHelper.swift */; };
+		4241B653BA8FBCB1A9E7A67A /* __init__.py in Resources */ = {isa = PBXBuildFile; fileRef = E9A38693E5762C44DBBF1884 /* __init__.py */; };
+		7EED355B360ECEE774009E13 /* AppViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35C1467AD8376C9CEE5F6337 /* AppViews.swift */; };
+		827FC7670B5669A46C2EAC09 /* SettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 185266F966685B625363055A /* SettingsStore.swift */; };
+		83D6BB825686AD2D0D955AF9 /* __main__.py in Resources */ = {isa = PBXBuildFile; fileRef = 6680F31899AC9941FF773ED8 /* __main__.py */; };
+		88D2D41766C068ECF76FDE22 /* summarize.py in Resources */ = {isa = PBXBuildFile; fileRef = 11958C6AF087D6D836897533 /* summarize.py */; };
+		8B1D51BECAFD093B99E87AC0 /* cli.py in Resources */ = {isa = PBXBuildFile; fileRef = 59529C372C6D31287D8CBFB9 /* cli.py */; };
+		9415808449F1B3E38F7E9EEB /* ActionRequestHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 737F7A61B627BE6E3234D587 /* ActionRequestHandler.swift */; };
+		9CEE481ADAF1092223A9F070 /* ShortcutsCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F092DBDA7FAF38A0B178EAC8 /* ShortcutsCore.framework */; };
+		9D88CDE7B60ABFD7A03363B7 /* ShortcutsCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F092DBDA7FAF38A0B178EAC8 /* ShortcutsCore.framework */; };
+		A49FE4BEAFCC0C2FB326512F /* core.py in Resources */ = {isa = PBXBuildFile; fileRef = 0A861B92A63C05B5F04D30EB /* core.py */; };
+		A6B6D102F7345CA6C23C27A6 /* ShortcutsCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = F092DBDA7FAF38A0B178EAC8 /* ShortcutsCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		A950EF270E6AF771BB7B6C37 /* InputNormalizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31C8444FE7EF8E0768CE9B48 /* InputNormalizer.swift */; };
+		B7A8F82B952EB947E7D2B8C6 /* ShortcutsCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = F092DBDA7FAF38A0B178EAC8 /* ShortcutsCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		BA8E417DAC7FE1B642F3AB01 /* research_table.py in Resources */ = {isa = PBXBuildFile; fileRef = 16C26B07EBA9E0BB3924BC3F /* research_table.py */; };
+		BF1097745F06A7D309ABBE02 /* research_list.py in Resources */ = {isa = PBXBuildFile; fileRef = 2EF749C5BD54E46DD9BE9D29 /* research_list.py */; };
+		C3FC34436CCA5ABE668063CD /* EngineRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A096248944BB6FEEA47B8AF /* EngineRunner.swift */; };
+		CA560DA07C7961A177B550E8 /* ShortcutsCoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 694941C9D088A734184179DB /* ShortcutsCoreTests.swift */; };
+		D921853254D616C22DD0F848 /* ShortcutsMenuBarApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A31F019728D6D2BE8004CE0F /* ShortcutsMenuBarApp.swift */; };
+		FC913C43B28CFC6390784C92 /* ShortcutsActionExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 5C9B4442769DCF3EC622A5B9 /* ShortcutsActionExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		42A8DB0D9CFADC390433C35E /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 260A161D2AE9115ED83D8448 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = EAD8EB010505A19CDBA4D5D1;
+			remoteInfo = ShortcutsCore;
+		};
+		6E9E85599005FE7F57AB4C43 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 260A161D2AE9115ED83D8448 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = CC0FA88F26CCB62941646339;
+			remoteInfo = ShortcutsActionExtension;
+		};
+		9945D8A99413341BACE883A2 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 260A161D2AE9115ED83D8448 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = EAD8EB010505A19CDBA4D5D1;
+			remoteInfo = ShortcutsCore;
+		};
+		AC6706CA0934D0FDCFB52706 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 260A161D2AE9115ED83D8448 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = EAD8EB010505A19CDBA4D5D1;
+			remoteInfo = ShortcutsCore;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		44F91DCFB7288B5AEA602F36 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				B7A8F82B952EB947E7D2B8C6 /* ShortcutsCore.framework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		8862B3008E8B047D9F5C329A /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				0C0D1518C19F8FA71AC6F36C /* ShortcutsCore.framework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		BB8117EE22BA814762861A98 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				FC913C43B28CFC6390784C92 /* ShortcutsActionExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DE010DC4363C6BD2625A302C /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				A6B6D102F7345CA6C23C27A6 /* ShortcutsCore.framework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		01EF0C5C530CE082E8B2B547 /* SharedConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedConstants.swift; sourceTree = "<group>"; };
+		0A096248944BB6FEEA47B8AF /* EngineRunner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EngineRunner.swift; sourceTree = "<group>"; };
+		0A861B92A63C05B5F04D30EB /* core.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = core.py; sourceTree = "<group>"; };
+		11958C6AF087D6D836897533 /* summarize.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = summarize.py; sourceTree = "<group>"; };
+		16C26B07EBA9E0BB3924BC3F /* research_table.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = research_table.py; sourceTree = "<group>"; };
+		185266F966685B625363055A /* SettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsStore.swift; sourceTree = "<group>"; };
+		291E600BE0B8ACFC5051E150 /* KeychainStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainStore.swift; sourceTree = "<group>"; };
+		2EF749C5BD54E46DD9BE9D29 /* research_list.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = research_list.py; sourceTree = "<group>"; };
+		2FF17C0DDF8A9D298EF716A6 /* EngineModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EngineModels.swift; sourceTree = "<group>"; };
+		31C8444FE7EF8E0768CE9B48 /* InputNormalizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputNormalizer.swift; sourceTree = "<group>"; };
+		35C1467AD8376C9CEE5F6337 /* AppViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppViews.swift; sourceTree = "<group>"; };
+		59529C372C6D31287D8CBFB9 /* cli.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = cli.py; sourceTree = "<group>"; };
+		59E54581E1C7E8AEE30FE1CB /* ShortcutsApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ShortcutsApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		5C9B4442769DCF3EC622A5B9 /* ShortcutsActionExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ShortcutsActionExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		6680F31899AC9941FF773ED8 /* __main__.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = __main__.py; sourceTree = "<group>"; };
+		694941C9D088A734184179DB /* ShortcutsCoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShortcutsCoreTests.swift; sourceTree = "<group>"; };
+		6A097660C4E07FDE236F3F60 /* NotificationHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationHelper.swift; sourceTree = "<group>"; };
+		737F7A61B627BE6E3234D587 /* ActionRequestHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActionRequestHandler.swift; sourceTree = "<group>"; };
+		79C5953B158CE377F8194716 /* ShortcutsCoreTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ShortcutsCoreTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		A31F019728D6D2BE8004CE0F /* ShortcutsMenuBarApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShortcutsMenuBarApp.swift; sourceTree = "<group>"; };
+		E9A38693E5762C44DBBF1884 /* __init__.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = __init__.py; sourceTree = "<group>"; };
+		F092DBDA7FAF38A0B178EAC8 /* ShortcutsCore.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = ShortcutsCore.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		FFFD6CB2C8B194A34B30A8B7 /* legacy.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = legacy.py; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		6C97CB1648FBBA3C91231E8A /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9CEE481ADAF1092223A9F070 /* ShortcutsCore.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		84F018E27358A4638516FC09 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9D88CDE7B60ABFD7A03363B7 /* ShortcutsCore.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B3C9698A01FAFA52717516DC /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0968A4682ABAC1DCE96CE653 /* ShortcutsCore.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		5203F9708951EDC8EC4D849F /* ShortcutsCoreTests */ = {
+			isa = PBXGroup;
+			children = (
+				694941C9D088A734184179DB /* ShortcutsCoreTests.swift */,
+			);
+			path = ShortcutsCoreTests;
+			sourceTree = "<group>";
+		};
+		734423C58C44B173D9098D27 /* ShortcutsCore */ = {
+			isa = PBXGroup;
+			children = (
+				2FF17C0DDF8A9D298EF716A6 /* EngineModels.swift */,
+				0A096248944BB6FEEA47B8AF /* EngineRunner.swift */,
+				31C8444FE7EF8E0768CE9B48 /* InputNormalizer.swift */,
+				291E600BE0B8ACFC5051E150 /* KeychainStore.swift */,
+				6A097660C4E07FDE236F3F60 /* NotificationHelper.swift */,
+				185266F966685B625363055A /* SettingsStore.swift */,
+				01EF0C5C530CE082E8B2B547 /* SharedConstants.swift */,
+			);
+			path = ShortcutsCore;
+			sourceTree = "<group>";
+		};
+		7E5145731DFEA034397E4CF9 = {
+			isa = PBXGroup;
+			children = (
+				EAFB5BE7B16867D6AC8A9253 /* shortcuts_engine */,
+				C3C4663A9B4AC2C4E933FFC8 /* ShortcutsActionExtension */,
+				FA09B79EA50A9886738C0E3D /* ShortcutsApp */,
+				734423C58C44B173D9098D27 /* ShortcutsCore */,
+				5203F9708951EDC8EC4D849F /* ShortcutsCoreTests */,
+				D52DD7DE09C151CADF6091EB /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		C3C4663A9B4AC2C4E933FFC8 /* ShortcutsActionExtension */ = {
+			isa = PBXGroup;
+			children = (
+				737F7A61B627BE6E3234D587 /* ActionRequestHandler.swift */,
+			);
+			path = ShortcutsActionExtension;
+			sourceTree = "<group>";
+		};
+		D52DD7DE09C151CADF6091EB /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				5C9B4442769DCF3EC622A5B9 /* ShortcutsActionExtension.appex */,
+				59E54581E1C7E8AEE30FE1CB /* ShortcutsApp.app */,
+				F092DBDA7FAF38A0B178EAC8 /* ShortcutsCore.framework */,
+				79C5953B158CE377F8194716 /* ShortcutsCoreTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		EAFB5BE7B16867D6AC8A9253 /* shortcuts_engine */ = {
+			isa = PBXGroup;
+			children = (
+				E9A38693E5762C44DBBF1884 /* __init__.py */,
+				6680F31899AC9941FF773ED8 /* __main__.py */,
+				59529C372C6D31287D8CBFB9 /* cli.py */,
+				0A861B92A63C05B5F04D30EB /* core.py */,
+				FFFD6CB2C8B194A34B30A8B7 /* legacy.py */,
+				2EF749C5BD54E46DD9BE9D29 /* research_list.py */,
+				16C26B07EBA9E0BB3924BC3F /* research_table.py */,
+				11958C6AF087D6D836897533 /* summarize.py */,
+			);
+			path = shortcuts_engine;
+			sourceTree = "<group>";
+		};
+		FA09B79EA50A9886738C0E3D /* ShortcutsApp */ = {
+			isa = PBXGroup;
+			children = (
+				35C1467AD8376C9CEE5F6337 /* AppViews.swift */,
+				A31F019728D6D2BE8004CE0F /* ShortcutsMenuBarApp.swift */,
+			);
+			path = ShortcutsApp;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		6155CE7E8A4DA5E54F3C730A /* ShortcutsCoreTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 6ADFDB70DCCD2C04E9DB4AC9 /* Build configuration list for PBXNativeTarget "ShortcutsCoreTests" */;
+			buildPhases = (
+				532CCD35EF995C017897C4B8 /* Sources */,
+				84F018E27358A4638516FC09 /* Frameworks */,
+				44F91DCFB7288B5AEA602F36 /* Embed Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				E379E9CE34541649ABC28C8B /* PBXTargetDependency */,
+			);
+			name = ShortcutsCoreTests;
+			packageProductDependencies = (
+			);
+			productName = ShortcutsCoreTests;
+			productReference = 79C5953B158CE377F8194716 /* ShortcutsCoreTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		CC0FA88F26CCB62941646339 /* ShortcutsActionExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 88F2E210455345C95019378D /* Build configuration list for PBXNativeTarget "ShortcutsActionExtension" */;
+			buildPhases = (
+				2579EC9558123FB4EA4D5C49 /* Sources */,
+				6C97CB1648FBBA3C91231E8A /* Frameworks */,
+				DE010DC4363C6BD2625A302C /* Embed Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				945EBCA612DF4DDA97967341 /* PBXTargetDependency */,
+			);
+			name = ShortcutsActionExtension;
+			packageProductDependencies = (
+			);
+			productName = ShortcutsActionExtension;
+			productReference = 5C9B4442769DCF3EC622A5B9 /* ShortcutsActionExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		D5298EC46FA2F80B8DD14032 /* ShortcutsApp */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 2DB8FA77BFBDE56D060ED55A /* Build configuration list for PBXNativeTarget "ShortcutsApp" */;
+			buildPhases = (
+				30AB70042AC2E7BCE81D05E1 /* Sources */,
+				B3C9698A01FAFA52717516DC /* Frameworks */,
+				BB8117EE22BA814762861A98 /* Embed Foundation Extensions */,
+				8862B3008E8B047D9F5C329A /* Embed Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				29662A266F62F8659846A206 /* PBXTargetDependency */,
+				8F29DCD51687C1587C50D46F /* PBXTargetDependency */,
+			);
+			name = ShortcutsApp;
+			packageProductDependencies = (
+			);
+			productName = ShortcutsApp;
+			productReference = 59E54581E1C7E8AEE30FE1CB /* ShortcutsApp.app */;
+			productType = "com.apple.product-type.application";
+		};
+		EAD8EB010505A19CDBA4D5D1 /* ShortcutsCore */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 389DC62CD20FB4E4F54A087F /* Build configuration list for PBXNativeTarget "ShortcutsCore" */;
+			buildPhases = (
+				F763F8DACCF865D53D19A064 /* Sources */,
+				6FD6B38FBF003DE870977850 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = ShortcutsCore;
+			packageProductDependencies = (
+			);
+			productName = ShortcutsCore;
+			productReference = F092DBDA7FAF38A0B178EAC8 /* ShortcutsCore.framework */;
+			productType = "com.apple.product-type.framework";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		260A161D2AE9115ED83D8448 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+				};
+			};
+			buildConfigurationList = D252BE271E3702A6E6B893C6 /* Build configuration list for PBXProject "ShortcutShelf" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 7E5145731DFEA034397E4CF9;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = D52DD7DE09C151CADF6091EB /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				CC0FA88F26CCB62941646339 /* ShortcutsActionExtension */,
+				D5298EC46FA2F80B8DD14032 /* ShortcutsApp */,
+				EAD8EB010505A19CDBA4D5D1 /* ShortcutsCore */,
+				6155CE7E8A4DA5E54F3C730A /* ShortcutsCoreTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		6FD6B38FBF003DE870977850 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4241B653BA8FBCB1A9E7A67A /* __init__.py in Resources */,
+				83D6BB825686AD2D0D955AF9 /* __main__.py in Resources */,
+				8B1D51BECAFD093B99E87AC0 /* cli.py in Resources */,
+				A49FE4BEAFCC0C2FB326512F /* core.py in Resources */,
+				3A586AEBE7938898ED428330 /* legacy.py in Resources */,
+				BF1097745F06A7D309ABBE02 /* research_list.py in Resources */,
+				BA8E417DAC7FE1B642F3AB01 /* research_table.py in Resources */,
+				88D2D41766C068ECF76FDE22 /* summarize.py in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		2579EC9558123FB4EA4D5C49 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9415808449F1B3E38F7E9EEB /* ActionRequestHandler.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		30AB70042AC2E7BCE81D05E1 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				7EED355B360ECEE774009E13 /* AppViews.swift in Sources */,
+				D921853254D616C22DD0F848 /* ShortcutsMenuBarApp.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		532CCD35EF995C017897C4B8 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CA560DA07C7961A177B550E8 /* ShortcutsCoreTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F763F8DACCF865D53D19A064 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0B43F7472B6F5915A5794281 /* EngineModels.swift in Sources */,
+				C3FC34436CCA5ABE668063CD /* EngineRunner.swift in Sources */,
+				A950EF270E6AF771BB7B6C37 /* InputNormalizer.swift in Sources */,
+				36E203BD2236F80809D0EC88 /* KeychainStore.swift in Sources */,
+				3FD5AFFDDE11483A0B8A7AD3 /* NotificationHelper.swift in Sources */,
+				827FC7670B5669A46C2EAC09 /* SettingsStore.swift in Sources */,
+				2FD628DF8D8665D1FE044337 /* SharedConstants.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		29662A266F62F8659846A206 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = EAD8EB010505A19CDBA4D5D1 /* ShortcutsCore */;
+			targetProxy = AC6706CA0934D0FDCFB52706 /* PBXContainerItemProxy */;
+		};
+		8F29DCD51687C1587C50D46F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = CC0FA88F26CCB62941646339 /* ShortcutsActionExtension */;
+			targetProxy = 6E9E85599005FE7F57AB4C43 /* PBXContainerItemProxy */;
+		};
+		945EBCA612DF4DDA97967341 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = EAD8EB010505A19CDBA4D5D1 /* ShortcutsCore */;
+			targetProxy = 42A8DB0D9CFADC390433C35E /* PBXContainerItemProxy */;
+		};
+		E379E9CE34541649ABC28C8B /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = EAD8EB010505A19CDBA4D5D1 /* ShortcutsCore */;
+			targetProxy = 9945D8A99413341BACE883A2 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		0FE409C8FF6C00F3410F3FB9 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = Config/ShortcutsActionExtension.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = "Config/ShortcutsActionExtension-Info.plist";
+				INFOPLIST_KEY_ShortcutsKeychainAccessGroup = "$(AppIdentifierPrefix)local.mfr.shortcuts.shared";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = local.mfr.shortcuts.action;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		17D58F7CAB8E34FCE5656643 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "";
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				GENERATE_INFOPLIST_FILE = YES;
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = local.mfr.shortcuts.core;
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Release;
+		};
+		478F4EA375DAD0E161CE4ED5 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "";
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				GENERATE_INFOPLIST_FILE = YES;
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = local.mfr.shortcuts.core;
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Debug;
+		};
+		94971D4DC12F7CAF0C323D58 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = local.mfr.shortcuts.core.tests;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		C026CE246EE4E5E1C6453DA7 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Config/ShortcutsApp.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "Shortcut Shelf";
+				INFOPLIST_KEY_LSUIElement = YES;
+				INFOPLIST_KEY_ShortcutsKeychainAccessGroup = "$(AppIdentifierPrefix)local.mfr.shortcuts.shared";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = local.mfr.shortcuts.app;
+				PRODUCT_NAME = ShortcutShelf;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		E3C0DA8066F6F63301348E38 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Config/ShortcutsApp.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "Shortcut Shelf";
+				INFOPLIST_KEY_LSUIElement = YES;
+				INFOPLIST_KEY_ShortcutsKeychainAccessGroup = "$(AppIdentifierPrefix)local.mfr.shortcuts.shared";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = local.mfr.shortcuts.app;
+				PRODUCT_NAME = ShortcutShelf;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		F236255CB36C052516992F40 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				AR = ar;
+				CC = clang;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_EXPLICIT_MODULES = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				CXX = "clang++";
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LD = clang;
+				LIBTOOL = libtool;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				NM = nm;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				RANLIB = ranlib;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+		F66AFBAC6FFF24AC8AB6D583 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = local.mfr.shortcuts.core.tests;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		FB4EE0426D18FA2421755658 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				AR = ar;
+				CC = clang;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_EXPLICIT_MODULES = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				CXX = "clang++";
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LD = clang;
+				LIBTOOL = libtool;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				NM = nm;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				RANLIB = ranlib;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		FE09AD74E9D5D998A8F43988 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = Config/ShortcutsActionExtension.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = "Config/ShortcutsActionExtension-Info.plist";
+				INFOPLIST_KEY_ShortcutsKeychainAccessGroup = "$(AppIdentifierPrefix)local.mfr.shortcuts.shared";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = local.mfr.shortcuts.action;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		2DB8FA77BFBDE56D060ED55A /* Build configuration list for PBXNativeTarget "ShortcutsApp" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E3C0DA8066F6F63301348E38 /* Debug */,
+				C026CE246EE4E5E1C6453DA7 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		389DC62CD20FB4E4F54A087F /* Build configuration list for PBXNativeTarget "ShortcutsCore" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				478F4EA375DAD0E161CE4ED5 /* Debug */,
+				17D58F7CAB8E34FCE5656643 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		6ADFDB70DCCD2C04E9DB4AC9 /* Build configuration list for PBXNativeTarget "ShortcutsCoreTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F66AFBAC6FFF24AC8AB6D583 /* Debug */,
+				94971D4DC12F7CAF0C323D58 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		88F2E210455345C95019378D /* Build configuration list for PBXNativeTarget "ShortcutsActionExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FE09AD74E9D5D998A8F43988 /* Debug */,
+				0FE409C8FF6C00F3410F3FB9 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		D252BE271E3702A6E6B893C6 /* Build configuration list for PBXProject "ShortcutShelf" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FB4EE0426D18FA2421755658 /* Debug */,
+				F236255CB36C052516992F40 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 260A161D2AE9115ED83D8448 /* Project object */;
+}
