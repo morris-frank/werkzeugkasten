@@ -1,0 +1,304 @@
+#!/Users/mfr/mamba/envs/basic/bin/python
+import json
+import os
+import re
+import sys
+from dataclasses import dataclass, field
+from datetime import datetime
+from pathlib import Path
+
+from openai import OpenAI
+from pydantic import BaseModel, ValidationError
+
+MODEL = "gpt-5.4"
+OUTPUT_DIR = Path.home() / "Desktop" / "inbox" / "ai-research"
+MAX_SLUG_LENGTH = 48
+WEB_SEARCH_TOOL = {
+    "type": "web_search",
+    "search_context_size": "medium",
+    "user_location": {
+        "type": "approximate",
+        "timezone": datetime.now().astimezone().tzinfo.key if hasattr(datetime.now().astimezone().tzinfo, "key") else str(datetime.now().astimezone().tzinfo),
+    },
+}
+
+
+class ResearchAnswer(BaseModel):
+    item: str
+    question: str
+    answer: str
+
+
+@dataclass
+class Result:
+    item: str
+    parsed: ResearchAnswer | None = None
+    raw_text: str = ""
+    sources: list[str] = field(default_factory=list)
+    error: str = ""
+
+
+def parse_items(raw: str) -> list[str]:
+    items: list[str] = []
+    for line in raw.splitlines():
+        cleaned = line.strip()
+        if not cleaned:
+            continue
+        cleaned = re.sub(r"^\s*(?:[-*+]\s+|\d+[.)]\s+)", "", cleaned).strip()
+        if not cleaned or not re.search(r"\w", cleaned):
+            continue
+        items.append(cleaned)
+    return items
+
+
+def run_self_tests() -> None:
+    assert parse_items("- Apple\n- Banana\n- Cherry") == ["Apple", "Banana", "Cherry"]
+    assert parse_items("1. Apple\n2. Banana\n3. Cherry") == ["Apple", "Banana", "Cherry"]
+    assert parse_items("- Apple\n\n-  \n* Banana\n---\n+ Cherry") == ["Apple", "Banana", "Cherry"]
+    assert parse_items("  - Acme Inc  \n  2) Beta BV  ") == ["Acme Inc", "Beta BV"]
+    assert parse_items("- C++\n- A+\n- AT&T") == ["C++", "A+", "AT&T"]
+    assert slugify_question("What does this company do?") == "what-does-this-company-do"
+    assert slugify_question("   $$$   ") == "research"
+    print("List parser self-test passed.")
+
+
+def read_pasted_list() -> str:
+    print("Paste the list. Press Enter twice when done.")
+    lines: list[str] = []
+    blank_streak = 0
+    while True:
+        try:
+            line = input()
+        except EOFError:
+            break
+        if line.strip():
+            blank_streak = 0
+        else:
+            blank_streak += 1
+            if lines and blank_streak >= 2:
+                break
+        lines.append(line)
+    return "\n".join(lines)
+
+
+def prompt_for_items() -> list[str]:
+    while True:
+        items = parse_items(read_pasted_list())
+        if not items:
+            print("No valid items found. Try again.", file=sys.stderr)
+            continue
+
+        print(f"\nParsed {len(items)} items.")
+        for index, item in enumerate(items[:3], start=1):
+            print(f"  {index}. {item}")
+        if len(items) > 3:
+            print("  ...")
+
+        answer = input(f"Proceed with {len(items)} items? [Y/n]: ").strip().lower()
+        if answer in {"", "y", "yes"}:
+            return items
+        print("\nPaste the list again.\n")
+
+
+def prompt_for_question() -> str:
+    while True:
+        question = input("\nQuestion: ").strip()
+        if question:
+            return question
+        print("Question cannot be empty.", file=sys.stderr)
+
+
+def build_prompt(item: str, question: str) -> str:
+    return f"""Research this item using web search and answer the question.
+
+Item: {item}
+Question: {question}
+
+Return JSON only, with exactly these keys:
+- item
+- question
+- answer
+
+Rules:
+- Keep answer factual and concise.
+- Prefer 1 short paragraph, max 80 words.
+- If reliable public information is limited, say that plainly.
+- No markdown code fences.
+- No extra keys.
+"""
+
+
+def extract_json_block(text: str) -> str:
+    candidate = text.strip()
+    if candidate.startswith("```"):
+        lines = candidate.splitlines()
+        if len(lines) >= 3:
+            candidate = "\n".join(lines[1:-1]).strip()
+    if candidate.startswith("{") and candidate.endswith("}"):
+        return candidate
+    start = candidate.find("{")
+    end = candidate.rfind("}")
+    if start != -1 and end != -1 and start < end:
+        return candidate[start : end + 1]
+    return candidate
+
+
+def extract_sources(response) -> list[str]:
+    urls: list[str] = []
+    seen: set[str] = set()
+    for output in getattr(response, "output", []):
+        if getattr(output, "type", None) != "web_search_call":
+            continue
+        action = getattr(output, "action", None)
+        for source in getattr(action, "sources", None) or []:
+            url = getattr(source, "url", "").strip()
+            if url and url not in seen:
+                seen.add(url)
+                urls.append(url)
+    return urls
+
+
+def research_item(item: str, question: str) -> Result:
+    client = OpenAI()
+    response = client.responses.create(
+        model=MODEL,
+        include=["web_search_call.action.sources"],
+        tools=[WEB_SEARCH_TOOL],
+        input=build_prompt(item, question),
+    )
+    raw_text = (response.output_text or "").strip()
+    sources = extract_sources(response)
+
+    try:
+        data = json.loads(extract_json_block(raw_text))
+        parsed = ResearchAnswer.model_validate(data)
+        return Result(item=item, parsed=parsed, raw_text=raw_text, sources=sources)
+    except (json.JSONDecodeError, ValidationError) as exc:
+        return Result(
+            item=item,
+            raw_text=raw_text or "[No text returned]",
+            sources=sources,
+            error=f"Structured validation failed: {exc}",
+        )
+
+
+def esc(text: str) -> str:
+    return text.replace("|", "\\|").replace("\n", "<br>").strip()
+
+
+def slugify_question(question: str) -> str:
+    slug = re.sub(r"[^a-z0-9]+", "-", question.lower()).strip("-")
+    slug = re.sub(r"-{2,}", "-", slug)
+    slug = slug[:MAX_SLUG_LENGTH].rstrip("-")
+    return slug or "research"
+
+
+def choose_output_path(started_at: datetime, question: str) -> Path:
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    base_name = f"{started_at.strftime('%Y-%m-%d')}-{slugify_question(question)}"
+    candidate = OUTPUT_DIR / f"{base_name}.md"
+    suffix = 2
+    while candidate.exists():
+        candidate = OUTPUT_DIR / f"{base_name}-{suffix}.md"
+        suffix += 1
+    return candidate
+
+
+def render_markdown(question: str, items: list[str], started_at: datetime, results: list[Result]) -> str:
+    completed = len(results)
+    table_ok = completed > 0 and all(result.parsed for result in results)
+    lines = [
+        "# AI Research",
+        "",
+        f"- Generated: {started_at.strftime('%Y-%m-%d %H:%M:%S %Z')}",
+        f"- Question: {question}",
+        f"- Progress: {completed}/{len(items)}",
+        "",
+        "## Items",
+    ]
+
+    lines.extend(f"- {item}" for item in items)
+    lines.append("")
+    lines.append("## Results")
+    lines.append("")
+
+    if table_ok:
+        lines.extend(
+            [
+                "| Item | Response |",
+                "| --- | --- |",
+            ]
+        )
+        for result in results:
+            lines.append(f"| {esc(result.item)} | {esc(result.parsed.answer)} |")
+    elif results:
+        for result in results:
+            lines.append(f"### {result.item}")
+            lines.append("")
+            if result.parsed:
+                lines.append(result.parsed.answer.strip())
+            else:
+                lines.append(result.raw_text.strip() or result.error or "No response.")
+            if result.error:
+                lines.append("")
+                lines.append(f"_Note: {result.error}_")
+            if result.sources:
+                lines.append("")
+                lines.append("Sources:")
+                lines.extend(f"- {url}" for url in result.sources[:5])
+            lines.append("")
+    else:
+        lines.append("No responses yet.")
+        lines.append("")
+
+    if completed < len(items):
+        lines.append("## Pending")
+        lines.append("")
+        lines.extend(f"- {item}" for item in items[completed:])
+        lines.append("")
+
+    return "\n".join(lines).rstrip() + "\n"
+
+
+def write_output(path: Path, question: str, items: list[str], started_at: datetime, results: list[Result]) -> None:
+    path.write_text(render_markdown(question, items, started_at, results), encoding="utf-8")
+
+
+def main() -> int:
+    if "--self-test" in sys.argv:
+        run_self_tests()
+        return 0
+
+    if "OPENAI_API_KEY" not in os.environ:
+        print("OPENAI_API_KEY is not set.", file=sys.stderr)
+        return 2
+
+    items = prompt_for_items()
+    question = prompt_for_question()
+    started_at = datetime.now().astimezone()
+    out_path = choose_output_path(started_at, question)
+    results: list[Result] = []
+
+    write_output(out_path, question, items, started_at, results)
+    print(f"\nWriting results to {out_path}")
+
+    try:
+        for index, item in enumerate(items, start=1):
+            print(f"[{index}/{len(items)}] {item}")
+            try:
+                result = research_item(item, question)
+            except Exception as exc:
+                result = Result(item=item, error=str(exc), raw_text=f"[Request failed] {exc}")
+            results.append(result)
+            write_output(out_path, question, items, started_at, results)
+    except KeyboardInterrupt:
+        print(f"\nStopped early. Partial output saved to {out_path}", file=sys.stderr)
+        write_output(out_path, question, items, started_at, results)
+        return 130
+
+    print(f"Done. Output saved to {out_path}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
