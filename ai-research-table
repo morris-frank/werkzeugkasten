@@ -1,0 +1,632 @@
+#!/Users/mfr/mamba/envs/basic/bin/python
+import csv
+import json
+import os
+import re
+import sys
+from dataclasses import dataclass, field
+from datetime import datetime
+from io import StringIO
+from pathlib import Path
+
+from openai import OpenAI
+from pydantic import BaseModel, ValidationError
+
+MODEL = "gpt-5.4"
+OUTPUT_DIR = Path.home() / "Desktop" / "inbox" / "ai-research"
+MAX_SLUG_LENGTH = 48
+QUESTION_WORDS = {
+    "who",
+    "what",
+    "when",
+    "where",
+    "why",
+    "how",
+    "which",
+    "is",
+    "are",
+    "do",
+    "does",
+    "did",
+    "can",
+    "could",
+    "should",
+    "would",
+    "will",
+}
+WEB_SEARCH_TOOL = {
+    "type": "web_search",
+    "search_context_size": "medium",
+    "user_location": {
+        "type": "approximate",
+        "timezone": datetime.now().astimezone().tzinfo.key if hasattr(datetime.now().astimezone().tzinfo, "key") else str(datetime.now().astimezone().tzinfo),
+    },
+}
+
+
+class ResearchRow(BaseModel):
+    key: str
+    updates: dict[str, str | None]
+
+
+@dataclass
+class Failure:
+    row_number: int
+    key: str
+    columns: list[str]
+    raw_text: str = ""
+    sources: list[str] = field(default_factory=list)
+    error: str = ""
+
+
+def slugify_question(text: str) -> str:
+    slug = re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")
+    slug = re.sub(r"-{2,}", "-", slug)
+    slug = slug[:MAX_SLUG_LENGTH].rstrip("-")
+    return slug or "research"
+
+
+def choose_output_path(started_at: datetime, label: str) -> Path:
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    base_name = f"{started_at.strftime('%Y-%m-%d')}-{slugify_question(label)}"
+    candidate = OUTPUT_DIR / f"{base_name}.md"
+    suffix = 2
+    while candidate.exists():
+        candidate = OUTPUT_DIR / f"{base_name}-{suffix}.md"
+        suffix += 1
+    return candidate
+
+
+def guess_table_format(raw: str) -> str:
+    lines = [line.strip() for line in raw.splitlines() if line.strip()]
+    if len(lines) >= 2 and "|" in lines[0]:
+        second = lines[1].replace("|", " ").strip()
+        if re.fullmatch(r"[:\-\s]+", second):
+            return "markdown"
+    if any("|" in line for line in lines[:3]):
+        return "markdown"
+    return "csv"
+
+
+def normalize_headers(headers: list[str]) -> list[str]:
+    normalized: list[str] = []
+    used: dict[str, int] = {}
+    for index, header in enumerate(headers, start=1):
+        name = header.strip() or f"column_{index}"
+        if name not in used:
+            used[name] = 1
+            normalized.append(name)
+            continue
+        used[name] += 1
+        normalized.append(f"{name} {used[name]}")
+    return normalized
+
+
+def is_markdown_separator(cells: list[str]) -> bool:
+    return bool(cells) and all(re.fullmatch(r":?-{3,}:?", cell.strip()) for cell in cells)
+
+
+def parse_markdown_table(raw: str) -> tuple[list[str], list[list[str]]]:
+    lines = [line.strip() for line in raw.splitlines() if line.strip()]
+    rows = [[cell.strip() for cell in line.strip("|").split("|")] for line in lines if "|" in line]
+    if len(rows) < 2:
+        raise ValueError("Could not parse a markdown table.")
+    headers = normalize_headers(rows[0])
+    data_rows = rows[1:]
+    if data_rows and is_markdown_separator(data_rows[0]):
+        data_rows = data_rows[1:]
+    return headers, normalize_rows(headers, data_rows)
+
+
+def parse_csv_table(raw: str) -> tuple[list[str], list[list[str]]]:
+    sample = raw[:4096]
+    try:
+        dialect = csv.Sniffer().sniff(sample, delimiters=",;\t")
+    except csv.Error:
+        dialect = csv.excel
+    reader = csv.reader(StringIO(raw), dialect)
+    rows = [[cell.strip() for cell in row] for row in reader if any(cell.strip() for cell in row)]
+    if len(rows) < 2:
+        raise ValueError("Could not parse a CSV table.")
+    headers = normalize_headers(rows[0])
+    return headers, normalize_rows(headers, rows[1:])
+
+
+def normalize_rows(headers: list[str], rows: list[list[str]]) -> list[list[str]]:
+    width = len(headers)
+    normalized: list[list[str]] = []
+    for row in rows:
+        cells = row[:width] + [""] * max(0, width - len(row))
+        normalized.append(cells)
+    return normalized
+
+
+def rows_as_dicts(headers: list[str], rows: list[list[str]]) -> list[dict[str, str]]:
+    return [dict(zip(headers, row)) for row in rows]
+
+
+def is_question_header(header: str) -> bool:
+    text = header.strip().lower()
+    if not text:
+        return False
+    if "?" in text:
+        return True
+    first_word = text.split()[0]
+    return first_word in QUESTION_WORDS
+
+
+def object_type_from_header(header: str) -> str:
+    text = re.sub(r"[_-]+", " ", header.strip().lower())
+    text = re.sub(r"\s+", " ", text).strip()
+    if text.endswith(" name") and len(text.split()) > 1:
+        text = text[:-5].strip()
+    if text in {"name", "title"}:
+        return "object"
+    return text or "object"
+
+
+def make_explicit_question(column: str, key: str, object_type: str) -> str:
+    text = column.strip()
+    if not text:
+        return f"What is this for the {object_type} {key}?"
+    if "?" in text:
+        return text
+    if text.split()[0].lower() in QUESTION_WORDS:
+        return text if text.endswith("?") else f"{text}?"
+    return f"What is the {text} of the {object_type} {key}?"
+
+
+def read_pasted_text() -> str:
+    print("Paste the CSV or markdown table. Press Enter twice when done.")
+    lines: list[str] = []
+    blank_streak = 0
+    while True:
+        try:
+            line = input()
+        except EOFError:
+            break
+        if line.strip():
+            blank_streak = 0
+        else:
+            blank_streak += 1
+            if lines and blank_streak >= 2:
+                break
+        lines.append(line)
+    return "\n".join(lines)
+
+
+def load_input_text() -> tuple[str, str]:
+    if len(sys.argv) > 1:
+        path = Path(sys.argv[1]).expanduser().resolve()
+        if not path.is_file():
+            raise FileNotFoundError(f"Not a file: {path}")
+        return path.read_text(encoding="utf-8"), path.name
+    raw = read_pasted_text()
+    if not raw.strip():
+        raise ValueError("No input provided.")
+    return raw, "pasted-table"
+
+
+def confirm_detection(
+    source_name: str,
+    input_format: str,
+    headers: list[str],
+    rows: list[dict[str, str]],
+    question_columns: list[str],
+    attribute_columns: list[str],
+) -> bool:
+    key_header = headers[0]
+    object_type = object_type_from_header(key_header)
+    requested_columns = max(0, len(headers) - 1)
+    print("")
+    print(f"Source: {source_name}")
+    print(f"Detected format: {input_format}")
+    print(f"Rows: {len(rows)}")
+    print(f"Requested columns per row: {requested_columns}")
+    print(f"Key column: {key_header}")
+    print(f"Object type: {object_type}")
+    print("Question columns:")
+    if question_columns:
+        for column in question_columns:
+            print(f"  - {column}")
+    else:
+        print("  - none")
+    print("Attribute columns:")
+    if attribute_columns:
+        for column in attribute_columns:
+            print(f"  - {column}")
+    else:
+        print("  - none")
+    if rows:
+        print(f"Example key: {rows[0].get(key_header, '').strip() or '[blank]'}")
+    answer = input("\nProceed? [Y/n]: ").strip().lower()
+    return answer in {"", "y", "yes"}
+
+
+def build_prompt(
+    key_header: str,
+    key: str,
+    row: dict[str, str],
+    missing_columns: list[str],
+    question_columns: set[str],
+) -> str:
+    object_type = object_type_from_header(key_header)
+    known_values = [f'- {column}: {row[column]}' for column in row if column != key_header and row[column].strip()]
+    missing_lines: list[str] = []
+    for column in missing_columns:
+        if column in question_columns:
+            missing_lines.append(f'- {column} [question]: {make_explicit_question(column, key, object_type)}')
+        else:
+            missing_lines.append(f'- {column} [attribute]: fill with a short tag or very short value only')
+
+    known_section = "\n".join(known_values) if known_values else "- none"
+    missing_section = "\n".join(missing_lines)
+
+    return f"""Research this {object_type} using web search and fill the missing table fields.
+
+Key column: {key_header}
+Object type: {object_type}
+{key_header}: {key}
+
+Known row values:
+{known_section}
+
+Missing fields to fill:
+{missing_section}
+
+Return JSON only in this shape:
+{{
+  "key": "{key}",
+  "updates": {{
+    "column name": "value"
+  }}
+}}
+
+Rules:
+- Only include columns from the missing fields list.
+- For question fields, answer directly in one short factual sentence.
+- For attribute fields, return the shortest practical tag or short value.
+- If you cannot find a reliable value, use an empty string.
+- No markdown code fences.
+- No extra keys.
+"""
+
+
+def extract_json_block(text: str) -> str:
+    candidate = text.strip()
+    if candidate.startswith("```"):
+        lines = candidate.splitlines()
+        if len(lines) >= 3:
+            candidate = "\n".join(lines[1:-1]).strip()
+    if candidate.startswith("{") and candidate.endswith("}"):
+        return candidate
+    start = candidate.find("{")
+    end = candidate.rfind("}")
+    if start != -1 and end != -1 and start < end:
+        return candidate[start : end + 1]
+    return candidate
+
+
+def extract_sources(response) -> list[str]:
+    urls: list[str] = []
+    seen: set[str] = set()
+    for output in getattr(response, "output", []):
+        if getattr(output, "type", None) != "web_search_call":
+            continue
+        action = getattr(output, "action", None)
+        for source in getattr(action, "sources", None) or []:
+            url = getattr(source, "url", "").strip()
+            if url and url not in seen:
+                seen.add(url)
+                urls.append(url)
+    return urls
+
+
+def research_row(
+    client: OpenAI,
+    key_header: str,
+    row: dict[str, str],
+    missing_columns: list[str],
+    question_columns: set[str],
+) -> tuple[ResearchRow | None, str, list[str], str]:
+    key = row.get(key_header, "").strip() or "[blank]"
+    response = client.responses.create(
+        model=MODEL,
+        include=["web_search_call.action.sources"],
+        tools=[WEB_SEARCH_TOOL],
+        input=build_prompt(key_header, key, row, missing_columns, question_columns),
+    )
+    raw_text = (response.output_text or "").strip()
+    sources = extract_sources(response)
+
+    try:
+        data = json.loads(extract_json_block(raw_text))
+        parsed = ResearchRow.model_validate(data)
+        return parsed, raw_text, sources, ""
+    except (json.JSONDecodeError, ValidationError) as exc:
+        return None, raw_text or "[No text returned]", sources, f"Structured validation failed: {exc}"
+
+
+def merge_updates(row: dict[str, str], missing_columns: list[str], updates: dict[str, str | None]) -> None:
+    allowed = set(missing_columns)
+    for column, value in updates.items():
+        if column not in allowed:
+            continue
+        text = (value or "").strip()
+        if text:
+            row[column] = text
+
+
+def esc(text: str) -> str:
+    return text.replace("|", "\\|").replace("\n", "<br>").strip()
+
+
+def render_markdown_table(headers: list[str], rows: list[dict[str, str]]) -> list[str]:
+    lines = [
+        "| " + " | ".join(esc(header) for header in headers) + " |",
+        "| " + " | ".join("---" for _ in headers) + " |",
+    ]
+    for row in rows:
+        lines.append("| " + " | ".join(esc(row.get(header, "")) for header in headers) + " |")
+    return lines
+
+
+def build_output_label(source_name: str, headers: list[str]) -> str:
+    if source_name != "pasted-table":
+        return Path(source_name).stem
+    return "-".join(headers[:3]) or "table-research"
+
+
+def render_markdown(
+    source_name: str,
+    input_format: str,
+    headers: list[str],
+    rows: list[dict[str, str]],
+    question_columns: list[str],
+    attribute_columns: list[str],
+    started_at: datetime,
+    processed_rows: int,
+    failures: list[Failure],
+) -> str:
+    key_header = headers[0]
+    object_type = object_type_from_header(key_header)
+    lines = [
+        "# AI Research Table",
+        "",
+        f"- Generated: {started_at.strftime('%Y-%m-%d %H:%M:%S %Z')}",
+        f"- Source: {source_name}",
+        f"- Detected format: {input_format}",
+        f"- Rows: {len(rows)}",
+        f"- Requested columns per row: {max(0, len(headers) - 1)}",
+        f"- Key column: {key_header}",
+        f"- Object type: {object_type}",
+        f"- Progress: {processed_rows}/{len(rows)}",
+        "",
+        "## Detected Columns",
+        "",
+        "Questions:",
+    ]
+
+    if question_columns:
+        lines.extend(f"- {column}" for column in question_columns)
+    else:
+        lines.append("- none")
+
+    lines.extend(["", "Attributes:"])
+    if attribute_columns:
+        lines.extend(f"- {column}" for column in attribute_columns)
+    else:
+        lines.append("- none")
+
+    lines.extend(["", "## Merged Table", ""])
+    lines.extend(render_markdown_table(headers, rows))
+
+    if processed_rows < len(rows):
+        lines.extend(["", "## Pending Rows", ""])
+        for row in rows[processed_rows:]:
+            lines.append(f"- {row.get(key_header, '').strip() or '[blank]'}")
+
+    lines.extend(["", "## Failed Responses", ""])
+    if failures:
+        for failure in failures:
+            lines.append(f"### Row {failure.row_number}: {failure.key}")
+            lines.append("")
+            lines.append("Missing columns:")
+            lines.extend(f"- {column}" for column in failure.columns)
+            lines.append("")
+            lines.append(failure.raw_text or failure.error or "No response.")
+            if failure.error:
+                lines.append("")
+                lines.append(f"_Note: {failure.error}_")
+            if failure.sources:
+                lines.append("")
+                lines.append("Sources:")
+                lines.extend(f"- {url}" for url in failure.sources[:5])
+            lines.append("")
+    else:
+        lines.append("None.")
+        lines.append("")
+
+    return "\n".join(lines).rstrip() + "\n"
+
+
+def write_output(
+    path: Path,
+    source_name: str,
+    input_format: str,
+    headers: list[str],
+    rows: list[dict[str, str]],
+    question_columns: list[str],
+    attribute_columns: list[str],
+    started_at: datetime,
+    processed_rows: int,
+    failures: list[Failure],
+) -> None:
+    path.write_text(
+        render_markdown(
+            source_name=source_name,
+            input_format=input_format,
+            headers=headers,
+            rows=rows,
+            question_columns=question_columns,
+            attribute_columns=attribute_columns,
+            started_at=started_at,
+            processed_rows=processed_rows,
+            failures=failures,
+        ),
+        encoding="utf-8",
+    )
+
+
+def run_self_tests() -> None:
+    assert guess_table_format("| a | b |\n| --- | --- |\n| x | y |") == "markdown"
+    assert guess_table_format("a,b\nx,y") == "csv"
+    headers, rows = parse_markdown_table("| name | country |\n| --- | --- |\n| Company A | DE |")
+    assert headers == ["name", "country"]
+    assert rows == [["Company A", "DE"]]
+    headers, rows = parse_csv_table("name,country\nCompany A,DE\n")
+    assert headers == ["name", "country"]
+    assert rows == [["Company A", "DE"]]
+    assert is_question_header("What do they do?")
+    assert not is_question_header("legal form")
+    assert object_type_from_header("company") == "company"
+    assert object_type_from_header("company name") == "company"
+    assert object_type_from_header("research_concept") == "research concept"
+    assert make_explicit_question("legal form", "OpenAI", "company") == "What is the legal form of the company OpenAI?"
+    assert slugify_question("What does this company do?") == "what-does-this-company-do"
+    assert slugify_question("   $$$   ") == "research"
+    print("Table parser self-test passed.")
+
+
+def main() -> int:
+    if "--self-test" in sys.argv:
+        run_self_tests()
+        return 0
+
+    if "OPENAI_API_KEY" not in os.environ:
+        print("OPENAI_API_KEY is not set.", file=sys.stderr)
+        return 2
+
+    try:
+        raw, source_name = load_input_text()
+        input_format = guess_table_format(raw)
+        if input_format == "markdown":
+            headers, raw_rows = parse_markdown_table(raw)
+        else:
+            headers, raw_rows = parse_csv_table(raw)
+    except Exception as exc:
+        print(str(exc), file=sys.stderr)
+        return 1
+
+    if len(headers) < 2:
+        print("Need at least two columns.", file=sys.stderr)
+        return 1
+    if not raw_rows:
+        print("No data rows found.", file=sys.stderr)
+        return 1
+
+    rows = rows_as_dicts(headers, raw_rows)
+    question_columns = [header for header in headers[1:] if is_question_header(header)]
+    attribute_columns = [header for header in headers[1:] if header not in question_columns]
+
+    if not confirm_detection(source_name, input_format, headers, rows, question_columns, attribute_columns):
+        print("Aborted.", file=sys.stderr)
+        return 1
+
+    started_at = datetime.now().astimezone()
+    out_path = choose_output_path(started_at, build_output_label(source_name, headers))
+    failures: list[Failure] = []
+    processed_rows = 0
+
+    write_output(
+        out_path,
+        source_name,
+        input_format,
+        headers,
+        rows,
+        question_columns,
+        attribute_columns,
+        started_at,
+        processed_rows,
+        failures,
+    )
+    print(f"\nWriting results to {out_path}")
+
+    client = OpenAI()
+    question_set = set(question_columns)
+    key_header = headers[0]
+
+    try:
+        for index, row in enumerate(rows, start=1):
+            key = row.get(key_header, "").strip() or f"Row {index}"
+            missing_columns = [header for header in headers[1:] if not row.get(header, "").strip()]
+            print(f"[{index}/{len(rows)}] {key}")
+
+            if missing_columns:
+                try:
+                    parsed, raw_text, sources, error = research_row(
+                        client=client,
+                        key_header=key_header,
+                        row=row,
+                        missing_columns=missing_columns,
+                        question_columns=question_set,
+                    )
+                    if parsed:
+                        merge_updates(row, missing_columns, parsed.updates)
+                    else:
+                        failures.append(
+                            Failure(
+                                row_number=index,
+                                key=key,
+                                columns=missing_columns,
+                                raw_text=raw_text,
+                                sources=sources,
+                                error=error,
+                            )
+                        )
+                except Exception as exc:
+                    failures.append(
+                        Failure(
+                            row_number=index,
+                            key=key,
+                            columns=missing_columns,
+                            raw_text=f"[Request failed] {exc}",
+                            error=str(exc),
+                        )
+                    )
+
+            processed_rows = index
+            write_output(
+                out_path,
+                source_name,
+                input_format,
+                headers,
+                rows,
+                question_columns,
+                attribute_columns,
+                started_at,
+                processed_rows,
+                failures,
+            )
+    except KeyboardInterrupt:
+        print(f"\nStopped early. Partial output saved to {out_path}", file=sys.stderr)
+        write_output(
+            out_path,
+            source_name,
+            input_format,
+            headers,
+            rows,
+            question_columns,
+            attribute_columns,
+            started_at,
+            processed_rows,
+            failures,
+        )
+        return 130
+
+    print(f"Done. Output saved to {out_path}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
