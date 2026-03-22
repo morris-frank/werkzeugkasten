@@ -41,7 +41,7 @@ Werkzeugkasten is a macOS menu-bar app with a Finder action for lightweight rese
 
 # Installation
 
-1. Download the most recent release [Werkzeugkasten.zip](https://github.com/morris-frank/werkzeugkasten/releases)
+1. Download the most recent release [Werkzeugkasten.zip](https://github.com/morris-frank/werkzeugkasten/releases/latest)
 2. Install and/or start
 3. Open `Settings` from the menu bar:
    - :key: OpenAI API key
