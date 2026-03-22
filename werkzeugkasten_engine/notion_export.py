@@ -15,7 +15,7 @@ OPEN_METEO_GEOCODING_API = "https://geocoding-api.open-meteo.com/v1/search"
 UUID_RE = re.compile(r"([0-9a-fA-F]{32}|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})")
 HTML_BREAK_RE = re.compile(r"\s*<br\s*/?>\s*", re.IGNORECASE)
 LAT_LON_RE = re.compile(r"(?P<lat>[+-]?\d{1,2}(?:\.\d+)?)\s*[,;/]\s*(?P<lon>[+-]?\d{1,3}(?:\.\d+)?)")
-URL_RE = re.compile(r"https?://[^\s<>)\]]+|www\.[^\s<>)\]]+", re.IGNORECASE)
+URL_RE = re.compile(r"https?://[^\s<>,)\]]+|www\.[^\s<>,)\]]+", re.IGNORECASE)
 MARKDOWN_LINK_RE = re.compile(r"\[([^\]]+)\]\((https?://[^)]+)\)")
 
 

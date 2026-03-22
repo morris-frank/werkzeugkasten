@@ -183,7 +183,35 @@ class ResearchTableTests(unittest.TestCase):
             rendered = output.read_text(encoding="utf-8")
             self.assertIn("https://a.example/one", rendered)
             self.assertIn("https://b.example/two", rendered)
+            self.assertNotIn("<br>", rendered)
+            self.assertIn("https://a.example/one, https://b.example/two", rendered)
             self.assertEqual(seen_urls, ["https://a.example/one", "https://b.example/two"])
+
+    def test_document_sources_are_downloaded_and_summarized(self) -> None:
+        downloaded = Path(tempfile.gettempdir()) / "werkzeugkasten-test.pdf"
+        downloaded.write_text("placeholder", encoding="utf-8")
+
+        def fake_download(url: str) -> Path:
+            self.assertEqual(url, "https://example.com/report.pdf")
+            return downloaded
+
+        def fake_summarize(path: Path, *, artifacts_directory: Path | None = None):
+            self.assertEqual(path, downloaded)
+            self.assertEqual(artifacts_directory, downloaded.parent)
+            return {
+                "input_path": str(downloaded),
+                "contents_path": str(downloaded.parent / ".werkzeugkasten-test.pdf.contents.md"),
+                "summary_path": str(downloaded.parent / "werkzeugkasten-test.pdf.summary.md"),
+                "contents_markdown": "converted",
+                "summary_markdown": "# Summary\nPDF summary",
+            }
+
+        with patch.object(research_table, "download_source_document", fake_download), patch.object(
+            research_table, "summarize_local_file", fake_summarize
+        ):
+            result = research_table.fetch_source_raw_text("https://example.com/report.pdf", {})
+            self.assertIn("PDF summary", result.text)
+            self.assertIn("werkzeugkasten-test.pdf", result.text)
 
     def test_notion_export_requires_configuration(self) -> None:
         dataset = research_table.make_dataset_shape(

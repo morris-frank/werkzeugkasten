@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import csv
 import json
+import mimetypes
 import re
 import traceback
 import urllib.parse
@@ -27,6 +28,7 @@ from .core import (
     response_create_kwargs,
 )
 from .notion_export import export_dataset_to_notion
+from .summarize import stable_download_path, summarize_local_file
 
 ProgressCallback = Callable[[int, int, str], None]
 
@@ -55,11 +57,25 @@ SOURCE_COLUMN = "Sources"
 SOURCE_RAW_COLUMN = "Sources[RAW]"
 TAG_COLUMN = "Tags"
 RECORD_ID_COLUMN = "Record ID"
-URL_RE = re.compile(r"https?://[^\s<>)\]]+|www\.[^\s<>)\]]+", re.IGNORECASE)
+URL_RE = re.compile(r"https?://[^\s<>,)\]]+|www\.[^\s<>,)\]]+", re.IGNORECASE)
 MARKDOWN_LINK_RE = re.compile(r"\[([^\]]+)\]\((https?://[^)]+)\)")
 REF_RE = re.compile(r"\s*\(Ref\s+\d+\)\s*$", re.IGNORECASE)
 NOTION_PAGE_SIZE_LIMIT = 1800
 HTML_BREAK_RE = re.compile(r"\s*<br\s*/?>\s*", re.IGNORECASE)
+DOCUMENT_SUFFIXES = {
+    ".pdf",
+    ".doc",
+    ".docx",
+    ".ppt",
+    ".pptx",
+    ".xls",
+    ".xlsx",
+    ".rtf",
+    ".odt",
+    ".ods",
+    ".odp",
+    ".epub",
+}
 
 
 @dataclass(frozen=True)
@@ -516,6 +532,30 @@ def apply_dynamic_value(row: dict[str, str], column: DynamicColumn, value: str) 
     row[column.name] = value
 
 
+def inferred_download_suffix(url: str, content_type: str = "") -> str:
+    parsed = urllib.parse.urlparse(url)
+    suffix = Path(parsed.path).suffix.lower()
+    if suffix in DOCUMENT_SUFFIXES:
+        return suffix
+    guessed = mimetypes.guess_extension(content_type.split(";", 1)[0].strip()) if content_type else None
+    return (guessed or "").lower()
+
+
+def is_probably_document_url(url: str) -> bool:
+    parsed = urllib.parse.urlparse(url)
+    suffix = Path(parsed.path).suffix.lower()
+    return suffix in DOCUMENT_SUFFIXES
+
+
+def download_source_document(url: str) -> Path:
+    response = requests.get(url, timeout=60)
+    response.raise_for_status()
+    suffix = inferred_download_suffix(url, response.headers.get("Content-Type", ""))
+    destination = stable_download_path(url, suffix)
+    destination.write_bytes(response.content)
+    return destination
+
+
 def fetch_source_raw_text(
     url: str,
     cache: dict[str, FetchResult],
@@ -536,6 +576,73 @@ def fetch_source_raw_text(
                 cached_text_preview=cache[url].text[:500],
             )
         return cache[url]
+    if is_probably_document_url(url):
+        if debug_logger is not None:
+            debug_logger.log(
+                "document_source_detected",
+                row_number=row_number,
+                key=key,
+                source_url=url,
+            )
+        try:
+            downloaded_path = download_source_document(url)
+            summary_result = summarize_local_file(downloaded_path, artifacts_directory=downloaded_path.parent)
+            text = "\n".join(
+                [
+                    f"[Document summary from downloaded file] {downloaded_path}",
+                    "",
+                    summary_result["summary_markdown"],
+                ]
+            ).strip()
+            result = FetchResult(text=text)
+            if debug_logger is not None:
+                debug_logger.log(
+                    "document_source_summarized",
+                    row_number=row_number,
+                    key=key,
+                    source_url=url,
+                    downloaded_path=str(downloaded_path),
+                    summary_path=summary_result["summary_path"],
+                    contents_path=summary_result["contents_path"],
+                    text_preview=text[:1000],
+                )
+            cache[url] = result
+            return result
+        except requests.exceptions.RequestException as exc:
+            result = FetchResult(
+                text=f"[Source fetch failed] {url}\n{exc}",
+                error_class="DownloadError",
+                message=str(exc),
+            )
+            if debug_logger is not None:
+                debug_logger.log(
+                    "document_source_download_failed",
+                    row_number=row_number,
+                    key=key,
+                    source_url=url,
+                    error_class="DownloadError",
+                    message=str(exc),
+                )
+            cache[url] = result
+            return result
+        except Exception as exc:
+            result = FetchResult(
+                text=f"[Source fetch failed] {url}\n{exc}",
+                error_class="DocumentSummaryError",
+                message=str(exc),
+            )
+            if debug_logger is not None:
+                debug_logger.log(
+                    "document_source_summary_failed",
+                    row_number=row_number,
+                    key=key,
+                    source_url=url,
+                    error_class="DocumentSummaryError",
+                    message=str(exc),
+                    traceback=traceback.format_exc(),
+                )
+            cache[url] = result
+            return result
     request_url = f"https://r.jina.ai/{url}"
     headers = {
         "X-Engine": "direct",
@@ -1005,12 +1112,12 @@ def normalize_dataset(
                 continue
             if header in url_like_columns:
                 items = split_and_clean_items(value, url_mode=True)
-                row[header] = ",".join(canonical_maps.get(header, {}).get(item, item) for item in items)
+                row[header] = ", ".join(canonical_maps.get(header, {}).get(item, item) for item in items)
                 continue
             if header in list_like_columns:
                 items = split_and_clean_items(value, url_mode=False)
                 mapped = [canonical_maps.get(header, {}).get(item, item) for item in items]
-                row[header] = ",".join(dict.fromkeys(mapped))
+                row[header] = ", ".join(dict.fromkeys(mapped))
                 continue
             normalized_scalar = normalize_scalar_value(value)
             row[header] = canonical_maps.get(header, {}).get(normalized_scalar, normalized_scalar)
@@ -1181,6 +1288,10 @@ def normalize_source_urls(urls: list[str]) -> list[str]:
     return sorted({url for url in normalized if url})
 
 
+def normalize_source_cell_value(value: str) -> str:
+    return ", ".join(normalize_source_urls(extract_urls(value)))
+
+
 def is_url_only(text: str) -> bool:
     stripped = text.strip()
     urls = extract_urls(stripped)
@@ -1284,6 +1395,12 @@ def run_research_dataset(
             attribute_columns.append(source_raw_column.name)
     elif existing_source_raw_header is not None:
         source_raw_column = DynamicColumn(name=existing_source_raw_header, existed=True, policy=MERGE_POLICY)
+
+    if source_column is not None:
+        for row in rows:
+            existing_value = row.get(source_column.name, "").strip()
+            if existing_value:
+                row[source_column.name] = normalize_source_cell_value(existing_value)
 
     started_at = datetime.now().astimezone()
     output_path = choose_output_path(
@@ -1442,10 +1559,20 @@ def run_research_dataset(
                     traceback=traceback.format_exc(),
                 )
 
-        effective_sources = merge_source_lists(existing_sources, sources)
+        preserve_existing_sources = bool(
+            source_column is not None and should_preserve_existing(row.get(source_column.name, ""), source_column.policy)
+        )
+        if preserve_existing_sources:
+            effective_sources = existing_sources
+        elif sources:
+            effective_sources = sources
+        else:
+            effective_sources = existing_sources
         if source_column is not None and effective_sources:
-            if not should_preserve_existing(row.get(source_column.name, ""), source_column.policy):
-                row[source_column.name] = ", ".join(effective_sources)
+            if preserve_existing_sources:
+                row[source_column.name] = normalize_source_cell_value(row.get(source_column.name, ""))
+            else:
+                row[source_column.name] = normalize_source_cell_value(", ".join(effective_sources))
             debug_logger.log(
                 "row_sources_applied",
                 row_number=index,

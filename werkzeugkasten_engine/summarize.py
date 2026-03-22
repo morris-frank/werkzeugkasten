@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import hashlib
+import tempfile
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
@@ -32,6 +34,7 @@ Document content:
 """
 
 MAX_SUMMARY_INPUT = 120_000
+DOWNLOADED_SOURCE_DIR = Path(tempfile.gettempdir()) / "werkzeugkasten-source-downloads"
 
 
 def get_stream_info(path: Path) -> Optional[markitdown.StreamInfo]:
@@ -70,26 +73,54 @@ def summarize_text_input(title: str, text: str) -> str:
     return (response.output_text or "").strip()
 
 
-def process_file(path_str: str) -> dict[str, str]:
-    path = Path(path_str).expanduser().resolve()
-    if not path.is_file():
-        raise FileNotFoundError(f"Not a file: {path}")
+def summarize_local_file(
+    path: Path,
+    *,
+    artifacts_directory: Path | None = None,
+) -> dict[str, str]:
+    resolved = path.expanduser().resolve()
+    if not resolved.is_file():
+        raise FileNotFoundError(f"Not a file: {resolved}")
 
-    markdown = convert_to_markdown(path)
+    markdown = convert_to_markdown(resolved)
     if not markdown:
-        raise RuntimeError(f"No extractable content for {path.name}")
+        raise RuntimeError(f"No extractable content for {resolved.name}")
 
-    contents_path = path.with_name(f".{path.name}.contents.md")
+    target_directory = (artifacts_directory or resolved.parent).expanduser()
+    target_directory.mkdir(parents=True, exist_ok=True)
+    contents_path = target_directory / f".{resolved.name}.contents.md"
     contents_path.write_text(markdown + "\n", encoding="utf-8")
 
-    summary = summarize_text_input(path.name, markdown)
-    summary_path = path.with_name(path.name + ".summary.md")
+    summary = summarize_text_input(resolved.name, markdown)
+    summary_path = target_directory / f"{resolved.name}.summary.md"
     summary_path.write_text(summary + "\n", encoding="utf-8")
 
     return {
-        "input_path": str(path),
+        "input_path": str(resolved),
         "contents_path": str(contents_path),
         "summary_path": str(summary_path),
+        "contents_markdown": markdown,
+        "summary_markdown": summary,
+    }
+
+
+def stable_download_directory() -> Path:
+    DOWNLOADED_SOURCE_DIR.mkdir(parents=True, exist_ok=True)
+    return DOWNLOADED_SOURCE_DIR
+
+
+def stable_download_path(url: str, suffix: str) -> Path:
+    digest = hashlib.sha256(url.encode("utf-8")).hexdigest()[:16]
+    clean_suffix = suffix if suffix.startswith(".") else f".{suffix}" if suffix else ""
+    return stable_download_directory() / f"{digest}{clean_suffix}"
+
+
+def process_file(path_str: str) -> dict[str, str]:
+    result = summarize_local_file(Path(path_str))
+    return {
+        "input_path": result["input_path"],
+        "contents_path": result["contents_path"],
+        "summary_path": result["summary_path"],
     }
 
 
