@@ -152,6 +152,39 @@ class ResearchTableTests(unittest.TestCase):
             self.assertIn("## Source Fetch Issues", rendered)
             self.assertIn("HTTP 403", rendered)
 
+    def test_existing_sources_are_used_when_no_research_columns_are_missing(self) -> None:
+        dataset = research_table.make_dataset_shape(
+            source_name="pasted-table",
+            detected_format="csv",
+            headers=["Company", "Sources"],
+            rows=[
+                {
+                    "Company": "OpenAI",
+                    "Sources": "https://b.example/two<br>[one](https://a.example/one?utm_source=openai)",
+                }
+            ],
+        )
+
+        seen_urls: list[str] = []
+
+        def fake_fetch(url: str, *_args, **_kwargs):
+            seen_urls.append(url)
+            return research_table.FetchResult(text=f"Fetched {url}")
+
+        with tempfile.TemporaryDirectory() as tmpdir, patch.object(research_table, "fetch_source_raw_text", fake_fetch):
+            output = Path(tmpdir) / "existing-sources.md"
+            research_table.run_research_dataset(
+                dataset,
+                options=research_table.ResearchOptions(
+                    include_source_raw=True,
+                    output_path=str(output),
+                ),
+            )
+            rendered = output.read_text(encoding="utf-8")
+            self.assertIn("https://a.example/one", rendered)
+            self.assertIn("https://b.example/two", rendered)
+            self.assertEqual(seen_urls, ["https://a.example/one", "https://b.example/two"])
+
     def test_notion_export_requires_configuration(self) -> None:
         dataset = research_table.make_dataset_shape(
             source_name="pasted-table",
@@ -214,6 +247,10 @@ class ResearchTableTests(unittest.TestCase):
             open_meteo_key="",
         )
         self.assertEqual({spec.name: spec.kind for spec in no_geocoder_specs}["Location"], "rich_text")
+        self.assertEqual(
+            notion_export.extract_source_urls("https://a.example/one<br>[two](https://b.example/two?utm_source=openai)"),
+            ["https://a.example/one", "https://b.example/two"],
+        )
         blocks = notion_export.render_row_children(
             {
                 "Sources": "https://a.example/one<br>https://a.example/two,https://b.example/three",

@@ -15,6 +15,8 @@ OPEN_METEO_GEOCODING_API = "https://geocoding-api.open-meteo.com/v1/search"
 UUID_RE = re.compile(r"([0-9a-fA-F]{32}|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})")
 HTML_BREAK_RE = re.compile(r"\s*<br\s*/?>\s*", re.IGNORECASE)
 LAT_LON_RE = re.compile(r"(?P<lat>[+-]?\d{1,2}(?:\.\d+)?)\s*[,;/]\s*(?P<lon>[+-]?\d{1,3}(?:\.\d+)?)")
+URL_RE = re.compile(r"https?://[^\s<>)\]]+|www\.[^\s<>)\]]+", re.IGNORECASE)
+MARKDOWN_LINK_RE = re.compile(r"\[([^\]]+)\]\((https?://[^)]+)\)")
 
 
 @dataclass(frozen=True)
@@ -207,6 +209,42 @@ def split_multi_value(value: str) -> list[str]:
     return result
 
 
+def normalize_url_value(value: str) -> str:
+    text = value.strip().strip("[]()")
+    if not text:
+        return ""
+    if text.startswith("www."):
+        text = f"https://{text}"
+    elif not re.match(r"^[a-z]+://", text, re.IGNORECASE):
+        text = f"https://{text}"
+    parsed = urllib.parse.urlparse(text)
+    host = parsed.netloc.lower()
+    path = parsed.path or ""
+    query_pairs = urllib.parse.parse_qsl(parsed.query, keep_blank_values=False)
+    filtered_query = [
+        (key, val)
+        for key, val in query_pairs
+        if not key.lower().startswith("utm_")
+        and "openai" not in key.lower()
+        and "openai" not in val.lower()
+    ]
+    query = urllib.parse.urlencode(filtered_query)
+    rebuilt = urllib.parse.urlunparse(("https", host, path.rstrip("/"), "", query, ""))
+    return rebuilt.rstrip("/") if rebuilt.endswith("/") and path in {"", "/"} else rebuilt
+
+
+def extract_source_urls(value: str) -> list[str]:
+    normalized_text = HTML_BREAK_RE.sub(" ", value or "")
+    urls = [match.group(0) for match in URL_RE.finditer(normalized_text)]
+    urls.extend(match.group(2) for match in MARKDOWN_LINK_RE.finditer(normalized_text))
+    result: list[str] = []
+    for url in urls:
+        normalized = normalize_url_value(url)
+        if normalized and normalized not in result:
+            result.append(normalized)
+    return result
+
+
 def heading_block(text: str, level: int = 2) -> dict[str, Any]:
     key = f"heading_{level}"
     return {"object": "block", "type": key, key: {"rich_text": rich_text_array(text, max_chars=180)}}
@@ -242,7 +280,7 @@ def render_row_children(
     blocks: list[dict[str, Any]] = []
     if sources_column and row.get(sources_column, "").strip():
         blocks.append(heading_block("Sources", level=2))
-        source_urls = split_multi_value(row[sources_column].replace("\n", ","))
+        source_urls = extract_source_urls(row[sources_column].replace("\n", ","))
         raw_map = parse_source_raw_map(row.get(source_raw_column, "")) if source_raw_column else {}
         for domain, urls in group_urls_by_domain(source_urls).items():
             blocks.append(heading_block(domain, level=3))

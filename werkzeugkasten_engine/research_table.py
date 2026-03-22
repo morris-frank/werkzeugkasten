@@ -5,15 +5,14 @@ import json
 import re
 import traceback
 import urllib.error
-import urllib.request
 import urllib.parse
+import urllib.request
 from dataclasses import dataclass, field
 from datetime import datetime
 from io import StringIO
 from pathlib import Path
 from typing import Callable
 
-import requests
 from rapidfuzz import fuzz
 
 from .core import (
@@ -487,6 +486,14 @@ def unique_header_name(headers: list[str], preferred: str) -> str:
     return f"{candidate} {suffix}"
 
 
+def find_header_case_insensitive(headers: list[str], preferred: str) -> str | None:
+    target = preferred.strip().lower()
+    for header in headers:
+        if header.strip().lower() == target:
+            return header
+    return None
+
+
 def resolve_dynamic_column(headers: list[str], rows: list[dict[str, str]], preferred: str, policy: str) -> DynamicColumn:
     if preferred in headers:
         if policy == OVERWRITE_POLICY:
@@ -531,17 +538,18 @@ def fetch_source_raw_text(
             )
         return cache[url]
     request_url = f"https://r.jina.ai/{url}"
-    request = urllib.request.Request(
-        request_url,
-        headers={
-            "X-Engine": "direct",
-            "X-Retain-Images": "none",
-            "X-Md-Link-Style": "referenced",
-        },
-    )
+    headers = {
+        "X-Engine": "direct",
+        "X-Retain-Images": "none",
+        "X-Md-Link-Style": "referenced",
+    }
     api_key = jina_api_key().strip()
     if api_key:
-        request.add_header("Authorization", f"Bearer {api_key}")
+        headers["Authorization"] = f"Bearer {api_key}"
+    request = urllib.request.Request(
+        request_url,
+        headers=headers,
+    )
     if debug_logger is not None:
         debug_logger.log(
             "jina_request",
@@ -549,12 +557,7 @@ def fetch_source_raw_text(
             key=key,
             source_url=url,
             request_url=request_url,
-            headers={
-                "X-Engine": "direct",
-                "X-Retain-Images": "none",
-                "X-Md-Link-Style": "referenced",
-                "Authorization": "Bearer [redacted]" if api_key else "",
-            },
+            headers=headers,
             has_authorization=bool(api_key),
         )
     try:
@@ -569,6 +572,7 @@ def fetch_source_raw_text(
                     key=key,
                     source_url=url,
                     request_url=request_url,
+                    headers=headers,
                     status_code=status_code,
                     text_length=len(body),
                     text_preview=body[:1000],
@@ -587,6 +591,7 @@ def fetch_source_raw_text(
                 key=key,
                 source_url=url,
                 request_url=request_url,
+                headers=headers,
                 status_code=exc.code,
                 error_class="HTTPError",
                 message=str(exc.reason),
@@ -604,6 +609,7 @@ def fetch_source_raw_text(
                 key=key,
                 source_url=url,
                 request_url=request_url,
+                headers=headers,
                 error_class="URLError",
                 message=str(exc.reason),
             )
@@ -620,6 +626,7 @@ def fetch_source_raw_text(
                 key=key,
                 source_url=url,
                 request_url=request_url,
+                headers=headers,
                 error_class="TimeoutError",
                 message="Timed out.",
             )
@@ -1164,8 +1171,9 @@ def replace_markdown_links_with_labels(text: str) -> str:
 
 
 def extract_urls(text: str) -> list[str]:
-    urls = [match.group(0) for match in URL_RE.finditer(text or "")]
-    urls.extend(match.group(2) for match in MARKDOWN_LINK_RE.finditer(text or ""))
+    normalized_text = HTML_BREAK_RE.sub(" ", text or "")
+    urls = [match.group(0) for match in URL_RE.finditer(normalized_text)]
+    urls.extend(match.group(2) for match in MARKDOWN_LINK_RE.finditer(normalized_text))
     normalized = [normalize_url_value(url) for url in urls]
     return [url for url in dict.fromkeys(normalized) if url]
 
@@ -1207,9 +1215,7 @@ def normalize_url_value(value: str) -> str:
     filtered_query = [
         (key, val)
         for key, val in query_pairs
-        if not key.lower().startswith("utm_")
-        and "openai" not in key.lower()
-        and "openai" not in val.lower()
+        if not key.lower().startswith("utm_") and "openai" not in key.lower() and "openai" not in val.lower()
     ]
     query = urllib.parse.urlencode(filtered_query)
     rebuilt = urllib.parse.urlunparse(("https", host, path.rstrip("/"), "", query, ""))
@@ -1221,6 +1227,21 @@ def generate_record_id(key: str, row_index: int) -> str:
     if not safe:
         safe = f"row-{row_index}"
     return f"{safe}-{row_index}"
+
+
+def source_urls_from_row(row: dict[str, str], source_column_name: str | None) -> list[str]:
+    if not source_column_name:
+        return []
+    return normalize_source_urls(extract_urls(row.get(source_column_name, "")))
+
+
+def merge_source_lists(*groups: list[str]) -> list[str]:
+    merged: list[str] = []
+    for group in groups:
+        for url in group:
+            if url and url not in merged:
+                merged.append(url)
+    return merged
 
 
 def run_research_dataset(
@@ -1250,14 +1271,21 @@ def run_research_dataset(
     nearest_column: DynamicColumn | None = None
     record_id_column: DynamicColumn | None = None
 
+    existing_source_header = find_header_case_insensitive(headers, SOURCE_COLUMN)
+    existing_source_raw_header = find_header_case_insensitive(headers, SOURCE_RAW_COLUMN)
+
     if options.include_sources:
         source_column = resolve_dynamic_column(headers, rows, SOURCE_COLUMN, options.source_column_policy)
         if source_column.name not in attribute_columns:
             attribute_columns.append(source_column.name)
+    elif existing_source_header is not None:
+        source_column = DynamicColumn(name=existing_source_header, existed=True, policy=MERGE_POLICY)
     if options.include_source_raw:
         source_raw_column = resolve_dynamic_column(headers, rows, SOURCE_RAW_COLUMN, options.source_raw_column_policy)
         if source_raw_column.name not in attribute_columns:
             attribute_columns.append(source_raw_column.name)
+    elif existing_source_raw_header is not None:
+        source_raw_column = DynamicColumn(name=existing_source_raw_header, existed=True, policy=MERGE_POLICY)
 
     started_at = datetime.now().astimezone()
     output_path = choose_output_path(
@@ -1335,11 +1363,13 @@ def run_research_dataset(
     )
     for index, row in enumerate(rows, start=1):
         key = row.get(key_header, "").strip() or f"Row {index}"
+        existing_sources = source_urls_from_row(row, source_column.name if source_column else None)
         debug_logger.log(
             "row_started",
             row_number=index,
             key=key,
             row_snapshot=dict(row),
+            existing_sources=existing_sources,
         )
         if progress:
             progress(index - 1, len(rows), key)
@@ -1414,23 +1444,25 @@ def run_research_dataset(
                     traceback=traceback.format_exc(),
                 )
 
-        if source_column is not None and sources:
-            apply_dynamic_value(row, source_column, ", ".join(sources))
+        effective_sources = merge_source_lists(existing_sources, sources)
+        if source_column is not None and effective_sources:
+            if not should_preserve_existing(row.get(source_column.name, ""), source_column.policy):
+                row[source_column.name] = ", ".join(effective_sources)
             debug_logger.log(
                 "row_sources_applied",
                 row_number=index,
                 key=key,
                 target_column=source_column.name,
-                sources=sources,
+                sources=effective_sources,
                 value=row.get(source_column.name, ""),
             )
         if (
             source_raw_column is not None
-            and sources
+            and effective_sources
             and not should_preserve_existing(row.get(source_raw_column.name, ""), source_raw_column.policy)
         ):
             row[source_raw_column.name] = combine_source_raw_text(
-                sources,
+                effective_sources,
                 key=key,
                 row_number=index,
                 cache=source_raw_cache,
@@ -1442,15 +1474,17 @@ def run_research_dataset(
                 row_number=index,
                 key=key,
                 target_column=source_raw_column.name,
+                sources=effective_sources,
                 value_length=len(row.get(source_raw_column.name, "")),
             )
-        elif source_raw_column is not None and sources:
+        elif source_raw_column is not None and effective_sources:
             debug_logger.log(
                 "row_source_raw_skipped",
                 row_number=index,
                 key=key,
                 reason="merge_policy_preserved_existing_value",
                 target_column=source_raw_column.name,
+                sources=effective_sources,
                 existing_length=len(row.get(source_raw_column.name, "")),
             )
 
