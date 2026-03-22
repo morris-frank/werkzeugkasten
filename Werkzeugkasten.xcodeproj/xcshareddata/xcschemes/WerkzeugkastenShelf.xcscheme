@@ -17,7 +17,7 @@
                BlueprintIdentifier = "CC0FA88F26CCB62941646339"
                BuildableName = "WerkzeugkastenActionExtension.appex"
                BlueprintName = "WerkzeugkastenActionExtension"
-               ReferencedContainer = "container:WerkzeugkastenShelf.xcodeproj">
+               ReferencedContainer = "container:Werkzeugkasten.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
          <BuildActionEntry
@@ -29,9 +29,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "D5298EC46FA2F80B8DD14032"
-               BuildableName = "WerkzeugkastenShelf.app"
+               BuildableName = "Werkzeugkasten.app"
                BlueprintName = "WerkzeugkastenApp"
-               ReferencedContainer = "container:WerkzeugkastenShelf.xcodeproj">
+               ReferencedContainer = "container:Werkzeugkasten.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
          <BuildActionEntry
@@ -45,7 +45,7 @@
                BlueprintIdentifier = "EAD8EB010505A19CDBA4D5D1"
                BuildableName = "WerkzeugkastenCore.framework"
                BlueprintName = "WerkzeugkastenCore"
-               ReferencedContainer = "container:WerkzeugkastenShelf.xcodeproj">
+               ReferencedContainer = "container:Werkzeugkasten.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -59,9 +59,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "D5298EC46FA2F80B8DD14032"
-            BuildableName = "WerkzeugkastenShelf.app"
+            BuildableName = "Werkzeugkasten.app"
             BlueprintName = "WerkzeugkastenApp"
-            ReferencedContainer = "container:WerkzeugkastenShelf.xcodeproj">
+            ReferencedContainer = "container:Werkzeugkasten.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
       <Testables>
@@ -73,7 +73,7 @@
                BlueprintIdentifier = "6155CE7E8A4DA5E54F3C730A"
                BuildableName = "WerkzeugkastenCoreTests.xctest"
                BlueprintName = "WerkzeugkastenCoreTests"
-               ReferencedContainer = "container:WerkzeugkastenShelf.xcodeproj">
+               ReferencedContainer = "container:Werkzeugkasten.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>
@@ -93,9 +93,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "D5298EC46FA2F80B8DD14032"
-            BuildableName = "WerkzeugkastenShelf.app"
+            BuildableName = "Werkzeugkasten.app"
             BlueprintName = "WerkzeugkastenApp"
-            ReferencedContainer = "container:WerkzeugkastenShelf.xcodeproj">
+            ReferencedContainer = "container:Werkzeugkasten.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -110,9 +110,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "D5298EC46FA2F80B8DD14032"
-            BuildableName = "WerkzeugkastenShelf.app"
+            BuildableName = "Werkzeugkasten.app"
             BlueprintName = "WerkzeugkastenApp"
-            ReferencedContainer = "container:WerkzeugkastenShelf.xcodeproj">
+            ReferencedContainer = "container:Werkzeugkasten.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

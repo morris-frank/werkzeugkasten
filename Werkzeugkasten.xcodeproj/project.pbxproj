@@ -335,7 +335,7 @@
 				TargetAttributes = {
 				};
 			};
-			buildConfigurationList = D252BE271E3702A6E6B893C6 /* Build configuration list for PBXProject "WerkzeugkastenShelf" */;
+			buildConfigurationList = D252BE271E3702A6E6B893C6 /* Build configuration list for PBXProject "Werkzeugkasten" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -534,7 +534,7 @@
 					"@executable_path/../Frameworks",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = local.mfr.werkzeugkasten.app;
-				PRODUCT_NAME = WerkzeugkastenShelf;
+				PRODUCT_NAME = Werkzeugkasten;
 				SDKROOT = macosx;
 			};
 			name = Release;
@@ -554,7 +554,7 @@
 					"@executable_path/../Frameworks",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = local.mfr.werkzeugkasten.app;
-				PRODUCT_NAME = WerkzeugkastenShelf;
+				PRODUCT_NAME = Werkzeugkasten;
 				SDKROOT = macosx;
 			};
 			name = Debug;
@@ -766,7 +766,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
 		};
-		D252BE271E3702A6E6B893C6 /* Build configuration list for PBXProject "WerkzeugkastenShelf" */ = {
+		D252BE271E3702A6E6B893C6 /* Build configuration list for PBXProject "Werkzeugkasten" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				FB4EE0426D18FA2421755658 /* Debug */,
