@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import json
 import re
 import urllib.parse
@@ -11,6 +12,9 @@ import requests
 from .core import LATEST_NOTION_VERSION, notion_api_token, notion_parent_page, open_meteo_api_key
 
 NOTION_API_BASE = "https://api.notion.com/v1"
+# Notion rejects bodies around ~500KB; stay well under once JSON-escaped UTF-8 is applied.
+NOTION_REQUEST_BODY_SAFE_MAX_BYTES = 420_000
+NOTION_ABBREVIATION_NOTE = "\n\n_(Abbreviated for Notion export size limit.)_"
 OPEN_METEO_GEOCODING_API = "https://geocoding-api.open-meteo.com/v1/search"
 UUID_RE = re.compile(r"([0-9a-fA-F]{32}|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})")
 HTML_BREAK_RE = re.compile(r"\s*<br\s*/?>\s*", re.IGNORECASE)
@@ -77,6 +81,197 @@ def page_parent_id() -> str:
     if not configured:
         raise ValueError("Set a Notion Parent Page ID or URL in Settings to export to Notion.")
     return normalize_notion_id(configured)
+
+
+def notion_request_json_byte_length(body: dict[str, Any]) -> int:
+    return len(json.dumps(body, ensure_ascii=True).encode("utf-8"))
+
+
+def truncate_utf8_bytes(text: str, max_bytes: int) -> str:
+    if max_bytes <= 0:
+        return ""
+    encoded = text.encode("utf-8")
+    if len(encoded) <= max_bytes:
+        return text
+    truncated = encoded[:max_bytes]
+    while truncated and (truncated[-1] & 0b1100_0000) == 0b1000_0000:
+        truncated = truncated[:-1]
+    return truncated.decode("utf-8", errors="ignore")
+
+
+def parse_source_raw_ordered(value: str) -> list[tuple[str, str]]:
+    pairs: list[tuple[str, str]] = []
+    for part in [part.strip() for part in re.split(r"\n(?=URL:\s)", value or "") if part.strip()]:
+        lines = part.splitlines()
+        if not lines:
+            continue
+        url = lines[0].replace("URL:", "").strip()
+        body = "\n".join(lines[1:]).strip()
+        if url:
+            pairs.append((url, body))
+    return pairs
+
+
+def format_sources_raw(pairs: list[tuple[str, str]]) -> str:
+    return "\n\n".join(f"URL: {url}\n{body}" for url, body in pairs)
+
+
+def iter_row_child_documents(
+    row: dict[str, str],
+    long_text_columns: set[str],
+    sources_column: str | None,
+    source_raw_column: str | None,
+) -> list[tuple[str, str]]:
+    segments: list[tuple[str, str]] = []
+    if sources_column and row.get(sources_column, "").strip():
+        source_urls = extract_source_urls(row[sources_column].replace("\n", ","))
+        raw_map = parse_source_raw_map(row.get(source_raw_column, "")) if source_raw_column else {}
+        for _domain, urls in group_urls_by_domain(source_urls).items():
+            for url in urls:
+                raw_body = raw_map.get(url, "")
+                if raw_body:
+                    segments.append((f"raw:{url}", raw_body))
+    for column in sorted(long_text_columns):
+        value = row.get(column, "").strip()
+        if not value:
+            continue
+        if column == source_raw_column:
+            continue
+        segments.append((f"col:{column}", value))
+    return segments
+
+
+def apply_segment_texts_to_row(
+    base_row: dict[str, str],
+    segment_texts: dict[str, str],
+    *,
+    source_raw_column: str | None,
+) -> dict[str, str]:
+    row = dict(base_row)
+    for key, text in segment_texts.items():
+        if key.startswith("col:"):
+            row[key[4:]] = text
+    if source_raw_column:
+        ordered = parse_source_raw_ordered(base_row.get(source_raw_column, ""))
+        new_pairs: list[tuple[str, str]] = []
+        for url, body in ordered:
+            sid = f"raw:{url}"
+            if sid in segment_texts:
+                new_pairs.append((url, segment_texts[sid]))
+            else:
+                new_pairs.append((url, body))
+        row[source_raw_column] = format_sources_raw(new_pairs)
+    return row
+
+
+def _shrink_property_values_for_request_size(properties: dict[str, Any]) -> dict[str, Any]:
+    """Last resort when database properties alone exceed the safe limit (rare)."""
+
+    def halve_rich_text_chunks(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        out: list[dict[str, Any]] = []
+        for item in items:
+            if not isinstance(item, dict):
+                continue
+            text_obj = item.get("text")
+            if isinstance(text_obj, dict) and "content" in text_obj:
+                content = text_obj["content"]
+                if isinstance(content, str) and content:
+                    new_item = copy.deepcopy(item)
+                    new_item["text"]["content"] = truncate_utf8_bytes(content, max(0, len(content.encode("utf-8")) // 2))
+                    out.append(new_item)
+                else:
+                    out.append(copy.deepcopy(item))
+            else:
+                out.append(copy.deepcopy(item))
+        return out
+
+    shrunk: dict[str, Any] = {}
+    for name, payload in properties.items():
+        if not isinstance(payload, dict):
+            shrunk[name] = copy.deepcopy(payload)
+            continue
+        p = copy.deepcopy(payload)
+        if "title" in p and isinstance(p["title"], list):
+            p["title"] = halve_rich_text_chunks(p["title"])
+        if "rich_text" in p and isinstance(p["rich_text"], list):
+            p["rich_text"] = halve_rich_text_chunks(p["rich_text"])
+        shrunk[name] = p
+    return shrunk
+
+
+def ensure_notion_safe_create_page_body(
+    create_page_body: dict[str, Any],
+    row: dict[str, str],
+    long_text_columns: set[str],
+    sources_column: str | None,
+    source_raw_column: str | None,
+) -> dict[str, Any]:
+    if notion_request_json_byte_length(create_page_body) <= NOTION_REQUEST_BODY_SAFE_MAX_BYTES:
+        return create_page_body
+
+    parent = create_page_body.get("parent")
+    properties = create_page_body.get("properties") or {}
+    base_only: dict[str, Any] = {"parent": parent, "properties": properties}
+    for _ in range(96):
+        if notion_request_json_byte_length(base_only) <= NOTION_REQUEST_BODY_SAFE_MAX_BYTES:
+            break
+        prev = notion_request_json_byte_length(base_only)
+        properties = _shrink_property_values_for_request_size(properties)
+        base_only = {"parent": parent, "properties": properties}
+        if notion_request_json_byte_length(base_only) >= prev:
+            break
+
+    segments = iter_row_child_documents(row, long_text_columns, sources_column, source_raw_column)
+    if not segments:
+        out: dict[str, Any] = {"parent": parent, "properties": properties}
+        children = render_row_children(row, long_text_columns, sources_column, source_raw_column)
+        if children:
+            out["children"] = children
+        while notion_request_json_byte_length(out) > NOTION_REQUEST_BODY_SAFE_MAX_BYTES and out.get("children"):
+            out.pop("children", None)
+        return out
+
+    sizes = [len(text.encode("utf-8")) for _, text in segments]
+
+    def build_at_scale(scale: float) -> dict[str, Any]:
+        segment_texts: dict[str, str] = {}
+        for (seg_id, text), size in zip(segments, sizes):
+            if size == 0:
+                segment_texts[seg_id] = text
+                continue
+            limit = int(scale * size)
+            if limit >= size:
+                segment_texts[seg_id] = text
+            else:
+                truncated = truncate_utf8_bytes(text, limit)
+                if len(truncated.encode("utf-8")) < size:
+                    segment_texts[seg_id] = truncated + NOTION_ABBREVIATION_NOTE
+                else:
+                    segment_texts[seg_id] = text
+        adjusted_row = apply_segment_texts_to_row(row, segment_texts, source_raw_column=source_raw_column)
+        children = render_row_children(adjusted_row, long_text_columns, sources_column, source_raw_column)
+        trial: dict[str, Any] = {"parent": parent, "properties": properties}
+        if children:
+            trial["children"] = children
+        return trial
+
+    low, high = 0.0, 1.0
+    best_trial: dict[str, Any] | None = None
+    for _ in range(56):
+        mid = (low + high) / 2.0
+        trial = build_at_scale(mid)
+        if notion_request_json_byte_length(trial) <= NOTION_REQUEST_BODY_SAFE_MAX_BYTES:
+            best_trial = trial
+            low = mid
+        else:
+            high = mid
+
+    trial = best_trial if best_trial is not None else build_at_scale(0.0)
+    scale = low
+    while notion_request_json_byte_length(trial) > NOTION_REQUEST_BODY_SAFE_MAX_BYTES and scale > 1e-12:
+        scale *= 0.88
+        trial = build_at_scale(scale)
+    return trial
 
 
 def rich_text_array(text: str, *, max_chars: int = 1800) -> list[dict[str, Any]]:
@@ -228,9 +423,7 @@ def normalize_url_value(value: str) -> str:
     filtered_query = [
         (key, val)
         for key, val in query_pairs
-        if not key.lower().startswith("utm_")
-        and "openai" not in key.lower()
-        and "openai" not in val.lower()
+        if not key.lower().startswith("utm_") and "openai" not in key.lower() and "openai" not in val.lower()
     ]
     query = urllib.parse.urlencode(filtered_query)
     rebuilt = urllib.parse.urlunparse(("https", host, path.rstrip("/"), "", query, ""))
@@ -527,6 +720,13 @@ def export_dataset_to_notion(
         children = render_row_children(row, long_text_columns, sources_column, source_raw_column)
         if children:
             create_page_body["children"] = children
+        create_page_body = ensure_notion_safe_create_page_body(
+            create_page_body,
+            row,
+            long_text_columns,
+            sources_column,
+            source_raw_column,
+        )
         page = notion_request("POST", "/pages", create_page_body)
         page_id = page.get("id")
         record_id = row.get(record_id_column or "", "").strip()

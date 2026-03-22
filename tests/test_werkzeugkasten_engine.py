@@ -290,6 +290,40 @@ class ResearchTableTests(unittest.TestCase):
         )
         self.assertTrue(any(block["type"] == "toggle" for block in blocks))
 
+    def test_notion_safe_create_page_body_shrinks_before_api_limit(self) -> None:
+        huge_a = "A" * 50_000
+        huge_b = "B" * 10_000
+        row = {
+            "Sources": "https://a.example/x https://b.example/y",
+            "Sources[RAW]": "URL: https://a.example/x\n" + huge_a + "\n\nURL: https://b.example/y\n" + huge_b,
+        }
+        properties = {"Name": {"title": notion_export.rich_text_array("Test")}}
+        create_page_body = {
+            "parent": {"type": "data_source_id", "data_source_id": "ds-id"},
+            "properties": properties,
+            "children": notion_export.render_row_children(
+                row,
+                {"Sources[RAW]"},
+                "Sources",
+                "Sources[RAW]",
+            ),
+        }
+        self.assertGreater(notion_export.notion_request_json_byte_length(create_page_body), 20_000)
+        with patch.object(notion_export, "NOTION_REQUEST_BODY_SAFE_MAX_BYTES", 20_000):
+            safe = notion_export.ensure_notion_safe_create_page_body(
+                create_page_body,
+                row,
+                {"Sources[RAW]"},
+                "Sources",
+                "Sources[RAW]",
+            )
+        self.assertLessEqual(notion_export.notion_request_json_byte_length(safe), 20_000)
+        self.assertIn("Abbreviated", json.dumps(safe, ensure_ascii=True))
+        self.assertGreater(
+            json.dumps(safe, ensure_ascii=True).count("A"),
+            json.dumps(safe, ensure_ascii=True).count("B"),
+        )
+
 
 class CoreTests(unittest.TestCase):
     def test_gpt5_models_get_medium_reasoning(self) -> None:
