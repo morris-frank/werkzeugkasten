@@ -1,8 +1,8 @@
 import SwiftUI
-import ShortcutsCore
+import WerkzeugkastenCore
 
 @main
-struct ShortcutsMenuBarApp: App {
+struct WerkzeugkastenMenuBarApp: App {
     @StateObject private var settings = SettingsStore()
 
     init() {
@@ -12,7 +12,7 @@ struct ShortcutsMenuBarApp: App {
     }
 
     var body: some Scene {
-        MenuBarExtra("Shortcuts", systemImage: "text.insert") {
+        MenuBarExtra("Werkzeugkasten", systemImage: "text.insert") {
             MenuBarContent()
                 .environmentObject(settings)
         }

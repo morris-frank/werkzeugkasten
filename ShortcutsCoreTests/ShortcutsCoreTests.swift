@@ -1,7 +1,7 @@
 import XCTest
-@testable import ShortcutsCore
+@testable import WerkzeugkastenCore
 
-final class ShortcutsCoreTests: XCTestCase {
+final class WerkzeugkastenCoreTests: XCTestCase {
     func testParseResearchItems() {
         XCTAssertEqual(
             InputNormalizer.parseResearchItems("- Apple\n2. Banana\n* Cherry"),
@@ -17,7 +17,7 @@ final class ShortcutsCoreTests: XCTestCase {
     func testPreparedCommandInjectsEnvironment() throws {
         let temp = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         try FileManager.default.createDirectory(at: temp, withIntermediateDirectories: true)
-        let packageDirectory = temp.appendingPathComponent("shortcuts_engine")
+        let packageDirectory = temp.appendingPathComponent("werkzeugkasten_engine")
         try FileManager.default.createDirectory(at: packageDirectory, withIntermediateDirectories: true)
         try "print('ok')".write(to: packageDirectory.appendingPathComponent("__main__.py"), atomically: true, encoding: .utf8)
 
@@ -34,10 +34,10 @@ final class ShortcutsCoreTests: XCTestCase {
             configuration: configuration
         )
 
-        XCTAssertEqual(prepared.arguments, ["-m", "shortcuts_engine", "summarize-text"])
+        XCTAssertEqual(prepared.arguments, ["-m", "werkzeugkasten_engine", "summarize-text"])
         XCTAssertEqual(prepared.environment["OPENAI_API_KEY"], "key")
-        XCTAssertEqual(prepared.environment["SHORTCUTS_RESEARCH_MODEL"], "research-model")
-        XCTAssertEqual(prepared.environment["SHORTCUTS_SUMMARY_MODEL"], "summary-model")
+        XCTAssertEqual(prepared.environment["WERKZEUGKASTEN_RESEARCH_MODEL"], "research-model")
+        XCTAssertEqual(prepared.environment["WERKZEUGKASTEN_SUMMARY_MODEL"], "summary-model")
         XCTAssertEqual(prepared.workingDirectoryURL, temp)
     }
 
@@ -71,7 +71,7 @@ final class ShortcutsCoreTests: XCTestCase {
         XCTAssertTrue(
             FileManager.default.fileExists(
                 atPath: prepared.workingDirectoryURL!
-                    .appendingPathComponent("shortcuts_engine/__main__.py")
+                    .appendingPathComponent("werkzeugkasten_engine/__main__.py")
                     .path
             )
         )
@@ -79,10 +79,10 @@ final class ShortcutsCoreTests: XCTestCase {
 
     @MainActor
     func testSettingsStorePersistsValues() throws {
-        let suiteName = "tests.shortcuts.\(UUID().uuidString)"
+        let suiteName = "tests.werkzeugkasten.\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: suiteName)!
         defaults.removePersistentDomain(forName: suiteName)
-        let service = "tests.shortcuts.service.\(UUID().uuidString)"
+        let service = "tests.werkzeugkasten.service.\(UUID().uuidString)"
         let account = "OPENAI_API_KEY"
 
         try? KeychainStore.delete(service: service, account: account)

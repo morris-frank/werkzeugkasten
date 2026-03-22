@@ -7,9 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		0968A4682ABAC1DCE96CE653 /* ShortcutsCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F092DBDA7FAF38A0B178EAC8 /* ShortcutsCore.framework */; };
+		0968A4682ABAC1DCE96CE653 /* WerkzeugkastenCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F092DBDA7FAF38A0B178EAC8 /* WerkzeugkastenCore.framework */; };
 		0B43F7472B6F5915A5794281 /* EngineModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FF17C0DDF8A9D298EF716A6 /* EngineModels.swift */; };
-		0C0D1518C19F8FA71AC6F36C /* ShortcutsCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = F092DBDA7FAF38A0B178EAC8 /* ShortcutsCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		0C0D1518C19F8FA71AC6F36C /* WerkzeugkastenCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = F092DBDA7FAF38A0B178EAC8 /* WerkzeugkastenCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		2FD628DF8D8665D1FE044337 /* SharedConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01EF0C5C530CE082E8B2B547 /* SharedConstants.swift */; };
 		36E203BD2236F80809D0EC88 /* KeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 291E600BE0B8ACFC5051E150 /* KeychainStore.swift */; };
 		3A586AEBE7938898ED428330 /* legacy.py in Resources */ = {isa = PBXBuildFile; fileRef = FFFD6CB2C8B194A34B30A8B7 /* legacy.py */; };
@@ -21,18 +21,18 @@
 		88D2D41766C068ECF76FDE22 /* summarize.py in Resources */ = {isa = PBXBuildFile; fileRef = 11958C6AF087D6D836897533 /* summarize.py */; };
 		8B1D51BECAFD093B99E87AC0 /* cli.py in Resources */ = {isa = PBXBuildFile; fileRef = 59529C372C6D31287D8CBFB9 /* cli.py */; };
 		9415808449F1B3E38F7E9EEB /* ActionRequestHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 737F7A61B627BE6E3234D587 /* ActionRequestHandler.swift */; };
-		9CEE481ADAF1092223A9F070 /* ShortcutsCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F092DBDA7FAF38A0B178EAC8 /* ShortcutsCore.framework */; };
-		9D88CDE7B60ABFD7A03363B7 /* ShortcutsCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F092DBDA7FAF38A0B178EAC8 /* ShortcutsCore.framework */; };
+		9CEE481ADAF1092223A9F070 /* WerkzeugkastenCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F092DBDA7FAF38A0B178EAC8 /* WerkzeugkastenCore.framework */; };
+		9D88CDE7B60ABFD7A03363B7 /* WerkzeugkastenCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F092DBDA7FAF38A0B178EAC8 /* WerkzeugkastenCore.framework */; };
 		A49FE4BEAFCC0C2FB326512F /* core.py in Resources */ = {isa = PBXBuildFile; fileRef = 0A861B92A63C05B5F04D30EB /* core.py */; };
-		A6B6D102F7345CA6C23C27A6 /* ShortcutsCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = F092DBDA7FAF38A0B178EAC8 /* ShortcutsCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		A6B6D102F7345CA6C23C27A6 /* WerkzeugkastenCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = F092DBDA7FAF38A0B178EAC8 /* WerkzeugkastenCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		A950EF270E6AF771BB7B6C37 /* InputNormalizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31C8444FE7EF8E0768CE9B48 /* InputNormalizer.swift */; };
-		B7A8F82B952EB947E7D2B8C6 /* ShortcutsCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = F092DBDA7FAF38A0B178EAC8 /* ShortcutsCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		B7A8F82B952EB947E7D2B8C6 /* WerkzeugkastenCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = F092DBDA7FAF38A0B178EAC8 /* WerkzeugkastenCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		BA8E417DAC7FE1B642F3AB01 /* research_table.py in Resources */ = {isa = PBXBuildFile; fileRef = 16C26B07EBA9E0BB3924BC3F /* research_table.py */; };
 		BF1097745F06A7D309ABBE02 /* research_list.py in Resources */ = {isa = PBXBuildFile; fileRef = 2EF749C5BD54E46DD9BE9D29 /* research_list.py */; };
 		C3FC34436CCA5ABE668063CD /* EngineRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A096248944BB6FEEA47B8AF /* EngineRunner.swift */; };
-		CA560DA07C7961A177B550E8 /* ShortcutsCoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 694941C9D088A734184179DB /* ShortcutsCoreTests.swift */; };
-		D921853254D616C22DD0F848 /* ShortcutsMenuBarApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A31F019728D6D2BE8004CE0F /* ShortcutsMenuBarApp.swift */; };
-		FC913C43B28CFC6390784C92 /* ShortcutsActionExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 5C9B4442769DCF3EC622A5B9 /* ShortcutsActionExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		CA560DA07C7961A177B550E8 /* WerkzeugkastenCoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 694941C9D088A734184179DB /* WerkzeugkastenCoreTests.swift */; };
+		D921853254D616C22DD0F848 /* WerkzeugkastenMenuBarApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A31F019728D6D2BE8004CE0F /* WerkzeugkastenMenuBarApp.swift */; };
+		FC913C43B28CFC6390784C92 /* WerkzeugkastenActionExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 5C9B4442769DCF3EC622A5B9 /* WerkzeugkastenActionExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -41,28 +41,28 @@
 			containerPortal = 260A161D2AE9115ED83D8448 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = EAD8EB010505A19CDBA4D5D1;
-			remoteInfo = ShortcutsCore;
+			remoteInfo = WerkzeugkastenCore;
 		};
 		6E9E85599005FE7F57AB4C43 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 260A161D2AE9115ED83D8448 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = CC0FA88F26CCB62941646339;
-			remoteInfo = ShortcutsActionExtension;
+			remoteInfo = WerkzeugkastenActionExtension;
 		};
 		9945D8A99413341BACE883A2 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 260A161D2AE9115ED83D8448 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = EAD8EB010505A19CDBA4D5D1;
-			remoteInfo = ShortcutsCore;
+			remoteInfo = WerkzeugkastenCore;
 		};
 		AC6706CA0934D0FDCFB52706 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 260A161D2AE9115ED83D8448 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = EAD8EB010505A19CDBA4D5D1;
-			remoteInfo = ShortcutsCore;
+			remoteInfo = WerkzeugkastenCore;
 		};
 /* End PBXContainerItemProxy section */
 
@@ -73,7 +73,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
-				B7A8F82B952EB947E7D2B8C6 /* ShortcutsCore.framework in Embed Frameworks */,
+				B7A8F82B952EB947E7D2B8C6 /* WerkzeugkastenCore.framework in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -84,7 +84,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
-				0C0D1518C19F8FA71AC6F36C /* ShortcutsCore.framework in Embed Frameworks */,
+				0C0D1518C19F8FA71AC6F36C /* WerkzeugkastenCore.framework in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -95,7 +95,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 13;
 			files = (
-				FC913C43B28CFC6390784C92 /* ShortcutsActionExtension.appex in Embed Foundation Extensions */,
+				FC913C43B28CFC6390784C92 /* WerkzeugkastenActionExtension.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -106,7 +106,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
-				A6B6D102F7345CA6C23C27A6 /* ShortcutsCore.framework in Embed Frameworks */,
+				A6B6D102F7345CA6C23C27A6 /* WerkzeugkastenCore.framework in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -126,16 +126,16 @@
 		31C8444FE7EF8E0768CE9B48 /* InputNormalizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputNormalizer.swift; sourceTree = "<group>"; };
 		35C1467AD8376C9CEE5F6337 /* AppViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppViews.swift; sourceTree = "<group>"; };
 		59529C372C6D31287D8CBFB9 /* cli.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = cli.py; sourceTree = "<group>"; };
-		59E54581E1C7E8AEE30FE1CB /* ShortcutsApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ShortcutsApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		5C9B4442769DCF3EC622A5B9 /* ShortcutsActionExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ShortcutsActionExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		59E54581E1C7E8AEE30FE1CB /* WerkzeugkastenApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = WerkzeugkastenApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		5C9B4442769DCF3EC622A5B9 /* WerkzeugkastenActionExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = WerkzeugkastenActionExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		6680F31899AC9941FF773ED8 /* __main__.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = __main__.py; sourceTree = "<group>"; };
-		694941C9D088A734184179DB /* ShortcutsCoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShortcutsCoreTests.swift; sourceTree = "<group>"; };
+		694941C9D088A734184179DB /* WerkzeugkastenCoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WerkzeugkastenCoreTests.swift; sourceTree = "<group>"; };
 		6A097660C4E07FDE236F3F60 /* NotificationHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationHelper.swift; sourceTree = "<group>"; };
 		737F7A61B627BE6E3234D587 /* ActionRequestHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActionRequestHandler.swift; sourceTree = "<group>"; };
-		79C5953B158CE377F8194716 /* ShortcutsCoreTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ShortcutsCoreTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		A31F019728D6D2BE8004CE0F /* ShortcutsMenuBarApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShortcutsMenuBarApp.swift; sourceTree = "<group>"; };
+		79C5953B158CE377F8194716 /* WerkzeugkastenCoreTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WerkzeugkastenCoreTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		A31F019728D6D2BE8004CE0F /* WerkzeugkastenMenuBarApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WerkzeugkastenMenuBarApp.swift; sourceTree = "<group>"; };
 		E9A38693E5762C44DBBF1884 /* __init__.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = __init__.py; sourceTree = "<group>"; };
-		F092DBDA7FAF38A0B178EAC8 /* ShortcutsCore.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = ShortcutsCore.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		F092DBDA7FAF38A0B178EAC8 /* WerkzeugkastenCore.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = WerkzeugkastenCore.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		FFFD6CB2C8B194A34B30A8B7 /* legacy.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = legacy.py; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -144,7 +144,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				9CEE481ADAF1092223A9F070 /* ShortcutsCore.framework in Frameworks */,
+				9CEE481ADAF1092223A9F070 /* WerkzeugkastenCore.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -152,7 +152,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				9D88CDE7B60ABFD7A03363B7 /* ShortcutsCore.framework in Frameworks */,
+				9D88CDE7B60ABFD7A03363B7 /* WerkzeugkastenCore.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -160,22 +160,22 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				0968A4682ABAC1DCE96CE653 /* ShortcutsCore.framework in Frameworks */,
+				0968A4682ABAC1DCE96CE653 /* WerkzeugkastenCore.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		5203F9708951EDC8EC4D849F /* ShortcutsCoreTests */ = {
+		5203F9708951EDC8EC4D849F /* WerkzeugkastenCoreTests */ = {
 			isa = PBXGroup;
 			children = (
-				694941C9D088A734184179DB /* ShortcutsCoreTests.swift */,
+				694941C9D088A734184179DB /* WerkzeugkastenCoreTests.swift */,
 			);
-			path = ShortcutsCoreTests;
+			path = WerkzeugkastenCoreTests;
 			sourceTree = "<group>";
 		};
-		734423C58C44B173D9098D27 /* ShortcutsCore */ = {
+		734423C58C44B173D9098D27 /* WerkzeugkastenCore */ = {
 			isa = PBXGroup;
 			children = (
 				2FF17C0DDF8A9D298EF716A6 /* EngineModels.swift */,
@@ -186,41 +186,41 @@
 				185266F966685B625363055A /* SettingsStore.swift */,
 				01EF0C5C530CE082E8B2B547 /* SharedConstants.swift */,
 			);
-			path = ShortcutsCore;
+			path = WerkzeugkastenCore;
 			sourceTree = "<group>";
 		};
 		7E5145731DFEA034397E4CF9 = {
 			isa = PBXGroup;
 			children = (
-				EAFB5BE7B16867D6AC8A9253 /* shortcuts_engine */,
-				C3C4663A9B4AC2C4E933FFC8 /* ShortcutsActionExtension */,
-				FA09B79EA50A9886738C0E3D /* ShortcutsApp */,
-				734423C58C44B173D9098D27 /* ShortcutsCore */,
-				5203F9708951EDC8EC4D849F /* ShortcutsCoreTests */,
+				EAFB5BE7B16867D6AC8A9253 /* werkzeugkasten_engine */,
+				C3C4663A9B4AC2C4E933FFC8 /* WerkzeugkastenActionExtension */,
+				FA09B79EA50A9886738C0E3D /* WerkzeugkastenApp */,
+				734423C58C44B173D9098D27 /* WerkzeugkastenCore */,
+				5203F9708951EDC8EC4D849F /* WerkzeugkastenCoreTests */,
 				D52DD7DE09C151CADF6091EB /* Products */,
 			);
 			sourceTree = "<group>";
 		};
-		C3C4663A9B4AC2C4E933FFC8 /* ShortcutsActionExtension */ = {
+		C3C4663A9B4AC2C4E933FFC8 /* WerkzeugkastenActionExtension */ = {
 			isa = PBXGroup;
 			children = (
 				737F7A61B627BE6E3234D587 /* ActionRequestHandler.swift */,
 			);
-			path = ShortcutsActionExtension;
+			path = WerkzeugkastenActionExtension;
 			sourceTree = "<group>";
 		};
 		D52DD7DE09C151CADF6091EB /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				5C9B4442769DCF3EC622A5B9 /* ShortcutsActionExtension.appex */,
-				59E54581E1C7E8AEE30FE1CB /* ShortcutsApp.app */,
-				F092DBDA7FAF38A0B178EAC8 /* ShortcutsCore.framework */,
-				79C5953B158CE377F8194716 /* ShortcutsCoreTests.xctest */,
+				5C9B4442769DCF3EC622A5B9 /* WerkzeugkastenActionExtension.appex */,
+				59E54581E1C7E8AEE30FE1CB /* WerkzeugkastenApp.app */,
+				F092DBDA7FAF38A0B178EAC8 /* WerkzeugkastenCore.framework */,
+				79C5953B158CE377F8194716 /* WerkzeugkastenCoreTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
 		};
-		EAFB5BE7B16867D6AC8A9253 /* shortcuts_engine */ = {
+		EAFB5BE7B16867D6AC8A9253 /* werkzeugkasten_engine */ = {
 			isa = PBXGroup;
 			children = (
 				E9A38693E5762C44DBBF1884 /* __init__.py */,
@@ -232,24 +232,24 @@
 				16C26B07EBA9E0BB3924BC3F /* research_table.py */,
 				11958C6AF087D6D836897533 /* summarize.py */,
 			);
-			path = shortcuts_engine;
+			path = werkzeugkasten_engine;
 			sourceTree = "<group>";
 		};
-		FA09B79EA50A9886738C0E3D /* ShortcutsApp */ = {
+		FA09B79EA50A9886738C0E3D /* WerkzeugkastenApp */ = {
 			isa = PBXGroup;
 			children = (
 				35C1467AD8376C9CEE5F6337 /* AppViews.swift */,
-				A31F019728D6D2BE8004CE0F /* ShortcutsMenuBarApp.swift */,
+				A31F019728D6D2BE8004CE0F /* WerkzeugkastenMenuBarApp.swift */,
 			);
-			path = ShortcutsApp;
+			path = WerkzeugkastenApp;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		6155CE7E8A4DA5E54F3C730A /* ShortcutsCoreTests */ = {
+		6155CE7E8A4DA5E54F3C730A /* WerkzeugkastenCoreTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 6ADFDB70DCCD2C04E9DB4AC9 /* Build configuration list for PBXNativeTarget "ShortcutsCoreTests" */;
+			buildConfigurationList = 6ADFDB70DCCD2C04E9DB4AC9 /* Build configuration list for PBXNativeTarget "WerkzeugkastenCoreTests" */;
 			buildPhases = (
 				532CCD35EF995C017897C4B8 /* Sources */,
 				84F018E27358A4638516FC09 /* Frameworks */,
@@ -260,16 +260,16 @@
 			dependencies = (
 				E379E9CE34541649ABC28C8B /* PBXTargetDependency */,
 			);
-			name = ShortcutsCoreTests;
+			name = WerkzeugkastenCoreTests;
 			packageProductDependencies = (
 			);
-			productName = ShortcutsCoreTests;
-			productReference = 79C5953B158CE377F8194716 /* ShortcutsCoreTests.xctest */;
+			productName = WerkzeugkastenCoreTests;
+			productReference = 79C5953B158CE377F8194716 /* WerkzeugkastenCoreTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
-		CC0FA88F26CCB62941646339 /* ShortcutsActionExtension */ = {
+		CC0FA88F26CCB62941646339 /* WerkzeugkastenActionExtension */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 88F2E210455345C95019378D /* Build configuration list for PBXNativeTarget "ShortcutsActionExtension" */;
+			buildConfigurationList = 88F2E210455345C95019378D /* Build configuration list for PBXNativeTarget "WerkzeugkastenActionExtension" */;
 			buildPhases = (
 				2579EC9558123FB4EA4D5C49 /* Sources */,
 				6C97CB1648FBBA3C91231E8A /* Frameworks */,
@@ -280,16 +280,16 @@
 			dependencies = (
 				945EBCA612DF4DDA97967341 /* PBXTargetDependency */,
 			);
-			name = ShortcutsActionExtension;
+			name = WerkzeugkastenActionExtension;
 			packageProductDependencies = (
 			);
-			productName = ShortcutsActionExtension;
-			productReference = 5C9B4442769DCF3EC622A5B9 /* ShortcutsActionExtension.appex */;
+			productName = WerkzeugkastenActionExtension;
+			productReference = 5C9B4442769DCF3EC622A5B9 /* WerkzeugkastenActionExtension.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
-		D5298EC46FA2F80B8DD14032 /* ShortcutsApp */ = {
+		D5298EC46FA2F80B8DD14032 /* WerkzeugkastenApp */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 2DB8FA77BFBDE56D060ED55A /* Build configuration list for PBXNativeTarget "ShortcutsApp" */;
+			buildConfigurationList = 2DB8FA77BFBDE56D060ED55A /* Build configuration list for PBXNativeTarget "WerkzeugkastenApp" */;
 			buildPhases = (
 				30AB70042AC2E7BCE81D05E1 /* Sources */,
 				B3C9698A01FAFA52717516DC /* Frameworks */,
@@ -302,16 +302,16 @@
 				29662A266F62F8659846A206 /* PBXTargetDependency */,
 				8F29DCD51687C1587C50D46F /* PBXTargetDependency */,
 			);
-			name = ShortcutsApp;
+			name = WerkzeugkastenApp;
 			packageProductDependencies = (
 			);
-			productName = ShortcutsApp;
-			productReference = 59E54581E1C7E8AEE30FE1CB /* ShortcutsApp.app */;
+			productName = WerkzeugkastenApp;
+			productReference = 59E54581E1C7E8AEE30FE1CB /* WerkzeugkastenApp.app */;
 			productType = "com.apple.product-type.application";
 		};
-		EAD8EB010505A19CDBA4D5D1 /* ShortcutsCore */ = {
+		EAD8EB010505A19CDBA4D5D1 /* WerkzeugkastenCore */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 389DC62CD20FB4E4F54A087F /* Build configuration list for PBXNativeTarget "ShortcutsCore" */;
+			buildConfigurationList = 389DC62CD20FB4E4F54A087F /* Build configuration list for PBXNativeTarget "WerkzeugkastenCore" */;
 			buildPhases = (
 				F763F8DACCF865D53D19A064 /* Sources */,
 				6FD6B38FBF003DE870977850 /* Resources */,
@@ -320,11 +320,11 @@
 			);
 			dependencies = (
 			);
-			name = ShortcutsCore;
+			name = WerkzeugkastenCore;
 			packageProductDependencies = (
 			);
-			productName = ShortcutsCore;
-			productReference = F092DBDA7FAF38A0B178EAC8 /* ShortcutsCore.framework */;
+			productName = WerkzeugkastenCore;
+			productReference = F092DBDA7FAF38A0B178EAC8 /* WerkzeugkastenCore.framework */;
 			productType = "com.apple.product-type.framework";
 		};
 /* End PBXNativeTarget section */
@@ -338,7 +338,7 @@
 				TargetAttributes = {
 				};
 			};
-			buildConfigurationList = D252BE271E3702A6E6B893C6 /* Build configuration list for PBXProject "ShortcutShelf" */;
+			buildConfigurationList = D252BE271E3702A6E6B893C6 /* Build configuration list for PBXProject "WerkzeugkastenShelf" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -352,10 +352,10 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				CC0FA88F26CCB62941646339 /* ShortcutsActionExtension */,
-				D5298EC46FA2F80B8DD14032 /* ShortcutsApp */,
-				EAD8EB010505A19CDBA4D5D1 /* ShortcutsCore */,
-				6155CE7E8A4DA5E54F3C730A /* ShortcutsCoreTests */,
+				CC0FA88F26CCB62941646339 /* WerkzeugkastenActionExtension */,
+				D5298EC46FA2F80B8DD14032 /* WerkzeugkastenApp */,
+				EAD8EB010505A19CDBA4D5D1 /* WerkzeugkastenCore */,
+				6155CE7E8A4DA5E54F3C730A /* WerkzeugkastenCoreTests */,
 			);
 		};
 /* End PBXProject section */
@@ -392,7 +392,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				7EED355B360ECEE774009E13 /* AppViews.swift in Sources */,
-				D921853254D616C22DD0F848 /* ShortcutsMenuBarApp.swift in Sources */,
+				D921853254D616C22DD0F848 /* WerkzeugkastenMenuBarApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -400,7 +400,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				CA560DA07C7961A177B550E8 /* ShortcutsCoreTests.swift in Sources */,
+				CA560DA07C7961A177B550E8 /* WerkzeugkastenCoreTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -423,22 +423,22 @@
 /* Begin PBXTargetDependency section */
 		29662A266F62F8659846A206 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = EAD8EB010505A19CDBA4D5D1 /* ShortcutsCore */;
+			target = EAD8EB010505A19CDBA4D5D1 /* WerkzeugkastenCore */;
 			targetProxy = AC6706CA0934D0FDCFB52706 /* PBXContainerItemProxy */;
 		};
 		8F29DCD51687C1587C50D46F /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = CC0FA88F26CCB62941646339 /* ShortcutsActionExtension */;
+			target = CC0FA88F26CCB62941646339 /* WerkzeugkastenActionExtension */;
 			targetProxy = 6E9E85599005FE7F57AB4C43 /* PBXContainerItemProxy */;
 		};
 		945EBCA612DF4DDA97967341 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = EAD8EB010505A19CDBA4D5D1 /* ShortcutsCore */;
+			target = EAD8EB010505A19CDBA4D5D1 /* WerkzeugkastenCore */;
 			targetProxy = 42A8DB0D9CFADC390433C35E /* PBXContainerItemProxy */;
 		};
 		E379E9CE34541649ABC28C8B /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = EAD8EB010505A19CDBA4D5D1 /* ShortcutsCore */;
+			target = EAD8EB010505A19CDBA4D5D1 /* WerkzeugkastenCore */;
 			targetProxy = 9945D8A99413341BACE883A2 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -447,16 +447,16 @@
 		0FE409C8FF6C00F3410F3FB9 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGN_ENTITLEMENTS = Config/ShortcutsActionExtension.entitlements;
+				CODE_SIGN_ENTITLEMENTS = Config/WerkzeugkastenActionExtension.entitlements;
 				COMBINE_HIDPI_IMAGES = YES;
-				INFOPLIST_FILE = "Config/ShortcutsActionExtension-Info.plist";
-				INFOPLIST_KEY_ShortcutsKeychainAccessGroup = "$(AppIdentifierPrefix)local.mfr.shortcuts.shared";
+				INFOPLIST_FILE = "Config/WerkzeugkastenActionExtension-Info.plist";
+				INFOPLIST_KEY_WerkzeugkastenKeychainAccessGroup = "$(AppIdentifierPrefix)local.mfr.werkzeugkasten.shared";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 					"@executable_path/../../../../Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = local.mfr.shortcuts.action;
+				PRODUCT_BUNDLE_IDENTIFIER = local.mfr.werkzeugkasten.action;
 				SDKROOT = macosx;
 			};
 			name = Release;
@@ -477,7 +477,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = local.mfr.shortcuts.core;
+				PRODUCT_BUNDLE_IDENTIFIER = local.mfr.werkzeugkasten.core;
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
 				VERSIONING_SYSTEM = "apple-generic";
@@ -500,7 +500,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = local.mfr.shortcuts.core;
+				PRODUCT_BUNDLE_IDENTIFIER = local.mfr.werkzeugkasten.core;
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
 				VERSIONING_SYSTEM = "apple-generic";
@@ -518,7 +518,7 @@
 					"@executable_path/../Frameworks",
 					"@loader_path/../Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = local.mfr.shortcuts.core.tests;
+				PRODUCT_BUNDLE_IDENTIFIER = local.mfr.werkzeugkasten.core.tests;
 				SDKROOT = macosx;
 			};
 			name = Release;
@@ -527,18 +527,18 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_ENTITLEMENTS = Config/ShortcutsApp.entitlements;
+				CODE_SIGN_ENTITLEMENTS = Config/WerkzeugkastenApp.entitlements;
 				COMBINE_HIDPI_IMAGES = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "Shortcut Shelf";
 				INFOPLIST_KEY_LSUIElement = YES;
-				INFOPLIST_KEY_ShortcutsKeychainAccessGroup = "$(AppIdentifierPrefix)local.mfr.shortcuts.shared";
+				INFOPLIST_KEY_WerkzeugkastenKeychainAccessGroup = "$(AppIdentifierPrefix)local.mfr.werkzeugkasten.shared";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = local.mfr.shortcuts.app;
-				PRODUCT_NAME = ShortcutShelf;
+				PRODUCT_BUNDLE_IDENTIFIER = local.mfr.werkzeugkasten.app;
+				PRODUCT_NAME = WerkzeugkastenShelf;
 				SDKROOT = macosx;
 			};
 			name = Release;
@@ -547,18 +547,18 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_ENTITLEMENTS = Config/ShortcutsApp.entitlements;
+				CODE_SIGN_ENTITLEMENTS = Config/WerkzeugkastenApp.entitlements;
 				COMBINE_HIDPI_IMAGES = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "Shortcut Shelf";
 				INFOPLIST_KEY_LSUIElement = YES;
-				INFOPLIST_KEY_ShortcutsKeychainAccessGroup = "$(AppIdentifierPrefix)local.mfr.shortcuts.shared";
+				INFOPLIST_KEY_WerkzeugkastenKeychainAccessGroup = "$(AppIdentifierPrefix)local.mfr.werkzeugkasten.shared";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = local.mfr.shortcuts.app;
-				PRODUCT_NAME = ShortcutShelf;
+				PRODUCT_BUNDLE_IDENTIFIER = local.mfr.werkzeugkasten.app;
+				PRODUCT_NAME = WerkzeugkastenShelf;
 				SDKROOT = macosx;
 			};
 			name = Debug;
@@ -638,7 +638,7 @@
 					"@executable_path/../Frameworks",
 					"@loader_path/../Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = local.mfr.shortcuts.core.tests;
+				PRODUCT_BUNDLE_IDENTIFIER = local.mfr.werkzeugkasten.core.tests;
 				SDKROOT = macosx;
 			};
 			name = Debug;
@@ -717,16 +717,16 @@
 		FE09AD74E9D5D998A8F43988 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGN_ENTITLEMENTS = Config/ShortcutsActionExtension.entitlements;
+				CODE_SIGN_ENTITLEMENTS = Config/WerkzeugkastenActionExtension.entitlements;
 				COMBINE_HIDPI_IMAGES = YES;
-				INFOPLIST_FILE = "Config/ShortcutsActionExtension-Info.plist";
-				INFOPLIST_KEY_ShortcutsKeychainAccessGroup = "$(AppIdentifierPrefix)local.mfr.shortcuts.shared";
+				INFOPLIST_FILE = "Config/WerkzeugkastenActionExtension-Info.plist";
+				INFOPLIST_KEY_WerkzeugkastenKeychainAccessGroup = "$(AppIdentifierPrefix)local.mfr.werkzeugkasten.shared";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 					"@executable_path/../../../../Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = local.mfr.shortcuts.action;
+				PRODUCT_BUNDLE_IDENTIFIER = local.mfr.werkzeugkasten.action;
 				SDKROOT = macosx;
 			};
 			name = Debug;
@@ -734,7 +734,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		2DB8FA77BFBDE56D060ED55A /* Build configuration list for PBXNativeTarget "ShortcutsApp" */ = {
+		2DB8FA77BFBDE56D060ED55A /* Build configuration list for PBXNativeTarget "WerkzeugkastenApp" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				E3C0DA8066F6F63301348E38 /* Debug */,
@@ -743,7 +743,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
 		};
-		389DC62CD20FB4E4F54A087F /* Build configuration list for PBXNativeTarget "ShortcutsCore" */ = {
+		389DC62CD20FB4E4F54A087F /* Build configuration list for PBXNativeTarget "WerkzeugkastenCore" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				478F4EA375DAD0E161CE4ED5 /* Debug */,
@@ -752,7 +752,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
 		};
-		6ADFDB70DCCD2C04E9DB4AC9 /* Build configuration list for PBXNativeTarget "ShortcutsCoreTests" */ = {
+		6ADFDB70DCCD2C04E9DB4AC9 /* Build configuration list for PBXNativeTarget "WerkzeugkastenCoreTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				F66AFBAC6FFF24AC8AB6D583 /* Debug */,
@@ -761,7 +761,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
 		};
-		88F2E210455345C95019378D /* Build configuration list for PBXNativeTarget "ShortcutsActionExtension" */ = {
+		88F2E210455345C95019378D /* Build configuration list for PBXNativeTarget "WerkzeugkastenActionExtension" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				FE09AD74E9D5D998A8F43988 /* Debug */,
@@ -770,7 +770,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
 		};
-		D252BE271E3702A6E6B893C6 /* Build configuration list for PBXProject "ShortcutShelf" */ = {
+		D252BE271E3702A6E6B893C6 /* Build configuration list for PBXProject "WerkzeugkastenShelf" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				FB4EE0426D18FA2421755658 /* Debug */,

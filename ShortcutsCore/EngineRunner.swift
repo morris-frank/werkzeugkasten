@@ -48,12 +48,12 @@ public final class EngineRunner: Sendable {
         let existingPythonPath = environment["PYTHONPATH"].map { "\($0):" } ?? ""
         environment["PYTHONPATH"] = existingPythonPath + moduleRoot.path
         environment["OPENAI_API_KEY"] = configuration.apiKey
-        environment["SHORTCUTS_RESEARCH_MODEL"] = configuration.researchModel
-        environment["SHORTCUTS_SUMMARY_MODEL"] = configuration.summaryModel
+        environment["WERKZEUGKASTEN_RESEARCH_MODEL"] = configuration.researchModel
+        environment["WERKZEUGKASTEN_SUMMARY_MODEL"] = configuration.summaryModel
 
         return PreparedCommand(
             executableURL: interpreterURL,
-            arguments: ["-m", "shortcuts_engine", command.rawValue],
+            arguments: ["-m", "werkzeugkasten_engine", command.rawValue],
             environment: environment,
             workingDirectoryURL: moduleRoot,
             stdinData: stdinData
@@ -121,7 +121,7 @@ public final class EngineRunner: Sendable {
             throw EngineError.missingResources
         }
 
-        let packagedRoot = resourceURL.appendingPathComponent("shortcuts_engine", isDirectory: true)
+        let packagedRoot = resourceURL.appendingPathComponent("werkzeugkasten_engine", isDirectory: true)
         if FileManager.default.fileExists(atPath: packagedRoot.appendingPathComponent("__main__.py").path) {
             return resourceURL
         }
@@ -136,8 +136,8 @@ public final class EngineRunner: Sendable {
     private func stageFlatBundleResources(from resourceURL: URL) throws -> URL {
         let fileManager = FileManager.default
         let root = fileManager.temporaryDirectory
-            .appendingPathComponent("shortcuts-engine-bundle", isDirectory: true)
-        let packageDirectory = root.appendingPathComponent("shortcuts_engine", isDirectory: true)
+            .appendingPathComponent("werkzeugkasten-engine-bundle", isDirectory: true)
+        let packageDirectory = root.appendingPathComponent("werkzeugkasten_engine", isDirectory: true)
 
         try fileManager.createDirectory(at: packageDirectory, withIntermediateDirectories: true)
 

@@ -15,9 +15,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "CC0FA88F26CCB62941646339"
-               BuildableName = "ShortcutsActionExtension.appex"
-               BlueprintName = "ShortcutsActionExtension"
-               ReferencedContainer = "container:ShortcutShelf.xcodeproj">
+               BuildableName = "WerkzeugkastenActionExtension.appex"
+               BlueprintName = "WerkzeugkastenActionExtension"
+               ReferencedContainer = "container:WerkzeugkastenShelf.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
          <BuildActionEntry
@@ -29,9 +29,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "D5298EC46FA2F80B8DD14032"
-               BuildableName = "ShortcutShelf.app"
-               BlueprintName = "ShortcutsApp"
-               ReferencedContainer = "container:ShortcutShelf.xcodeproj">
+               BuildableName = "WerkzeugkastenShelf.app"
+               BlueprintName = "WerkzeugkastenApp"
+               ReferencedContainer = "container:WerkzeugkastenShelf.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
          <BuildActionEntry
@@ -43,9 +43,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "EAD8EB010505A19CDBA4D5D1"
-               BuildableName = "ShortcutsCore.framework"
-               BlueprintName = "ShortcutsCore"
-               ReferencedContainer = "container:ShortcutShelf.xcodeproj">
+               BuildableName = "WerkzeugkastenCore.framework"
+               BlueprintName = "WerkzeugkastenCore"
+               ReferencedContainer = "container:WerkzeugkastenShelf.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -59,9 +59,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "D5298EC46FA2F80B8DD14032"
-            BuildableName = "ShortcutShelf.app"
-            BlueprintName = "ShortcutsApp"
-            ReferencedContainer = "container:ShortcutShelf.xcodeproj">
+            BuildableName = "WerkzeugkastenShelf.app"
+            BlueprintName = "WerkzeugkastenApp"
+            ReferencedContainer = "container:WerkzeugkastenShelf.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
       <Testables>
@@ -71,9 +71,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "6155CE7E8A4DA5E54F3C730A"
-               BuildableName = "ShortcutsCoreTests.xctest"
-               BlueprintName = "ShortcutsCoreTests"
-               ReferencedContainer = "container:ShortcutShelf.xcodeproj">
+               BuildableName = "WerkzeugkastenCoreTests.xctest"
+               BlueprintName = "WerkzeugkastenCoreTests"
+               ReferencedContainer = "container:WerkzeugkastenShelf.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>
@@ -93,9 +93,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "D5298EC46FA2F80B8DD14032"
-            BuildableName = "ShortcutShelf.app"
-            BlueprintName = "ShortcutsApp"
-            ReferencedContainer = "container:ShortcutShelf.xcodeproj">
+            BuildableName = "WerkzeugkastenShelf.app"
+            BlueprintName = "WerkzeugkastenApp"
+            ReferencedContainer = "container:WerkzeugkastenShelf.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -110,9 +110,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "D5298EC46FA2F80B8DD14032"
-            BuildableName = "ShortcutShelf.app"
-            BlueprintName = "ShortcutsApp"
-            ReferencedContainer = "container:ShortcutShelf.xcodeproj">
+            BuildableName = "WerkzeugkastenShelf.app"
+            BlueprintName = "WerkzeugkastenApp"
+            ReferencedContainer = "container:WerkzeugkastenShelf.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

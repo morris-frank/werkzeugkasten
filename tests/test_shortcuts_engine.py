@@ -10,9 +10,9 @@ from datetime import datetime
 from pathlib import Path
 from unittest.mock import patch
 
-from shortcuts_engine import research_list, research_table, summarize
-from shortcuts_engine.cli import main as cli_main
-from shortcuts_engine.core import choose_output_path, extract_json_block
+from werkzeugkasten_engine import research_list, research_table, summarize
+from werkzeugkasten_engine.cli import main as cli_main
+from werkzeugkasten_engine.core import choose_output_path, extract_json_block
 
 
 class ResearchListTests(unittest.TestCase):
@@ -23,8 +23,8 @@ class ResearchListTests(unittest.TestCase):
         )
 
     def test_extract_json_block(self) -> None:
-        wrapped = "```json\n{\"answer\":\"ok\"}\n```"
-        self.assertEqual(extract_json_block(wrapped), "{\"answer\":\"ok\"}")
+        wrapped = '```json\n{"answer":"ok"}\n```'
+        self.assertEqual(extract_json_block(wrapped), '{"answer":"ok"}')
 
     def test_choose_output_path_suffixes(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -55,7 +55,10 @@ class SummarizeTests(unittest.TestCase):
 
 class CliTests(unittest.TestCase):
     def test_research_list_json_contract(self) -> None:
-        with patch("shortcuts_engine.cli.run_research_list", return_value={"output_path": "/tmp/out.md", "item_count": 2, "completed_count": 2}):
+        with patch(
+            "werkzeugkasten_engine.cli.run_research_list",
+            return_value={"output_path": "/tmp/out.md", "item_count": 2, "completed_count": 2},
+        ):
             with patch("sys.stdin", io.StringIO(json.dumps({"items": ["A", "B"], "question": "Q"}))):
                 stdout = io.StringIO()
                 with redirect_stdout(stdout):
@@ -64,7 +67,7 @@ class CliTests(unittest.TestCase):
         self.assertEqual(json.loads(stdout.getvalue()), {"output_path": "/tmp/out.md", "item_count": 2, "completed_count": 2})
 
     def test_summarize_text_json_contract(self) -> None:
-        with patch("shortcuts_engine.cli.summarize_text_input", return_value="# Summary\nOk"):
+        with patch("werkzeugkasten_engine.cli.summarize_text_input", return_value="# Summary\nOk"):
             with patch("sys.stdin", io.StringIO(json.dumps({"title": "Note", "text": "hello"}))):
                 stdout = io.StringIO()
                 with redirect_stdout(stdout):

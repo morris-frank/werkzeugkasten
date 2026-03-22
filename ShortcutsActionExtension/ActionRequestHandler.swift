@@ -1,6 +1,6 @@
 import Foundation
 import UniformTypeIdentifiers
-import ShortcutsCore
+import WerkzeugkastenCore
 
 private final class ExtensionContextBox: @unchecked Sendable {
     let value: NSExtensionContext
@@ -28,7 +28,7 @@ final class ActionRequestHandler: NSObject, NSExtensionRequestHandling {
                 )
 
                 await NotificationHelper.post(
-                    title: "Shortcuts Summary Complete",
+                    title: "Werkzeugkasten Summary Complete",
                     body: response.failures.isEmpty
                         ? "Processed \(response.files.count) file(s)."
                         : "Processed \(response.files.count) file(s) with \(response.failures.count) failure(s)."
@@ -37,7 +37,7 @@ final class ActionRequestHandler: NSObject, NSExtensionRequestHandling {
                 extensionContext.completeRequest(returningItems: nil)
             } catch {
                 await NotificationHelper.post(
-                    title: "Shortcuts Summary Failed",
+                    title: "Werkzeugkasten Summary Failed",
                     body: error.localizedDescription
                 )
                 extensionContext.cancelRequest(withError: error)

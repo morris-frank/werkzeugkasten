@@ -28,7 +28,7 @@ def _print_json(data: dict[str, Any]) -> int:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="shortcuts-engine")
+    parser = argparse.ArgumentParser(prog="werkzeugkasten-engine")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     research_list = subparsers.add_parser("research-list")

@@ -16,9 +16,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "47E3273B1CD0736409FCE50E"
-               BuildableName = "ShortcutsActionExtension.appex"
-               BlueprintName = "ShortcutsActionExtension"
-               ReferencedContainer = "container:Shortcuts.xcodeproj">
+               BuildableName = "WerkzeugkastenActionExtension.appex"
+               BlueprintName = "WerkzeugkastenActionExtension"
+               ReferencedContainer = "container:Werkzeugkasten.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
          <BuildActionEntry
@@ -30,9 +30,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "76498A9ECEE16F3B536E855C"
-               BuildableName = "ShortcutsApp.app"
-               BlueprintName = "ShortcutsApp"
-               ReferencedContainer = "container:Shortcuts.xcodeproj">
+               BuildableName = "WerkzeugkastenApp.app"
+               BlueprintName = "WerkzeugkastenApp"
+               ReferencedContainer = "container:Werkzeugkasten.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
          <BuildActionEntry
@@ -44,9 +44,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "D983AFC2BC181AECA9763356"
-               BuildableName = "ShortcutsCore.framework"
-               BlueprintName = "ShortcutsCore"
-               ReferencedContainer = "container:Shortcuts.xcodeproj">
+               BuildableName = "WerkzeugkastenCore.framework"
+               BlueprintName = "WerkzeugkastenCore"
+               ReferencedContainer = "container:Werkzeugkasten.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -60,9 +60,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "47E3273B1CD0736409FCE50E"
-            BuildableName = "ShortcutsActionExtension.appex"
-            BlueprintName = "ShortcutsActionExtension"
-            ReferencedContainer = "container:Shortcuts.xcodeproj">
+            BuildableName = "WerkzeugkastenActionExtension.appex"
+            BlueprintName = "WerkzeugkastenActionExtension"
+            ReferencedContainer = "container:Werkzeugkasten.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
       <Testables>
@@ -72,9 +72,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "3FCB8ECA8BC5F494540A7C14"
-               BuildableName = "ShortcutsCoreTests.xctest"
-               BlueprintName = "ShortcutsCoreTests"
-               ReferencedContainer = "container:Shortcuts.xcodeproj">
+               BuildableName = "WerkzeugkastenCoreTests.xctest"
+               BlueprintName = "WerkzeugkastenCoreTests"
+               ReferencedContainer = "container:Werkzeugkasten.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>
@@ -96,9 +96,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "47E3273B1CD0736409FCE50E"
-            BuildableName = "ShortcutsActionExtension.appex"
-            BlueprintName = "ShortcutsActionExtension"
-            ReferencedContainer = "container:Shortcuts.xcodeproj">
+            BuildableName = "WerkzeugkastenActionExtension.appex"
+            BlueprintName = "WerkzeugkastenActionExtension"
+            ReferencedContainer = "container:Werkzeugkasten.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -113,9 +113,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "47E3273B1CD0736409FCE50E"
-            BuildableName = "ShortcutsActionExtension.appex"
-            BlueprintName = "ShortcutsActionExtension"
-            ReferencedContainer = "container:Shortcuts.xcodeproj">
+            BuildableName = "WerkzeugkastenActionExtension.appex"
+            BlueprintName = "WerkzeugkastenActionExtension"
+            ReferencedContainer = "container:Werkzeugkasten.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

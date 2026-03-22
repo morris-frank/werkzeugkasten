@@ -1,6 +1,6 @@
 import AppKit
 import SwiftUI
-import ShortcutsCore
+import WerkzeugkastenCore
 
 struct MenuBarContent: View {
     @Environment(\.openWindow) private var openWindow
@@ -453,7 +453,7 @@ struct SettingsWindow: View {
                     .foregroundStyle(.red)
             }
 
-            Text("Enable “Summarize with Shortcuts” in System Settings > Privacy & Security > Extensions if Finder does not show it immediately.")
+            Text("Enable “Summarize with Werkzeugkasten” in System Settings > Privacy & Security > Extensions if Finder does not show it immediately.")
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
 

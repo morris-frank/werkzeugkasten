@@ -14,18 +14,18 @@ public final class SettingsStore: ObservableObject {
     private let keychainAccessGroup: String?
 
     public init(
-        defaults: UserDefaults? = UserDefaults(suiteName: ShortcutsConstants.appGroup),
-        keychainService: String = ShortcutsConstants.keychainService,
-        keychainAccount: String = ShortcutsConstants.keychainAccount,
-        keychainAccessGroup: String? = Bundle.main.object(forInfoDictionaryKey: "ShortcutsKeychainAccessGroup") as? String
+        defaults: UserDefaults? = UserDefaults(suiteName: WerkzeugkastenConstants.appGroup),
+        keychainService: String = WerkzeugkastenConstants.keychainService,
+        keychainAccount: String = WerkzeugkastenConstants.keychainAccount,
+        keychainAccessGroup: String? = Bundle.main.object(forInfoDictionaryKey: "WerkzeugkastenKeychainAccessGroup") as? String
     ) {
         self.defaults = defaults ?? .standard
         self.keychainService = keychainService
         self.keychainAccount = keychainAccount
         self.keychainAccessGroup = keychainAccessGroup
-        self.researchModel = Self.loadDefault("researchModel", from: defaults) ?? ShortcutsConstants.defaultResearchModel
-        self.summaryModel = Self.loadDefault("summaryModel", from: defaults) ?? ShortcutsConstants.defaultSummaryModel
-        self.pythonInterpreterPath = Self.loadDefault("pythonInterpreterPath", from: defaults) ?? ShortcutsConstants.defaultPythonInterpreterPath
+        self.researchModel = Self.loadDefault("researchModel", from: defaults) ?? WerkzeugkastenConstants.defaultResearchModel
+        self.summaryModel = Self.loadDefault("summaryModel", from: defaults) ?? WerkzeugkastenConstants.defaultSummaryModel
+        self.pythonInterpreterPath = Self.loadDefault("pythonInterpreterPath", from: defaults) ?? WerkzeugkastenConstants.defaultPythonInterpreterPath
         self.apiKey = (try? KeychainStore.load(service: keychainService, account: keychainAccount, accessGroup: keychainAccessGroup)) ?? ""
     }
 
@@ -43,9 +43,9 @@ public final class SettingsStore: ObservableObject {
         let normalizedInterpreter = pythonInterpreterPath.trimmingCharacters(in: .whitespacesAndNewlines)
         let normalizedAPIKey = apiKey.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        defaults.set(normalizedResearchModel.isEmpty ? ShortcutsConstants.defaultResearchModel : normalizedResearchModel, forKey: "researchModel")
-        defaults.set(normalizedSummaryModel.isEmpty ? ShortcutsConstants.defaultSummaryModel : normalizedSummaryModel, forKey: "summaryModel")
-        defaults.set(normalizedInterpreter.isEmpty ? ShortcutsConstants.defaultPythonInterpreterPath : normalizedInterpreter, forKey: "pythonInterpreterPath")
+        defaults.set(normalizedResearchModel.isEmpty ? WerkzeugkastenConstants.defaultResearchModel : normalizedResearchModel, forKey: "researchModel")
+        defaults.set(normalizedSummaryModel.isEmpty ? WerkzeugkastenConstants.defaultSummaryModel : normalizedSummaryModel, forKey: "summaryModel")
+        defaults.set(normalizedInterpreter.isEmpty ? WerkzeugkastenConstants.defaultPythonInterpreterPath : normalizedInterpreter, forKey: "pythonInterpreterPath")
 
         if normalizedAPIKey.isEmpty {
             try KeychainStore.delete(service: keychainService, account: keychainAccount, accessGroup: keychainAccessGroup)
@@ -54,9 +54,9 @@ public final class SettingsStore: ObservableObject {
         }
 
         apiKey = normalizedAPIKey
-        researchModel = defaults.string(forKey: "researchModel") ?? ShortcutsConstants.defaultResearchModel
-        summaryModel = defaults.string(forKey: "summaryModel") ?? ShortcutsConstants.defaultSummaryModel
-        pythonInterpreterPath = defaults.string(forKey: "pythonInterpreterPath") ?? ShortcutsConstants.defaultPythonInterpreterPath
+        researchModel = defaults.string(forKey: "researchModel") ?? WerkzeugkastenConstants.defaultResearchModel
+        summaryModel = defaults.string(forKey: "summaryModel") ?? WerkzeugkastenConstants.defaultSummaryModel
+        pythonInterpreterPath = defaults.string(forKey: "pythonInterpreterPath") ?? WerkzeugkastenConstants.defaultPythonInterpreterPath
     }
 
     public func configuration() throws -> EngineConfiguration {
@@ -72,8 +72,8 @@ public final class SettingsStore: ObservableObject {
 
         return EngineConfiguration(
             apiKey: normalizedAPIKey,
-            researchModel: researchModel.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? ShortcutsConstants.defaultResearchModel : researchModel.trimmingCharacters(in: .whitespacesAndNewlines),
-            summaryModel: summaryModel.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? ShortcutsConstants.defaultSummaryModel : summaryModel.trimmingCharacters(in: .whitespacesAndNewlines),
+            researchModel: researchModel.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? WerkzeugkastenConstants.defaultResearchModel : researchModel.trimmingCharacters(in: .whitespacesAndNewlines),
+            summaryModel: summaryModel.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? WerkzeugkastenConstants.defaultSummaryModel : summaryModel.trimmingCharacters(in: .whitespacesAndNewlines),
             pythonInterpreterPath: normalizedInterpreter
         )
     }
