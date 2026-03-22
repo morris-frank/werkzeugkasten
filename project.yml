@@ -16,6 +16,8 @@ settings:
     CLANG_ENABLE_EXPLICIT_MODULES: NO
     SWIFT_VERSION: 6.0
     MACOSX_DEPLOYMENT_TARGET: 15.0
+    MARKETING_VERSION: 0.1.0
+    CURRENT_PROJECT_VERSION: 1
     PRODUCT_NAME: $(TARGET_NAME)
 targets:
   WerkzeugkastenCore:
@@ -30,7 +32,7 @@ targets:
     settings:
       base:
         GENERATE_INFOPLIST_FILE: YES
-        PRODUCT_BUNDLE_IDENTIFIER: local.mfr.werkzeugkasten.core
+        PRODUCT_BUNDLE_IDENTIFIER: com.morrisfrank.werkzeugkasten.core
   WerkzeugkastenApp:
     type: application
     platform: macOS
@@ -46,11 +48,15 @@ targets:
     settings:
       base:
         GENERATE_INFOPLIST_FILE: YES
+        ENABLE_HARDENED_RUNTIME: YES
         PRODUCT_NAME: Werkzeugkasten
-        PRODUCT_BUNDLE_IDENTIFIER: local.mfr.werkzeugkasten.app
+        PRODUCT_BUNDLE_IDENTIFIER: com.morrisfrank.werkzeugkasten
         INFOPLIST_KEY_CFBundleDisplayName: Shortcut Shelf
+        INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.productivity
         INFOPLIST_KEY_LSUIElement: YES
-        INFOPLIST_KEY_WerkzeugkastenKeychainAccessGroup: $(AppIdentifierPrefix)local.mfr.werkzeugkasten.shared
+        INFOPLIST_KEY_CFBundleShortVersionString: $(MARKETING_VERSION)
+        INFOPLIST_KEY_CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        INFOPLIST_KEY_WerkzeugkastenKeychainAccessGroup: $(AppIdentifierPrefix)com.morrisfrank.werkzeugkasten.shared
   WerkzeugkastenActionExtension:
     type: app-extension
     platform: macOS
@@ -65,8 +71,9 @@ targets:
         embed: true
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: local.mfr.werkzeugkasten.action
-        INFOPLIST_KEY_WerkzeugkastenKeychainAccessGroup: $(AppIdentifierPrefix)local.mfr.werkzeugkasten.shared
+        ENABLE_HARDENED_RUNTIME: YES
+        PRODUCT_BUNDLE_IDENTIFIER: com.morrisfrank.werkzeugkasten.action
+        INFOPLIST_KEY_WerkzeugkastenKeychainAccessGroup: $(AppIdentifierPrefix)com.morrisfrank.werkzeugkasten.shared
   WerkzeugkastenCoreTests:
     type: bundle.unit-test
     platform: macOS
@@ -77,7 +84,9 @@ targets:
     settings:
       base:
         GENERATE_INFOPLIST_FILE: YES
-        PRODUCT_BUNDLE_IDENTIFIER: local.mfr.werkzeugkasten.core.tests
+        INFOPLIST_KEY_CFBundleShortVersionString: $(MARKETING_VERSION)
+        INFOPLIST_KEY_CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        PRODUCT_BUNDLE_IDENTIFIER: com.morrisfrank.werkzeugkasten.core.tests
 schemes:
   Werkzeugkasten:
     build:

@@ -7,105 +7,107 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		0968A4682ABAC1DCE96CE653 /* WerkzeugkastenCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F092DBDA7FAF38A0B178EAC8 /* WerkzeugkastenCore.framework */; };
-		0B43F7472B6F5915A5794281 /* EngineModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FF17C0DDF8A9D298EF716A6 /* EngineModels.swift */; };
-		0C0D1518C19F8FA71AC6F36C /* WerkzeugkastenCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = F092DBDA7FAF38A0B178EAC8 /* WerkzeugkastenCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
-		2FD628DF8D8665D1FE044337 /* SharedConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01EF0C5C530CE082E8B2B547 /* SharedConstants.swift */; };
-		36E203BD2236F80809D0EC88 /* KeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 291E600BE0B8ACFC5051E150 /* KeychainStore.swift */; };
-		3FD5AFFDDE11483A0B8A7AD3 /* NotificationHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A097660C4E07FDE236F3F60 /* NotificationHelper.swift */; };
-		4241B653BA8FBCB1A9E7A67A /* __init__.py in Resources */ = {isa = PBXBuildFile; fileRef = E9A38693E5762C44DBBF1884 /* __init__.py */; };
-		7EED355B360ECEE774009E13 /* AppViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35C1467AD8376C9CEE5F6337 /* AppViews.swift */; };
-		827FC7670B5669A46C2EAC09 /* SettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 185266F966685B625363055A /* SettingsStore.swift */; };
-		83D6BB825686AD2D0D955AF9 /* __main__.py in Resources */ = {isa = PBXBuildFile; fileRef = 6680F31899AC9941FF773ED8 /* __main__.py */; };
-		88D2D41766C068ECF76FDE22 /* summarize.py in Resources */ = {isa = PBXBuildFile; fileRef = 11958C6AF087D6D836897533 /* summarize.py */; };
-		8B1D51BECAFD093B99E87AC0 /* cli.py in Resources */ = {isa = PBXBuildFile; fileRef = 59529C372C6D31287D8CBFB9 /* cli.py */; };
-		9415808449F1B3E38F7E9EEB /* ActionRequestHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 737F7A61B627BE6E3234D587 /* ActionRequestHandler.swift */; };
-		9CEE481ADAF1092223A9F070 /* WerkzeugkastenCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F092DBDA7FAF38A0B178EAC8 /* WerkzeugkastenCore.framework */; };
-		9D88CDE7B60ABFD7A03363B7 /* WerkzeugkastenCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F092DBDA7FAF38A0B178EAC8 /* WerkzeugkastenCore.framework */; };
-		A49FE4BEAFCC0C2FB326512F /* core.py in Resources */ = {isa = PBXBuildFile; fileRef = 0A861B92A63C05B5F04D30EB /* core.py */; };
-		A6B6D102F7345CA6C23C27A6 /* WerkzeugkastenCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = F092DBDA7FAF38A0B178EAC8 /* WerkzeugkastenCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
-		A950EF270E6AF771BB7B6C37 /* InputNormalizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31C8444FE7EF8E0768CE9B48 /* InputNormalizer.swift */; };
-		B7A8F82B952EB947E7D2B8C6 /* WerkzeugkastenCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = F092DBDA7FAF38A0B178EAC8 /* WerkzeugkastenCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
-		BA8E417DAC7FE1B642F3AB01 /* research_table.py in Resources */ = {isa = PBXBuildFile; fileRef = 16C26B07EBA9E0BB3924BC3F /* research_table.py */; };
-		BF1097745F06A7D309ABBE02 /* research_list.py in Resources */ = {isa = PBXBuildFile; fileRef = 2EF749C5BD54E46DD9BE9D29 /* research_list.py */; };
-		C3FC34436CCA5ABE668063CD /* EngineRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A096248944BB6FEEA47B8AF /* EngineRunner.swift */; };
-		CA560DA07C7961A177B550E8 /* WerkzeugkastenCoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 694941C9D088A734184179DB /* WerkzeugkastenCoreTests.swift */; };
-		D921853254D616C22DD0F848 /* WerkzeugkastenMenuBarApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A31F019728D6D2BE8004CE0F /* WerkzeugkastenMenuBarApp.swift */; };
-		FC913C43B28CFC6390784C92 /* WerkzeugkastenActionExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 5C9B4442769DCF3EC622A5B9 /* WerkzeugkastenActionExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		1A15626C013F1F131E97AFAA /* codex_log.py in Resources */ = {isa = PBXBuildFile; fileRef = 3954B8F33B736FF2B45D4892 /* codex_log.py */; };
+		1CEDD53BF75389E07914AD2B /* summarize.py in Resources */ = {isa = PBXBuildFile; fileRef = EDC23E0CFB110D28C76C5C34 /* summarize.py */; };
+		2DF2B33E6A677756264D45C1 /* InputNormalizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 181ED0556CE78A69F5117AE4 /* InputNormalizer.swift */; };
+		34B590C5442398CB786BDDB9 /* ActionRequestHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = D074526C6194A7A31FE77BF4 /* ActionRequestHandler.swift */; };
+		42303336D32F8BEA7C132699 /* WerkzeugkastenCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 3060211CCE42A26E316070BC /* WerkzeugkastenCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		518A6C266B6AA329A5E82C8B /* research_table.py in Resources */ = {isa = PBXBuildFile; fileRef = 7560BDE31895559957D708AE /* research_table.py */; };
+		55D2260D9C21F1DB84F0365B /* WerkzeugkastenMenuBarApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EFF0536F5C13E31AB66473A /* WerkzeugkastenMenuBarApp.swift */; };
+		6108108A3D7D48EF2025689E /* WerkzeugkastenCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3060211CCE42A26E316070BC /* WerkzeugkastenCore.framework */; };
+		749AA8368709E3D98D579697 /* core.py in Resources */ = {isa = PBXBuildFile; fileRef = 2A3EEE0A0F4244A4A905161A /* core.py */; };
+		75F85F789B45D1E50CF19FF4 /* __init__.py in Resources */ = {isa = PBXBuildFile; fileRef = A0E61C6A9597429654640C06 /* __init__.py */; };
+		7D5FA8EF07FD2268BB016162 /* KeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 830304711401CF08505EC9CC /* KeychainStore.swift */; };
+		7E9C6A978616A9B9ED374082 /* SettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9EA15E79BA1DEF64E3260EC5 /* SettingsStore.swift */; };
+		8394E79A6F305A2E15E423A7 /* WerkzeugkastenCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3060211CCE42A26E316070BC /* WerkzeugkastenCore.framework */; };
+		919EBDABC2850772F1A21BB7 /* EngineRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43C2DC0426AFB4EDAE58BDA4 /* EngineRunner.swift */; };
+		9A380FA55531D84B04C75011 /* EngineModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAB967D4725A9E07D6CC3605 /* EngineModels.swift */; };
+		A51273A49BE279C5869F11E8 /* cli.py in Resources */ = {isa = PBXBuildFile; fileRef = 677A8E7873E5DCC3B38A2B7D /* cli.py */; };
+		A9521C90331F4099767E8A87 /* NotificationHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C9AD89BF9426D42198C30DB /* NotificationHelper.swift */; };
+		AF236DDC8A0D3AD1D3FCB6EE /* WerkzeugkastenCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3060211CCE42A26E316070BC /* WerkzeugkastenCore.framework */; };
+		B39D4F4F49B219D3D646C00E /* __main__.py in Resources */ = {isa = PBXBuildFile; fileRef = 2C791A72EC62117F80E25D36 /* __main__.py */; };
+		B47DCF1F55AE076A5422ADAA /* research_list.py in Resources */ = {isa = PBXBuildFile; fileRef = 015A9D71820D249B30CD2823 /* research_list.py */; };
+		BD6D2BDB6852CEFB60126BE9 /* WerkzeugkastenCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 3060211CCE42A26E316070BC /* WerkzeugkastenCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		C1050161AE39E362C01426C1 /* WerkzeugkastenActionExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A33AF22B9EE5EB03E5664A2A /* WerkzeugkastenActionExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		CF883C0C4FFCE13B233D3A01 /* WindowCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D5D8A5D78CE1CDCE82209AC /* WindowCoordinator.swift */; };
+		D59FB34DE9E055453690F25D /* AppViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BA9C96D9A04A2F882B04ABD /* AppViews.swift */; };
+		D7D245429DA6EA3104141A14 /* WerkzeugkastenCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 3060211CCE42A26E316070BC /* WerkzeugkastenCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		F846416F731C89098F88510B /* SharedConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A54CC72921F51DAF9F09726 /* SharedConstants.swift */; };
+		F967F7B429F6CB777E7D0DB8 /* WerkzeugkastenCoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3045FA7836D178715D8E8F9D /* WerkzeugkastenCoreTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		42A8DB0D9CFADC390433C35E /* PBXContainerItemProxy */ = {
+		4788D5F368A6BAA42C89927A /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
-			containerPortal = 260A161D2AE9115ED83D8448 /* Project object */;
+			containerPortal = 729DD3C704C6EA7F8CB7789C /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = EAD8EB010505A19CDBA4D5D1;
+			remoteGlobalIDString = 582AEE2345C08646F81127B6;
 			remoteInfo = WerkzeugkastenCore;
 		};
-		6E9E85599005FE7F57AB4C43 /* PBXContainerItemProxy */ = {
+		D5AD8238E91602EDD6257B0E /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
-			containerPortal = 260A161D2AE9115ED83D8448 /* Project object */;
+			containerPortal = 729DD3C704C6EA7F8CB7789C /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = CC0FA88F26CCB62941646339;
+			remoteGlobalIDString = 31945154CCBA6878BA025554;
 			remoteInfo = WerkzeugkastenActionExtension;
 		};
-		9945D8A99413341BACE883A2 /* PBXContainerItemProxy */ = {
+		EC2FD359547EF73A8B70872D /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
-			containerPortal = 260A161D2AE9115ED83D8448 /* Project object */;
+			containerPortal = 729DD3C704C6EA7F8CB7789C /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = EAD8EB010505A19CDBA4D5D1;
+			remoteGlobalIDString = 582AEE2345C08646F81127B6;
 			remoteInfo = WerkzeugkastenCore;
 		};
-		AC6706CA0934D0FDCFB52706 /* PBXContainerItemProxy */ = {
+		FEA987827790F9458F6C1BE4 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
-			containerPortal = 260A161D2AE9115ED83D8448 /* Project object */;
+			containerPortal = 729DD3C704C6EA7F8CB7789C /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = EAD8EB010505A19CDBA4D5D1;
+			remoteGlobalIDString = 582AEE2345C08646F81127B6;
 			remoteInfo = WerkzeugkastenCore;
 		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
-		44F91DCFB7288B5AEA602F36 /* Embed Frameworks */ = {
+		342E4E6572088345158886F1 /* Embed Frameworks */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
-				B7A8F82B952EB947E7D2B8C6 /* WerkzeugkastenCore.framework in Embed Frameworks */,
+				42303336D32F8BEA7C132699 /* WerkzeugkastenCore.framework in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		8862B3008E8B047D9F5C329A /* Embed Frameworks */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "";
-			dstSubfolderSpec = 10;
-			files = (
-				0C0D1518C19F8FA71AC6F36C /* WerkzeugkastenCore.framework in Embed Frameworks */,
-			);
-			name = "Embed Frameworks";
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		BB8117EE22BA814762861A98 /* Embed Foundation Extensions */ = {
+		5348C3972E4C5D4264DD8E54 /* Embed Foundation Extensions */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
 			dstPath = "";
 			dstSubfolderSpec = 13;
 			files = (
-				FC913C43B28CFC6390784C92 /* WerkzeugkastenActionExtension.appex in Embed Foundation Extensions */,
+				C1050161AE39E362C01426C1 /* WerkzeugkastenActionExtension.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		DE010DC4363C6BD2625A302C /* Embed Frameworks */ = {
+		9B99D2F2CCD728F670FE6867 /* Embed Frameworks */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
-				A6B6D102F7345CA6C23C27A6 /* WerkzeugkastenCore.framework in Embed Frameworks */,
+				BD6D2BDB6852CEFB60126BE9 /* WerkzeugkastenCore.framework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B6A747349378577323ECDE7C /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				D7D245429DA6EA3104141A14 /* WerkzeugkastenCore.framework in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -113,205 +115,187 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		01EF0C5C530CE082E8B2B547 /* SharedConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedConstants.swift; sourceTree = "<group>"; };
-		0A096248944BB6FEEA47B8AF /* EngineRunner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EngineRunner.swift; sourceTree = "<group>"; };
-		0A861B92A63C05B5F04D30EB /* core.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = core.py; sourceTree = "<group>"; };
-		11958C6AF087D6D836897533 /* summarize.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = summarize.py; sourceTree = "<group>"; };
-		16C26B07EBA9E0BB3924BC3F /* research_table.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = research_table.py; sourceTree = "<group>"; };
-		185266F966685B625363055A /* SettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsStore.swift; sourceTree = "<group>"; };
-		291E600BE0B8ACFC5051E150 /* KeychainStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainStore.swift; sourceTree = "<group>"; };
-		2EF749C5BD54E46DD9BE9D29 /* research_list.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = research_list.py; sourceTree = "<group>"; };
-		2FF17C0DDF8A9D298EF716A6 /* EngineModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EngineModels.swift; sourceTree = "<group>"; };
-		31C8444FE7EF8E0768CE9B48 /* InputNormalizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputNormalizer.swift; sourceTree = "<group>"; };
-		35C1467AD8376C9CEE5F6337 /* AppViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppViews.swift; sourceTree = "<group>"; };
-		59529C372C6D31287D8CBFB9 /* cli.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = cli.py; sourceTree = "<group>"; };
-		59E54581E1C7E8AEE30FE1CB /* WerkzeugkastenApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = WerkzeugkastenApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		5C9B4442769DCF3EC622A5B9 /* WerkzeugkastenActionExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = WerkzeugkastenActionExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
-		6680F31899AC9941FF773ED8 /* __main__.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = __main__.py; sourceTree = "<group>"; };
-		694941C9D088A734184179DB /* WerkzeugkastenCoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WerkzeugkastenCoreTests.swift; sourceTree = "<group>"; };
-		6A097660C4E07FDE236F3F60 /* NotificationHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationHelper.swift; sourceTree = "<group>"; };
-		737F7A61B627BE6E3234D587 /* ActionRequestHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActionRequestHandler.swift; sourceTree = "<group>"; };
-		79C5953B158CE377F8194716 /* WerkzeugkastenCoreTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WerkzeugkastenCoreTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		A31F019728D6D2BE8004CE0F /* WerkzeugkastenMenuBarApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WerkzeugkastenMenuBarApp.swift; sourceTree = "<group>"; };
-		E9A38693E5762C44DBBF1884 /* __init__.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = __init__.py; sourceTree = "<group>"; };
-		F092DBDA7FAF38A0B178EAC8 /* WerkzeugkastenCore.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = WerkzeugkastenCore.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		015A9D71820D249B30CD2823 /* research_list.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = research_list.py; sourceTree = "<group>"; };
+		0C9AD89BF9426D42198C30DB /* NotificationHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationHelper.swift; sourceTree = "<group>"; };
+		181ED0556CE78A69F5117AE4 /* InputNormalizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputNormalizer.swift; sourceTree = "<group>"; };
+		1A54CC72921F51DAF9F09726 /* SharedConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedConstants.swift; sourceTree = "<group>"; };
+		2A3EEE0A0F4244A4A905161A /* core.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = core.py; sourceTree = "<group>"; };
+		2C791A72EC62117F80E25D36 /* __main__.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = __main__.py; sourceTree = "<group>"; };
+		3045FA7836D178715D8E8F9D /* WerkzeugkastenCoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WerkzeugkastenCoreTests.swift; sourceTree = "<group>"; };
+		3060211CCE42A26E316070BC /* WerkzeugkastenCore.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = WerkzeugkastenCore.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		3954B8F33B736FF2B45D4892 /* codex_log.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = codex_log.py; sourceTree = "<group>"; };
+		43C2DC0426AFB4EDAE58BDA4 /* EngineRunner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EngineRunner.swift; sourceTree = "<group>"; };
+		5D5D8A5D78CE1CDCE82209AC /* WindowCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowCoordinator.swift; sourceTree = "<group>"; };
+		5E799B08F555168148FB0CDD /* WerkzeugkastenCoreTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WerkzeugkastenCoreTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		5EFF0536F5C13E31AB66473A /* WerkzeugkastenMenuBarApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WerkzeugkastenMenuBarApp.swift; sourceTree = "<group>"; };
+		677A8E7873E5DCC3B38A2B7D /* cli.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = cli.py; sourceTree = "<group>"; };
+		7560BDE31895559957D708AE /* research_table.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = research_table.py; sourceTree = "<group>"; };
+		830304711401CF08505EC9CC /* KeychainStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainStore.swift; sourceTree = "<group>"; };
+		9BA9C96D9A04A2F882B04ABD /* AppViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppViews.swift; sourceTree = "<group>"; };
+		9EA15E79BA1DEF64E3260EC5 /* SettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsStore.swift; sourceTree = "<group>"; };
+		A0E61C6A9597429654640C06 /* __init__.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = __init__.py; sourceTree = "<group>"; };
+		A33AF22B9EE5EB03E5664A2A /* WerkzeugkastenActionExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = WerkzeugkastenActionExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		D074526C6194A7A31FE77BF4 /* ActionRequestHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActionRequestHandler.swift; sourceTree = "<group>"; };
+		DA5E2387B3B583F70D9B0547 /* Werkzeugkasten.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Werkzeugkasten.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		EDC23E0CFB110D28C76C5C34 /* summarize.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = summarize.py; sourceTree = "<group>"; };
+		FAB967D4725A9E07D6CC3605 /* EngineModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EngineModels.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		6C97CB1648FBBA3C91231E8A /* Frameworks */ = {
+		24D37AF25D06006473E02FB5 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				9CEE481ADAF1092223A9F070 /* WerkzeugkastenCore.framework in Frameworks */,
+				6108108A3D7D48EF2025689E /* WerkzeugkastenCore.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		84F018E27358A4638516FC09 /* Frameworks */ = {
+		25828972EA578C4B63C642B7 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				9D88CDE7B60ABFD7A03363B7 /* WerkzeugkastenCore.framework in Frameworks */,
+				8394E79A6F305A2E15E423A7 /* WerkzeugkastenCore.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		B3C9698A01FAFA52717516DC /* Frameworks */ = {
+		8ECABE761B18B216704AB38C /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				0968A4682ABAC1DCE96CE653 /* WerkzeugkastenCore.framework in Frameworks */,
+				AF236DDC8A0D3AD1D3FCB6EE /* WerkzeugkastenCore.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		5203F9708951EDC8EC4D849F /* WerkzeugkastenCoreTests */ = {
+		45D4453731D6B8BD7802B036 /* werkzeugkasten_engine */ = {
 			isa = PBXGroup;
 			children = (
-				694941C9D088A734184179DB /* WerkzeugkastenCoreTests.swift */,
-			);
-			path = WerkzeugkastenCoreTests;
-			sourceTree = "<group>";
-		};
-		734423C58C44B173D9098D27 /* WerkzeugkastenCore */ = {
-			isa = PBXGroup;
-			children = (
-				2FF17C0DDF8A9D298EF716A6 /* EngineModels.swift */,
-				0A096248944BB6FEEA47B8AF /* EngineRunner.swift */,
-				31C8444FE7EF8E0768CE9B48 /* InputNormalizer.swift */,
-				291E600BE0B8ACFC5051E150 /* KeychainStore.swift */,
-				6A097660C4E07FDE236F3F60 /* NotificationHelper.swift */,
-				185266F966685B625363055A /* SettingsStore.swift */,
-				01EF0C5C530CE082E8B2B547 /* SharedConstants.swift */,
-			);
-			path = WerkzeugkastenCore;
-			sourceTree = "<group>";
-		};
-		7E5145731DFEA034397E4CF9 = {
-			isa = PBXGroup;
-			children = (
-				EAFB5BE7B16867D6AC8A9253 /* werkzeugkasten_engine */,
-				C3C4663A9B4AC2C4E933FFC8 /* WerkzeugkastenActionExtension */,
-				FA09B79EA50A9886738C0E3D /* WerkzeugkastenApp */,
-				734423C58C44B173D9098D27 /* WerkzeugkastenCore */,
-				5203F9708951EDC8EC4D849F /* WerkzeugkastenCoreTests */,
-				D52DD7DE09C151CADF6091EB /* Products */,
-			);
-			sourceTree = "<group>";
-		};
-		C3C4663A9B4AC2C4E933FFC8 /* WerkzeugkastenActionExtension */ = {
-			isa = PBXGroup;
-			children = (
-				737F7A61B627BE6E3234D587 /* ActionRequestHandler.swift */,
-			);
-			path = WerkzeugkastenActionExtension;
-			sourceTree = "<group>";
-		};
-		D52DD7DE09C151CADF6091EB /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				5C9B4442769DCF3EC622A5B9 /* WerkzeugkastenActionExtension.appex */,
-				59E54581E1C7E8AEE30FE1CB /* WerkzeugkastenApp.app */,
-				F092DBDA7FAF38A0B178EAC8 /* WerkzeugkastenCore.framework */,
-				79C5953B158CE377F8194716 /* WerkzeugkastenCoreTests.xctest */,
-			);
-			name = Products;
-			sourceTree = "<group>";
-		};
-		EAFB5BE7B16867D6AC8A9253 /* werkzeugkasten_engine */ = {
-			isa = PBXGroup;
-			children = (
-				E9A38693E5762C44DBBF1884 /* __init__.py */,
-				6680F31899AC9941FF773ED8 /* __main__.py */,
-				59529C372C6D31287D8CBFB9 /* cli.py */,
-				0A861B92A63C05B5F04D30EB /* core.py */,
-				2EF749C5BD54E46DD9BE9D29 /* research_list.py */,
-				16C26B07EBA9E0BB3924BC3F /* research_table.py */,
-				11958C6AF087D6D836897533 /* summarize.py */,
+				A0E61C6A9597429654640C06 /* __init__.py */,
+				2C791A72EC62117F80E25D36 /* __main__.py */,
+				677A8E7873E5DCC3B38A2B7D /* cli.py */,
+				3954B8F33B736FF2B45D4892 /* codex_log.py */,
+				2A3EEE0A0F4244A4A905161A /* core.py */,
+				015A9D71820D249B30CD2823 /* research_list.py */,
+				7560BDE31895559957D708AE /* research_table.py */,
+				EDC23E0CFB110D28C76C5C34 /* summarize.py */,
 			);
 			path = werkzeugkasten_engine;
 			sourceTree = "<group>";
 		};
-		FA09B79EA50A9886738C0E3D /* WerkzeugkastenApp */ = {
+		79337F03AB601D653996CE52 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				35C1467AD8376C9CEE5F6337 /* AppViews.swift */,
-				A31F019728D6D2BE8004CE0F /* WerkzeugkastenMenuBarApp.swift */,
+				A33AF22B9EE5EB03E5664A2A /* WerkzeugkastenActionExtension.appex */,
+				DA5E2387B3B583F70D9B0547 /* Werkzeugkasten.app */,
+				3060211CCE42A26E316070BC /* WerkzeugkastenCore.framework */,
+				5E799B08F555168148FB0CDD /* WerkzeugkastenCoreTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		7B5FAB4D7F12C525AC90A696 /* WerkzeugkastenCoreTests */ = {
+			isa = PBXGroup;
+			children = (
+				3045FA7836D178715D8E8F9D /* WerkzeugkastenCoreTests.swift */,
+			);
+			path = WerkzeugkastenCoreTests;
+			sourceTree = "<group>";
+		};
+		80065861AC4D1AE603364A7E /* WerkzeugkastenActionExtension */ = {
+			isa = PBXGroup;
+			children = (
+				D074526C6194A7A31FE77BF4 /* ActionRequestHandler.swift */,
+			);
+			path = WerkzeugkastenActionExtension;
+			sourceTree = "<group>";
+		};
+		9F1DA5432B82D1879F526FA8 /* WerkzeugkastenApp */ = {
+			isa = PBXGroup;
+			children = (
+				9BA9C96D9A04A2F882B04ABD /* AppViews.swift */,
+				5EFF0536F5C13E31AB66473A /* WerkzeugkastenMenuBarApp.swift */,
+				5D5D8A5D78CE1CDCE82209AC /* WindowCoordinator.swift */,
 			);
 			path = WerkzeugkastenApp;
+			sourceTree = "<group>";
+		};
+		A837BF4DEE9DD98603F39072 /* WerkzeugkastenCore */ = {
+			isa = PBXGroup;
+			children = (
+				FAB967D4725A9E07D6CC3605 /* EngineModels.swift */,
+				43C2DC0426AFB4EDAE58BDA4 /* EngineRunner.swift */,
+				181ED0556CE78A69F5117AE4 /* InputNormalizer.swift */,
+				830304711401CF08505EC9CC /* KeychainStore.swift */,
+				0C9AD89BF9426D42198C30DB /* NotificationHelper.swift */,
+				9EA15E79BA1DEF64E3260EC5 /* SettingsStore.swift */,
+				1A54CC72921F51DAF9F09726 /* SharedConstants.swift */,
+			);
+			path = WerkzeugkastenCore;
+			sourceTree = "<group>";
+		};
+		EA73F583289740E94D68CBBE = {
+			isa = PBXGroup;
+			children = (
+				45D4453731D6B8BD7802B036 /* werkzeugkasten_engine */,
+				80065861AC4D1AE603364A7E /* WerkzeugkastenActionExtension */,
+				9F1DA5432B82D1879F526FA8 /* WerkzeugkastenApp */,
+				A837BF4DEE9DD98603F39072 /* WerkzeugkastenCore */,
+				7B5FAB4D7F12C525AC90A696 /* WerkzeugkastenCoreTests */,
+				79337F03AB601D653996CE52 /* Products */,
+			);
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		6155CE7E8A4DA5E54F3C730A /* WerkzeugkastenCoreTests */ = {
+		2762252001ADB3BA7114330D /* WerkzeugkastenCoreTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 6ADFDB70DCCD2C04E9DB4AC9 /* Build configuration list for PBXNativeTarget "WerkzeugkastenCoreTests" */;
+			buildConfigurationList = 63B072BBD0EE9FCAC17ECE0A /* Build configuration list for PBXNativeTarget "WerkzeugkastenCoreTests" */;
 			buildPhases = (
-				532CCD35EF995C017897C4B8 /* Sources */,
-				84F018E27358A4638516FC09 /* Frameworks */,
-				44F91DCFB7288B5AEA602F36 /* Embed Frameworks */,
+				20737DB522B6D244C4FF5412 /* Sources */,
+				25828972EA578C4B63C642B7 /* Frameworks */,
+				342E4E6572088345158886F1 /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				E379E9CE34541649ABC28C8B /* PBXTargetDependency */,
+				2DC680EE8E1C59E70BEA68D1 /* PBXTargetDependency */,
 			);
 			name = WerkzeugkastenCoreTests;
 			packageProductDependencies = (
 			);
 			productName = WerkzeugkastenCoreTests;
-			productReference = 79C5953B158CE377F8194716 /* WerkzeugkastenCoreTests.xctest */;
+			productReference = 5E799B08F555168148FB0CDD /* WerkzeugkastenCoreTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
-		CC0FA88F26CCB62941646339 /* WerkzeugkastenActionExtension */ = {
+		31945154CCBA6878BA025554 /* WerkzeugkastenActionExtension */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 88F2E210455345C95019378D /* Build configuration list for PBXNativeTarget "WerkzeugkastenActionExtension" */;
+			buildConfigurationList = 23987E625F29713332CEE297 /* Build configuration list for PBXNativeTarget "WerkzeugkastenActionExtension" */;
 			buildPhases = (
-				2579EC9558123FB4EA4D5C49 /* Sources */,
-				6C97CB1648FBBA3C91231E8A /* Frameworks */,
-				DE010DC4363C6BD2625A302C /* Embed Frameworks */,
+				B5EB634ED62CDFB05689886B /* Sources */,
+				24D37AF25D06006473E02FB5 /* Frameworks */,
+				B6A747349378577323ECDE7C /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				945EBCA612DF4DDA97967341 /* PBXTargetDependency */,
+				95236CFCF5B1788FD1D7429E /* PBXTargetDependency */,
 			);
 			name = WerkzeugkastenActionExtension;
 			packageProductDependencies = (
 			);
 			productName = WerkzeugkastenActionExtension;
-			productReference = 5C9B4442769DCF3EC622A5B9 /* WerkzeugkastenActionExtension.appex */;
+			productReference = A33AF22B9EE5EB03E5664A2A /* WerkzeugkastenActionExtension.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
-		D5298EC46FA2F80B8DD14032 /* WerkzeugkastenApp */ = {
+		582AEE2345C08646F81127B6 /* WerkzeugkastenCore */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 2DB8FA77BFBDE56D060ED55A /* Build configuration list for PBXNativeTarget "WerkzeugkastenApp" */;
+			buildConfigurationList = 9818429E99A93CF10F7BF567 /* Build configuration list for PBXNativeTarget "WerkzeugkastenCore" */;
 			buildPhases = (
-				30AB70042AC2E7BCE81D05E1 /* Sources */,
-				B3C9698A01FAFA52717516DC /* Frameworks */,
-				BB8117EE22BA814762861A98 /* Embed Foundation Extensions */,
-				8862B3008E8B047D9F5C329A /* Embed Frameworks */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				29662A266F62F8659846A206 /* PBXTargetDependency */,
-				8F29DCD51687C1587C50D46F /* PBXTargetDependency */,
-			);
-			name = WerkzeugkastenApp;
-			packageProductDependencies = (
-			);
-			productName = WerkzeugkastenApp;
-			productReference = 59E54581E1C7E8AEE30FE1CB /* WerkzeugkastenApp.app */;
-			productType = "com.apple.product-type.application";
-		};
-		EAD8EB010505A19CDBA4D5D1 /* WerkzeugkastenCore */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 389DC62CD20FB4E4F54A087F /* Build configuration list for PBXNativeTarget "WerkzeugkastenCore" */;
-			buildPhases = (
-				F763F8DACCF865D53D19A064 /* Sources */,
-				6FD6B38FBF003DE870977850 /* Resources */,
+				9A69516D132CA0C36143DC72 /* Sources */,
+				CB0A5E87A02710E0A1100C7F /* Resources */,
 			);
 			buildRules = (
 			);
@@ -321,245 +305,174 @@
 			packageProductDependencies = (
 			);
 			productName = WerkzeugkastenCore;
-			productReference = F092DBDA7FAF38A0B178EAC8 /* WerkzeugkastenCore.framework */;
+			productReference = 3060211CCE42A26E316070BC /* WerkzeugkastenCore.framework */;
 			productType = "com.apple.product-type.framework";
+		};
+		EA614D7EEAB7DFFCFB0F6FD0 /* WerkzeugkastenApp */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 4CAB0475E21ECD88DD53A9C5 /* Build configuration list for PBXNativeTarget "WerkzeugkastenApp" */;
+			buildPhases = (
+				7ED0CEEDBDA5AD2ECA68AD8E /* Sources */,
+				8ECABE761B18B216704AB38C /* Frameworks */,
+				5348C3972E4C5D4264DD8E54 /* Embed Foundation Extensions */,
+				9B99D2F2CCD728F670FE6867 /* Embed Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				CC3C1F56F9ED7E7848378BF5 /* PBXTargetDependency */,
+				88DD619BECEFC3FB8655FF6A /* PBXTargetDependency */,
+			);
+			name = WerkzeugkastenApp;
+			packageProductDependencies = (
+			);
+			productName = WerkzeugkastenApp;
+			productReference = DA5E2387B3B583F70D9B0547 /* Werkzeugkasten.app */;
+			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
-		260A161D2AE9115ED83D8448 /* Project object */ = {
+		729DD3C704C6EA7F8CB7789C /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1430;
-				TargetAttributes = {
-				};
 			};
-			buildConfigurationList = D252BE271E3702A6E6B893C6 /* Build configuration list for PBXProject "Werkzeugkasten" */;
+			buildConfigurationList = 98C9B075B2D44CAD5B9CA83A /* Build configuration list for PBXProject "Werkzeugkasten" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				Base,
 				en,
 			);
-			mainGroup = 7E5145731DFEA034397E4CF9;
+			mainGroup = EA73F583289740E94D68CBBE;
 			minimizedProjectReferenceProxies = 1;
 			preferredProjectObjectVersion = 77;
-			productRefGroup = D52DD7DE09C151CADF6091EB /* Products */;
+			productRefGroup = 79337F03AB601D653996CE52 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				CC0FA88F26CCB62941646339 /* WerkzeugkastenActionExtension */,
-				D5298EC46FA2F80B8DD14032 /* WerkzeugkastenApp */,
-				EAD8EB010505A19CDBA4D5D1 /* WerkzeugkastenCore */,
-				6155CE7E8A4DA5E54F3C730A /* WerkzeugkastenCoreTests */,
+				31945154CCBA6878BA025554 /* WerkzeugkastenActionExtension */,
+				EA614D7EEAB7DFFCFB0F6FD0 /* WerkzeugkastenApp */,
+				582AEE2345C08646F81127B6 /* WerkzeugkastenCore */,
+				2762252001ADB3BA7114330D /* WerkzeugkastenCoreTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		6FD6B38FBF003DE870977850 /* Resources */ = {
+		CB0A5E87A02710E0A1100C7F /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				4241B653BA8FBCB1A9E7A67A /* __init__.py in Resources */,
-				83D6BB825686AD2D0D955AF9 /* __main__.py in Resources */,
-				8B1D51BECAFD093B99E87AC0 /* cli.py in Resources */,
-				A49FE4BEAFCC0C2FB326512F /* core.py in Resources */,
-				BF1097745F06A7D309ABBE02 /* research_list.py in Resources */,
-				BA8E417DAC7FE1B642F3AB01 /* research_table.py in Resources */,
-				88D2D41766C068ECF76FDE22 /* summarize.py in Resources */,
+				75F85F789B45D1E50CF19FF4 /* __init__.py in Resources */,
+				B39D4F4F49B219D3D646C00E /* __main__.py in Resources */,
+				A51273A49BE279C5869F11E8 /* cli.py in Resources */,
+				1A15626C013F1F131E97AFAA /* codex_log.py in Resources */,
+				749AA8368709E3D98D579697 /* core.py in Resources */,
+				B47DCF1F55AE076A5422ADAA /* research_list.py in Resources */,
+				518A6C266B6AA329A5E82C8B /* research_table.py in Resources */,
+				1CEDD53BF75389E07914AD2B /* summarize.py in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		2579EC9558123FB4EA4D5C49 /* Sources */ = {
+		20737DB522B6D244C4FF5412 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				9415808449F1B3E38F7E9EEB /* ActionRequestHandler.swift in Sources */,
+				F967F7B429F6CB777E7D0DB8 /* WerkzeugkastenCoreTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		30AB70042AC2E7BCE81D05E1 /* Sources */ = {
+		7ED0CEEDBDA5AD2ECA68AD8E /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				7EED355B360ECEE774009E13 /* AppViews.swift in Sources */,
-				D921853254D616C22DD0F848 /* WerkzeugkastenMenuBarApp.swift in Sources */,
+				D59FB34DE9E055453690F25D /* AppViews.swift in Sources */,
+				55D2260D9C21F1DB84F0365B /* WerkzeugkastenMenuBarApp.swift in Sources */,
+				CF883C0C4FFCE13B233D3A01 /* WindowCoordinator.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		532CCD35EF995C017897C4B8 /* Sources */ = {
+		9A69516D132CA0C36143DC72 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				CA560DA07C7961A177B550E8 /* WerkzeugkastenCoreTests.swift in Sources */,
+				9A380FA55531D84B04C75011 /* EngineModels.swift in Sources */,
+				919EBDABC2850772F1A21BB7 /* EngineRunner.swift in Sources */,
+				2DF2B33E6A677756264D45C1 /* InputNormalizer.swift in Sources */,
+				7D5FA8EF07FD2268BB016162 /* KeychainStore.swift in Sources */,
+				A9521C90331F4099767E8A87 /* NotificationHelper.swift in Sources */,
+				7E9C6A978616A9B9ED374082 /* SettingsStore.swift in Sources */,
+				F846416F731C89098F88510B /* SharedConstants.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		F763F8DACCF865D53D19A064 /* Sources */ = {
+		B5EB634ED62CDFB05689886B /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				0B43F7472B6F5915A5794281 /* EngineModels.swift in Sources */,
-				C3FC34436CCA5ABE668063CD /* EngineRunner.swift in Sources */,
-				A950EF270E6AF771BB7B6C37 /* InputNormalizer.swift in Sources */,
-				36E203BD2236F80809D0EC88 /* KeychainStore.swift in Sources */,
-				3FD5AFFDDE11483A0B8A7AD3 /* NotificationHelper.swift in Sources */,
-				827FC7670B5669A46C2EAC09 /* SettingsStore.swift in Sources */,
-				2FD628DF8D8665D1FE044337 /* SharedConstants.swift in Sources */,
+				34B590C5442398CB786BDDB9 /* ActionRequestHandler.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		29662A266F62F8659846A206 /* PBXTargetDependency */ = {
+		2DC680EE8E1C59E70BEA68D1 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = EAD8EB010505A19CDBA4D5D1 /* WerkzeugkastenCore */;
-			targetProxy = AC6706CA0934D0FDCFB52706 /* PBXContainerItemProxy */;
+			target = 582AEE2345C08646F81127B6 /* WerkzeugkastenCore */;
+			targetProxy = EC2FD359547EF73A8B70872D /* PBXContainerItemProxy */;
 		};
-		8F29DCD51687C1587C50D46F /* PBXTargetDependency */ = {
+		88DD619BECEFC3FB8655FF6A /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = CC0FA88F26CCB62941646339 /* WerkzeugkastenActionExtension */;
-			targetProxy = 6E9E85599005FE7F57AB4C43 /* PBXContainerItemProxy */;
+			target = 31945154CCBA6878BA025554 /* WerkzeugkastenActionExtension */;
+			targetProxy = D5AD8238E91602EDD6257B0E /* PBXContainerItemProxy */;
 		};
-		945EBCA612DF4DDA97967341 /* PBXTargetDependency */ = {
+		95236CFCF5B1788FD1D7429E /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = EAD8EB010505A19CDBA4D5D1 /* WerkzeugkastenCore */;
-			targetProxy = 42A8DB0D9CFADC390433C35E /* PBXContainerItemProxy */;
+			target = 582AEE2345C08646F81127B6 /* WerkzeugkastenCore */;
+			targetProxy = 4788D5F368A6BAA42C89927A /* PBXContainerItemProxy */;
 		};
-		E379E9CE34541649ABC28C8B /* PBXTargetDependency */ = {
+		CC3C1F56F9ED7E7848378BF5 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = EAD8EB010505A19CDBA4D5D1 /* WerkzeugkastenCore */;
-			targetProxy = 9945D8A99413341BACE883A2 /* PBXContainerItemProxy */;
+			target = 582AEE2345C08646F81127B6 /* WerkzeugkastenCore */;
+			targetProxy = FEA987827790F9458F6C1BE4 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
-		0FE409C8FF6C00F3410F3FB9 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_ENTITLEMENTS = Config/WerkzeugkastenActionExtension.entitlements;
-				COMBINE_HIDPI_IMAGES = YES;
-				INFOPLIST_FILE = "Config/WerkzeugkastenActionExtension-Info.plist";
-				INFOPLIST_KEY_WerkzeugkastenKeychainAccessGroup = "$(AppIdentifierPrefix)local.mfr.werkzeugkasten.shared";
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/../Frameworks",
-					"@executable_path/../../../../Frameworks",
-				);
-				PRODUCT_BUNDLE_IDENTIFIER = local.mfr.werkzeugkasten.action;
-				SDKROOT = macosx;
-			};
-			name = Release;
-		};
-		17D58F7CAB8E34FCE5656643 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_IDENTITY = "";
-				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
-				DEFINES_MODULE = YES;
-				DYLIB_COMPATIBILITY_VERSION = 1;
-				DYLIB_CURRENT_VERSION = 1;
-				DYLIB_INSTALL_NAME_BASE = "@rpath";
-				GENERATE_INFOPLIST_FILE = YES;
-				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/../Frameworks",
-				);
-				PRODUCT_BUNDLE_IDENTIFIER = local.mfr.werkzeugkasten.core;
-				SDKROOT = macosx;
-				SKIP_INSTALL = YES;
-				VERSIONING_SYSTEM = "apple-generic";
-			};
-			name = Release;
-		};
-		478F4EA375DAD0E161CE4ED5 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_IDENTITY = "";
-				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
-				DEFINES_MODULE = YES;
-				DYLIB_COMPATIBILITY_VERSION = 1;
-				DYLIB_CURRENT_VERSION = 1;
-				DYLIB_INSTALL_NAME_BASE = "@rpath";
-				GENERATE_INFOPLIST_FILE = YES;
-				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/../Frameworks",
-				);
-				PRODUCT_BUNDLE_IDENTIFIER = local.mfr.werkzeugkasten.core;
-				SDKROOT = macosx;
-				SKIP_INSTALL = YES;
-				VERSIONING_SYSTEM = "apple-generic";
-			};
-			name = Debug;
-		};
-		94971D4DC12F7CAF0C323D58 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
-				COMBINE_HIDPI_IMAGES = YES;
-				GENERATE_INFOPLIST_FILE = YES;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/../Frameworks",
-					"@loader_path/../Frameworks",
-				);
-				PRODUCT_BUNDLE_IDENTIFIER = local.mfr.werkzeugkasten.core.tests;
-				SDKROOT = macosx;
-			};
-			name = Release;
-		};
-		C026CE246EE4E5E1C6453DA7 /* Release */ = {
+		039D45BAAD8677B6514A18F2 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = Config/WerkzeugkastenApp.entitlements;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Developer ID Application";
 				COMBINE_HIDPI_IMAGES = YES;
+				"DEVELOPMENT_TEAM[sdk=macosx*]" = 8GPF2CCDMW;
+				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "Shortcut Shelf";
+				INFOPLIST_KEY_CFBundleShortVersionString = "$(MARKETING_VERSION)";
+				INFOPLIST_KEY_CFBundleVersion = "$(CURRENT_PROJECT_VERSION)";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_LSUIElement = YES;
-				INFOPLIST_KEY_WerkzeugkastenKeychainAccessGroup = "$(AppIdentifierPrefix)local.mfr.werkzeugkasten.shared";
+				INFOPLIST_KEY_WerkzeugkastenKeychainAccessGroup = "$(AppIdentifierPrefix)com.morrisfrank.werkzeugkasten.shared";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = local.mfr.werkzeugkasten.app;
-				PRODUCT_NAME = Werkzeugkasten;
-				SDKROOT = macosx;
-			};
-			name = Release;
-		};
-		E3C0DA8066F6F63301348E38 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_ENTITLEMENTS = Config/WerkzeugkastenApp.entitlements;
-				COMBINE_HIDPI_IMAGES = YES;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "Shortcut Shelf";
-				INFOPLIST_KEY_LSUIElement = YES;
-				INFOPLIST_KEY_WerkzeugkastenKeychainAccessGroup = "$(AppIdentifierPrefix)local.mfr.werkzeugkasten.shared";
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/../Frameworks",
-				);
-				PRODUCT_BUNDLE_IDENTIFIER = local.mfr.werkzeugkasten.app;
+				PRODUCT_BUNDLE_IDENTIFIER = com.morrisfrank.werkzeugkasten;
 				PRODUCT_NAME = Werkzeugkasten;
 				SDKROOT = macosx;
 			};
 			name = Debug;
 		};
-		F236255CB36C052516992F40 /* Release */ = {
+		06A5F8F13AB52C6E2D89DEA3 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -596,86 +509,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CXX = "clang++";
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				ENABLE_NS_ASSERTIONS = NO;
-				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				GCC_C_LANGUAGE_STANDARD = gnu11;
-				GCC_NO_COMMON_BLOCKS = YES;
-				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
-				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
-				GCC_WARN_UNDECLARED_SELECTOR = YES;
-				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
-				GCC_WARN_UNUSED_FUNCTION = YES;
-				GCC_WARN_UNUSED_VARIABLE = YES;
-				LD = clang;
-				LIBTOOL = libtool;
-				MACOSX_DEPLOYMENT_TARGET = 15.0;
-				MTL_ENABLE_DEBUG_INFO = NO;
-				MTL_FAST_MATH = YES;
-				NM = nm;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				RANLIB = ranlib;
-				SDKROOT = macosx;
-				SWIFT_COMPILATION_MODE = wholemodule;
-				SWIFT_OPTIMIZATION_LEVEL = "-O";
-				SWIFT_VERSION = 6.0;
-			};
-			name = Release;
-		};
-		F66AFBAC6FFF24AC8AB6D583 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
-				COMBINE_HIDPI_IMAGES = YES;
-				GENERATE_INFOPLIST_FILE = YES;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/../Frameworks",
-					"@loader_path/../Frameworks",
-				);
-				PRODUCT_BUNDLE_IDENTIFIER = local.mfr.werkzeugkasten.core.tests;
-				SDKROOT = macosx;
-			};
-			name = Debug;
-		};
-		FB4EE0426D18FA2421755658 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				AR = ar;
-				CC = clang;
-				CLANG_ANALYZER_NONNULL = YES;
-				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
-				CLANG_CXX_LIBRARY = "libc++";
-				CLANG_ENABLE_EXPLICIT_MODULES = NO;
-				CLANG_ENABLE_MODULES = YES;
-				CLANG_ENABLE_OBJC_ARC = YES;
-				CLANG_ENABLE_OBJC_WEAK = YES;
-				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
-				CLANG_WARN_BOOL_CONVERSION = YES;
-				CLANG_WARN_COMMA = YES;
-				CLANG_WARN_CONSTANT_CONVERSION = YES;
-				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
-				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
-				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
-				CLANG_WARN_EMPTY_BODY = YES;
-				CLANG_WARN_ENUM_CONVERSION = YES;
-				CLANG_WARN_INFINITE_RECURSION = YES;
-				CLANG_WARN_INT_CONVERSION = YES;
-				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
-				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
-				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
-				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
-				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
-				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
-				CLANG_WARN_STRICT_PROTOTYPES = YES;
-				CLANG_WARN_SUSPICIOUS_MOVE = YES;
-				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
-				CLANG_WARN_UNREACHABLE_CODE = YES;
-				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
 				CXX = "clang++";
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -697,6 +531,7 @@
 				LD = clang;
 				LIBTOOL = libtool;
 				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				MARKETING_VERSION = 0.1.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				NM = nm;
@@ -710,19 +545,230 @@
 			};
 			name = Debug;
 		};
-		FE09AD74E9D5D998A8F43988 /* Debug */ = {
+		0F01A49C52D9710908B84EA2 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = Config/WerkzeugkastenActionExtension.entitlements;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Developer ID Application";
+				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = "";
+				"DEVELOPMENT_TEAM[sdk=macosx*]" = 8GPF2CCDMW;
+				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = "Config/WerkzeugkastenActionExtension-Info.plist";
-				INFOPLIST_KEY_WerkzeugkastenKeychainAccessGroup = "$(AppIdentifierPrefix)local.mfr.werkzeugkasten.shared";
+				INFOPLIST_KEY_WerkzeugkastenKeychainAccessGroup = "$(AppIdentifierPrefix)com.morrisfrank.werkzeugkasten.shared";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 					"@executable_path/../../../../Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = local.mfr.werkzeugkasten.action;
+				PRODUCT_BUNDLE_IDENTIFIER = com.morrisfrank.werkzeugkasten.action;
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		2826BB7CA323FE6D0143636C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "Apple Development";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Developer ID Application";
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				"DEVELOPMENT_TEAM[sdk=macosx*]" = 8GPF2CCDMW;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				GENERATE_INFOPLIST_FILE = YES;
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.morrisfrank.werkzeugkasten.core;
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Release;
+		};
+		5228F24E39D021A5358B9314 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Developer ID Application";
+				COMBINE_HIDPI_IMAGES = YES;
+				"DEVELOPMENT_TEAM[sdk=macosx*]" = 8GPF2CCDMW;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleShortVersionString = "$(MARKETING_VERSION)";
+				INFOPLIST_KEY_CFBundleVersion = "$(CURRENT_PROJECT_VERSION)";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.morrisfrank.werkzeugkasten.core.tests;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		A5F6B2B324ABA22A58CDDD07 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "Apple Development";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Developer ID Application";
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				"DEVELOPMENT_TEAM[sdk=macosx*]" = 8GPF2CCDMW;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				GENERATE_INFOPLIST_FILE = YES;
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.morrisfrank.werkzeugkasten.core;
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Debug;
+		};
+		A9BA3F20613222082AA888CF /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				AR = ar;
+				CC = clang;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_EXPLICIT_MODULES = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				CXX = "clang++";
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LD = clang;
+				LIBTOOL = libtool;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				MARKETING_VERSION = 0.1.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				NM = nm;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				RANLIB = ranlib;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+		C68397546E48F2B12906DFD8 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Developer ID Application";
+				COMBINE_HIDPI_IMAGES = YES;
+				"DEVELOPMENT_TEAM[sdk=macosx*]" = 8GPF2CCDMW;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleShortVersionString = "$(MARKETING_VERSION)";
+				INFOPLIST_KEY_CFBundleVersion = "$(CURRENT_PROJECT_VERSION)";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.morrisfrank.werkzeugkasten.core.tests;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		D34AB36D0169529204E2BC07 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Config/WerkzeugkastenApp.entitlements;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Developer ID Application";
+				COMBINE_HIDPI_IMAGES = YES;
+				"DEVELOPMENT_TEAM[sdk=macosx*]" = 8GPF2CCDMW;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "Shortcut Shelf";
+				INFOPLIST_KEY_CFBundleShortVersionString = "$(MARKETING_VERSION)";
+				INFOPLIST_KEY_CFBundleVersion = "$(CURRENT_PROJECT_VERSION)";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_LSUIElement = YES;
+				INFOPLIST_KEY_WerkzeugkastenKeychainAccessGroup = "$(AppIdentifierPrefix)com.morrisfrank.werkzeugkasten.shared";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.morrisfrank.werkzeugkasten;
+				PRODUCT_NAME = Werkzeugkasten;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		D93E328ECB14E833C3483F26 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = Config/WerkzeugkastenActionExtension.entitlements;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Developer ID Application";
+				CODE_SIGN_STYLE = Manual;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = "";
+				"DEVELOPMENT_TEAM[sdk=macosx*]" = 8GPF2CCDMW;
+				ENABLE_HARDENED_RUNTIME = YES;
+				INFOPLIST_FILE = "Config/WerkzeugkastenActionExtension-Info.plist";
+				INFOPLIST_KEY_WerkzeugkastenKeychainAccessGroup = "$(AppIdentifierPrefix)com.morrisfrank.werkzeugkasten.shared";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.morrisfrank.werkzeugkasten.action;
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 			};
 			name = Debug;
@@ -730,52 +776,52 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		2DB8FA77BFBDE56D060ED55A /* Build configuration list for PBXNativeTarget "WerkzeugkastenApp" */ = {
+		23987E625F29713332CEE297 /* Build configuration list for PBXNativeTarget "WerkzeugkastenActionExtension" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				E3C0DA8066F6F63301348E38 /* Debug */,
-				C026CE246EE4E5E1C6453DA7 /* Release */,
+				D93E328ECB14E833C3483F26 /* Debug */,
+				0F01A49C52D9710908B84EA2 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
 		};
-		389DC62CD20FB4E4F54A087F /* Build configuration list for PBXNativeTarget "WerkzeugkastenCore" */ = {
+		4CAB0475E21ECD88DD53A9C5 /* Build configuration list for PBXNativeTarget "WerkzeugkastenApp" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				478F4EA375DAD0E161CE4ED5 /* Debug */,
-				17D58F7CAB8E34FCE5656643 /* Release */,
+				039D45BAAD8677B6514A18F2 /* Debug */,
+				D34AB36D0169529204E2BC07 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
 		};
-		6ADFDB70DCCD2C04E9DB4AC9 /* Build configuration list for PBXNativeTarget "WerkzeugkastenCoreTests" */ = {
+		63B072BBD0EE9FCAC17ECE0A /* Build configuration list for PBXNativeTarget "WerkzeugkastenCoreTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				F66AFBAC6FFF24AC8AB6D583 /* Debug */,
-				94971D4DC12F7CAF0C323D58 /* Release */,
+				5228F24E39D021A5358B9314 /* Debug */,
+				C68397546E48F2B12906DFD8 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
 		};
-		88F2E210455345C95019378D /* Build configuration list for PBXNativeTarget "WerkzeugkastenActionExtension" */ = {
+		9818429E99A93CF10F7BF567 /* Build configuration list for PBXNativeTarget "WerkzeugkastenCore" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				FE09AD74E9D5D998A8F43988 /* Debug */,
-				0FE409C8FF6C00F3410F3FB9 /* Release */,
+				A5F6B2B324ABA22A58CDDD07 /* Debug */,
+				2826BB7CA323FE6D0143636C /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
 		};
-		D252BE271E3702A6E6B893C6 /* Build configuration list for PBXProject "Werkzeugkasten" */ = {
+		98C9B075B2D44CAD5B9CA83A /* Build configuration list for PBXProject "Werkzeugkasten" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				FB4EE0426D18FA2421755658 /* Debug */,
-				F236255CB36C052516992F40 /* Release */,
+				06A5F8F13AB52C6E2D89DEA3 /* Debug */,
+				A9BA3F20613222082AA888CF /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
 		};
 /* End XCConfigurationList section */
 	};
-	rootObject = 260A161D2AE9115ED83D8448 /* Project object */;
+	rootObject = 729DD3C704C6EA7F8CB7789C /* Project object */;
 }

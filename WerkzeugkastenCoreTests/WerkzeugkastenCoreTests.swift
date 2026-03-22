@@ -41,6 +41,30 @@ final class WerkzeugkastenCoreTests: XCTestCase {
         XCTAssertEqual(prepared.workingDirectoryURL, temp)
     }
 
+    func testPreparedCommandSkipsAPIKeyForPrettifyCodexLog() throws {
+        let temp = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: temp, withIntermediateDirectories: true)
+        let packageDirectory = temp.appendingPathComponent("werkzeugkasten_engine")
+        try FileManager.default.createDirectory(at: packageDirectory, withIntermediateDirectories: true)
+        try "print('ok')".write(to: packageDirectory.appendingPathComponent("__main__.py"), atomically: true, encoding: .utf8)
+
+        let configuration = EngineConfiguration(
+            apiKey: "",
+            researchModel: "research-model",
+            summaryModel: "summary-model",
+            pythonInterpreterPath: "/bin/echo"
+        )
+
+        let prepared = try EngineRunner(resourceURLOverride: temp).preparedCommand(
+            command: .prettifyCodexLog,
+            payload: ["path": "/tmp/session.jsonl"],
+            configuration: configuration
+        )
+
+        XCTAssertEqual(prepared.arguments, ["-m", "werkzeugkasten_engine", "prettify-codex-log"])
+        XCTAssertNil(prepared.environment["OPENAI_API_KEY"])
+    }
+
     func testDecodeResponse() throws {
         let data = Data(#"{"summary_markdown":"Summary\nOk"}"#.utf8)
         let decoded = try EngineRunner.decode(SummarizeTextResponse.self, from: data)
@@ -51,7 +75,7 @@ final class WerkzeugkastenCoreTests: XCTestCase {
         let temp = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         try FileManager.default.createDirectory(at: temp, withIntermediateDirectories: true)
 
-        for name in ["__init__.py", "__main__.py", "cli.py", "core.py", "research_list.py", "research_table.py", "summarize.py"] {
+        for name in ["__init__.py", "__main__.py", "cli.py", "codex_log.py", "core.py", "research_list.py", "research_table.py", "summarize.py"] {
             try "print('ok')".write(to: temp.appendingPathComponent(name), atomically: true, encoding: .utf8)
         }
 
@@ -91,7 +115,8 @@ final class WerkzeugkastenCoreTests: XCTestCase {
             defaults: defaults,
             keychainService: service,
             keychainAccount: account,
-            keychainAccessGroup: nil
+            keychainAccessGroup: nil,
+            requireSharedCapabilities: false
         )
         store.apiKey = "secret"
         store.researchModel = "research"
@@ -103,7 +128,8 @@ final class WerkzeugkastenCoreTests: XCTestCase {
             defaults: defaults,
             keychainService: service,
             keychainAccount: account,
-            keychainAccessGroup: nil
+            keychainAccessGroup: nil,
+            requireSharedCapabilities: false
         )
 
         XCTAssertEqual(reloaded.apiKey, "secret")
@@ -113,5 +139,10 @@ final class WerkzeugkastenCoreTests: XCTestCase {
 
         try? KeychainStore.delete(service: service, account: account)
         defaults.removePersistentDomain(forName: suiteName)
+    }
+
+    func testEngineCommandRequirements() {
+        XCTAssertFalse(EngineCommand.prettifyCodexLog.requiresAPIKey)
+        XCTAssertTrue(EngineCommand.summarizeText.requiresAPIKey)
     }
 }

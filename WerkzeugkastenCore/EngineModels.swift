@@ -25,6 +25,16 @@ public enum EngineCommand: String, Sendable {
     case researchTable = "research-table"
     case summarizeFiles = "summarize-files"
     case summarizeText = "summarize-text"
+    case prettifyCodexLog = "prettify-codex-log"
+
+    public var requiresAPIKey: Bool {
+        switch self {
+        case .prettifyCodexLog:
+            return false
+        case .researchList, .inspectTable, .researchTable, .summarizeFiles, .summarizeText:
+            return true
+        }
+    }
 }
 
 public struct PreparedCommand: Equatable, Sendable {
@@ -164,10 +174,28 @@ public struct SummarizeTextResponse: Decodable, Equatable, Sendable {
     }
 }
 
+public struct PrettifyCodexLogResponse: Decodable, Equatable, Sendable {
+    public let outputPath: String
+    public let completedTurnCount: Int
+    public let imageCount: Int
+    public let toolCallCount: Int
+    public let totalTokenCount: Int?
+
+    enum CodingKeys: String, CodingKey {
+        case outputPath = "output_path"
+        case completedTurnCount = "completed_turn_count"
+        case imageCount = "image_count"
+        case toolCallCount = "tool_call_count"
+        case totalTokenCount = "total_token_count"
+    }
+}
+
 public enum EngineError: LocalizedError, Equatable {
     case missingAPIKey
     case missingInterpreter(String)
     case missingResources
+    case sharedSettingsUnavailable(String)
+    case keychainAccessFailure(String)
     case invalidPayload(String)
     case processFailure(String)
     case invalidResponse(String)
@@ -180,6 +208,10 @@ public enum EngineError: LocalizedError, Equatable {
             return "Python interpreter not found or not executable: \(path)"
         case .missingResources:
             return "Bundled Python resources are missing."
+        case .sharedSettingsUnavailable(let message):
+            return message
+        case .keychainAccessFailure(let message):
+            return message
         case .invalidPayload(let message):
             return message
         case .processFailure(let message):

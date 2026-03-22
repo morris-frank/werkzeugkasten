@@ -5,6 +5,7 @@ import json
 import sys
 from typing import Any
 
+from .codex_log import prettify_codex_log
 from .core import read_json_stdin
 from .research_list import run_research_list
 from .research_table import inspect_table, run_research_table
@@ -45,6 +46,7 @@ def build_parser() -> argparse.ArgumentParser:
     summarize_files_cmd.add_argument("--progress", action="store_true")
 
     subparsers.add_parser("summarize-text")
+    subparsers.add_parser("prettify-codex-log")
     return parser
 
 
@@ -90,6 +92,12 @@ def main(argv: list[str] | None = None) -> int:
             if not isinstance(title, str) or not isinstance(text, str):
                 raise ValueError("`title` and `text` must be strings.")
             return _print_json({"summary_markdown": summarize_text_input(title, text)})
+
+        if args.command == "prettify-codex-log":
+            path = payload.get("path")
+            if not isinstance(path, str):
+                raise ValueError("`path` must be a string.")
+            return _print_json(prettify_codex_log(path))
     except Exception as exc:
         print(str(exc), file=sys.stderr)
         return 1

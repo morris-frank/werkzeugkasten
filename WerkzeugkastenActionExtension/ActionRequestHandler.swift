@@ -21,10 +21,19 @@ final class ActionRequestHandler: NSObject, NSExtensionRequestHandling {
                 let urls = try await Self.extractFileURLs(from: extensionContext.inputItems)
                 let uniqueURLs = InputNormalizer.uniqueFileURLs(urls)
                 let runner = EngineRunner()
+                let settings = SettingsStore()
+
+                if let sharedSettingsIssue = settings.sharedSettingsIssue {
+                    throw EngineError.sharedSettingsUnavailable(sharedSettingsIssue)
+                }
+                if settings.apiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty, let keychainIssue = settings.keychainIssue {
+                    throw EngineError.keychainAccessFailure(keychainIssue)
+                }
+
                 let response: SummarizeFilesResponse = try await runner.run(
                     .summarizeFiles,
                     payload: ["paths": uniqueURLs.map(\.path)],
-                    configuration: try SettingsStore().configuration()
+                    configuration: try settings.configuration()
                 )
 
                 await NotificationHelper.post(

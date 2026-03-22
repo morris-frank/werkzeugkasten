@@ -14,7 +14,7 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "CC0FA88F26CCB62941646339"
+               BlueprintIdentifier = "31945154CCBA6878BA025554"
                BuildableName = "WerkzeugkastenActionExtension.appex"
                BlueprintName = "WerkzeugkastenActionExtension"
                ReferencedContainer = "container:Werkzeugkasten.xcodeproj">
@@ -28,7 +28,7 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "D5298EC46FA2F80B8DD14032"
+               BlueprintIdentifier = "EA614D7EEAB7DFFCFB0F6FD0"
                BuildableName = "Werkzeugkasten.app"
                BlueprintName = "WerkzeugkastenApp"
                ReferencedContainer = "container:Werkzeugkasten.xcodeproj">
@@ -42,7 +42,7 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "EAD8EB010505A19CDBA4D5D1"
+               BlueprintIdentifier = "582AEE2345C08646F81127B6"
                BuildableName = "WerkzeugkastenCore.framework"
                BlueprintName = "WerkzeugkastenCore"
                ReferencedContainer = "container:Werkzeugkasten.xcodeproj">
@@ -58,7 +58,7 @@
       <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "D5298EC46FA2F80B8DD14032"
+            BlueprintIdentifier = "EA614D7EEAB7DFFCFB0F6FD0"
             BuildableName = "Werkzeugkasten.app"
             BlueprintName = "WerkzeugkastenApp"
             ReferencedContainer = "container:Werkzeugkasten.xcodeproj">
@@ -70,7 +70,7 @@
             parallelizable = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "6155CE7E8A4DA5E54F3C730A"
+               BlueprintIdentifier = "2762252001ADB3BA7114330D"
                BuildableName = "WerkzeugkastenCoreTests.xctest"
                BlueprintName = "WerkzeugkastenCoreTests"
                ReferencedContainer = "container:Werkzeugkasten.xcodeproj">
@@ -92,7 +92,7 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "D5298EC46FA2F80B8DD14032"
+            BlueprintIdentifier = "EA614D7EEAB7DFFCFB0F6FD0"
             BuildableName = "Werkzeugkasten.app"
             BlueprintName = "WerkzeugkastenApp"
             ReferencedContainer = "container:Werkzeugkasten.xcodeproj">
@@ -109,7 +109,7 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "D5298EC46FA2F80B8DD14032"
+            BlueprintIdentifier = "EA614D7EEAB7DFFCFB0F6FD0"
             BuildableName = "Werkzeugkasten.app"
             BlueprintName = "WerkzeugkastenApp"
             ReferencedContainer = "container:Werkzeugkasten.xcodeproj">

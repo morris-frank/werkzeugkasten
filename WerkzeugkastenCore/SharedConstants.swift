@@ -1,10 +1,54 @@
 import Foundation
 
 public enum WerkzeugkastenConstants {
-    public static let appGroup = "group.local.mfr.werkzeugkasten"
-    public static let keychainService = "local.mfr.werkzeugkasten"
+    public static let appBundleIdentifier = "com.morrisfrank.werkzeugkasten"
+    public static let actionExtensionBundleIdentifier = "com.morrisfrank.werkzeugkasten.action"
+    public static let appGroup = "group.com.morrisfrank.werkzeugkasten"
+    public static let keychainService = appBundleIdentifier
     public static let keychainAccount = "OPENAI_API_KEY"
-    public static let defaultPythonInterpreterPath = "/Users/mfr/mamba/envs/basic/bin/python"
+    public static let keychainAccessGroupSuffix = "com.morrisfrank.werkzeugkasten.shared"
+    public static var defaultPythonInterpreterPath: String {
+        resolvedPythonInterpreterPath() ?? ""
+    }
     public static let defaultResearchModel = "gpt-5.4"
     public static let defaultSummaryModel = "gpt-5.4"
+
+    public static func resolvedPythonInterpreterPath() -> String? {
+        for candidate in pythonInterpreterCandidates() {
+            if let resolved = resolveExecutablePath(candidate) {
+                return resolved
+            }
+        }
+        return nil
+    }
+
+    private static func pythonInterpreterCandidates() -> [String] {
+        let environment = ProcessInfo.processInfo.environment
+        return [
+            environment["WERKZEUGKASTEN_PYTHON"],
+            environment["PYTHON"],
+            "/opt/homebrew/bin/python3",
+            "/usr/local/bin/python3",
+            "/usr/bin/python3",
+            "python3",
+            "python",
+        ]
+        .compactMap { $0?.trimmingCharacters(in: .whitespacesAndNewlines) }
+        .filter { !$0.isEmpty }
+    }
+
+    private static func resolveExecutablePath(_ candidate: String) -> String? {
+        let fileManager = FileManager.default
+        if candidate.hasPrefix("/") {
+            return fileManager.isExecutableFile(atPath: candidate) ? candidate : nil
+        }
+
+        for directory in ProcessInfo.processInfo.environment["PATH"]?.split(separator: ":") ?? [] {
+            let resolved = String(directory) + "/" + candidate
+            if fileManager.isExecutableFile(atPath: resolved) {
+                return resolved
+            }
+        }
+        return nil
+    }
 }

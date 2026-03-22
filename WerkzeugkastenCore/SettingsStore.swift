@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import Security
 
 @MainActor
 public final class SettingsStore: ObservableObject {
@@ -7,37 +8,71 @@ public final class SettingsStore: ObservableObject {
     @Published public var researchModel: String
     @Published public var summaryModel: String
     @Published public var pythonInterpreterPath: String
+    @Published public private(set) var sharedSettingsIssue: String?
+    @Published public private(set) var keychainIssue: String?
 
     private let defaults: UserDefaults
     private let keychainService: String
     private let keychainAccount: String
     private let keychainAccessGroup: String?
+    private let requireSharedCapabilities: Bool
 
     public init(
         defaults: UserDefaults? = UserDefaults(suiteName: WerkzeugkastenConstants.appGroup),
         keychainService: String = WerkzeugkastenConstants.keychainService,
         keychainAccount: String = WerkzeugkastenConstants.keychainAccount,
-        keychainAccessGroup: String? = Bundle.main.object(forInfoDictionaryKey: "WerkzeugkastenKeychainAccessGroup") as? String
+        keychainAccessGroup: String? = Bundle.main.object(forInfoDictionaryKey: "WerkzeugkastenKeychainAccessGroup") as? String,
+        requireSharedCapabilities: Bool = true
     ) {
-        self.defaults = defaults ?? .standard
+        let sharedDefaults = defaults ?? UserDefaults(suiteName: WerkzeugkastenConstants.appGroup)
+        self.defaults = sharedDefaults ?? .standard
         self.keychainService = keychainService
         self.keychainAccount = keychainAccount
         self.keychainAccessGroup = keychainAccessGroup
-        self.researchModel = Self.loadDefault("researchModel", from: defaults) ?? WerkzeugkastenConstants.defaultResearchModel
-        self.summaryModel = Self.loadDefault("summaryModel", from: defaults) ?? WerkzeugkastenConstants.defaultSummaryModel
-        self.pythonInterpreterPath = Self.loadDefault("pythonInterpreterPath", from: defaults) ?? WerkzeugkastenConstants.defaultPythonInterpreterPath
-        self.apiKey = (try? KeychainStore.load(service: keychainService, account: keychainAccount, accessGroup: keychainAccessGroup)) ?? ""
+        self.requireSharedCapabilities = requireSharedCapabilities
+        self.researchModel = Self.loadDefault("researchModel", from: self.defaults) ?? WerkzeugkastenConstants.defaultResearchModel
+        self.summaryModel = Self.loadDefault("summaryModel", from: self.defaults) ?? WerkzeugkastenConstants.defaultSummaryModel
+        self.pythonInterpreterPath = Self.loadDefault("pythonInterpreterPath", from: self.defaults) ?? WerkzeugkastenConstants.defaultPythonInterpreterPath
+        self.sharedSettingsIssue = requireSharedCapabilities && sharedDefaults == nil
+            ? "Shared settings are unavailable. Enable the App Group `\(WerkzeugkastenConstants.appGroup)` for the app and Finder extension."
+            : nil
+        self.keychainIssue = requireSharedCapabilities && keychainAccessGroup == nil
+            ? "Shared keychain access is unavailable. Set `WerkzeugkastenKeychainAccessGroup` and enable Keychain Sharing for both targets."
+            : nil
+
+        do {
+            self.apiKey = try KeychainStore.load(
+                service: keychainService,
+                account: keychainAccount,
+                accessGroup: keychainAccessGroup
+            ) ?? ""
+        } catch {
+            self.apiKey = ""
+            self.keychainIssue = Self.describeKeychainFailure(
+                error,
+                accessGroup: keychainAccessGroup,
+                fallback: self.keychainIssue
+            )
+        }
     }
 
-    private static func loadDefault(_ key: String, from defaults: UserDefaults?) -> String? {
-        defaults?.string(forKey: key)
+    private static func loadDefault(_ key: String, from defaults: UserDefaults) -> String? {
+        defaults.string(forKey: key)
     }
 
     public var interpreterIsReachable: Bool {
         FileManager.default.isExecutableFile(atPath: pythonInterpreterPath.trimmingCharacters(in: .whitespacesAndNewlines))
     }
 
+    public var suggestedPythonInterpreterPath: String {
+        WerkzeugkastenConstants.defaultPythonInterpreterPath
+    }
+
     public func save() throws {
+        if let sharedSettingsIssue, requireSharedCapabilities {
+            throw EngineError.sharedSettingsUnavailable(sharedSettingsIssue)
+        }
+
         let normalizedResearchModel = researchModel.trimmingCharacters(in: .whitespacesAndNewlines)
         let normalizedSummaryModel = summaryModel.trimmingCharacters(in: .whitespacesAndNewlines)
         let normalizedInterpreter = pythonInterpreterPath.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -47,10 +82,23 @@ public final class SettingsStore: ObservableObject {
         defaults.set(normalizedSummaryModel.isEmpty ? WerkzeugkastenConstants.defaultSummaryModel : normalizedSummaryModel, forKey: "summaryModel")
         defaults.set(normalizedInterpreter.isEmpty ? WerkzeugkastenConstants.defaultPythonInterpreterPath : normalizedInterpreter, forKey: "pythonInterpreterPath")
 
-        if normalizedAPIKey.isEmpty {
-            try KeychainStore.delete(service: keychainService, account: keychainAccount, accessGroup: keychainAccessGroup)
-        } else {
-            try KeychainStore.save(value: normalizedAPIKey, service: keychainService, account: keychainAccount, accessGroup: keychainAccessGroup)
+        do {
+            if normalizedAPIKey.isEmpty {
+                if keychainAccessGroup != nil || !requireSharedCapabilities {
+                    try KeychainStore.delete(service: keychainService, account: keychainAccount, accessGroup: keychainAccessGroup)
+                }
+            } else {
+                guard keychainIssue == nil || !requireSharedCapabilities else {
+                    throw EngineError.keychainAccessFailure(keychainIssue ?? "Shared keychain access is unavailable.")
+                }
+                try KeychainStore.save(value: normalizedAPIKey, service: keychainService, account: keychainAccount, accessGroup: keychainAccessGroup)
+            }
+        } catch let error as EngineError {
+            throw error
+        } catch {
+            throw EngineError.keychainAccessFailure(
+                Self.describeKeychainFailure(error, accessGroup: keychainAccessGroup)
+            )
         }
 
         apiKey = normalizedAPIKey
@@ -60,21 +108,26 @@ public final class SettingsStore: ObservableObject {
     }
 
     public func configuration() throws -> EngineConfiguration {
-        let normalizedAPIKey = apiKey.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !normalizedAPIKey.isEmpty else {
-            throw EngineError.missingAPIKey
-        }
-
         let normalizedInterpreter = pythonInterpreterPath.trimmingCharacters(in: .whitespacesAndNewlines)
         guard FileManager.default.isExecutableFile(atPath: normalizedInterpreter) else {
             throw EngineError.missingInterpreter(normalizedInterpreter)
         }
 
         return EngineConfiguration(
-            apiKey: normalizedAPIKey,
+            apiKey: apiKey.trimmingCharacters(in: .whitespacesAndNewlines),
             researchModel: researchModel.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? WerkzeugkastenConstants.defaultResearchModel : researchModel.trimmingCharacters(in: .whitespacesAndNewlines),
             summaryModel: summaryModel.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? WerkzeugkastenConstants.defaultSummaryModel : summaryModel.trimmingCharacters(in: .whitespacesAndNewlines),
             pythonInterpreterPath: normalizedInterpreter
         )
+    }
+
+    private static func describeKeychainFailure(_ error: Error, accessGroup: String?, fallback: String? = nil) -> String {
+        let nsError = error as NSError
+        let osStatus = OSStatus(nsError.code)
+        let details = SecCopyErrorMessageString(osStatus, nil) as String? ?? error.localizedDescription
+        if let accessGroup {
+            return "Shared keychain access failed for `\(accessGroup)`: \(details)"
+        }
+        return fallback ?? "Keychain access failed: \(details)"
     }
 }

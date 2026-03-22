@@ -6,6 +6,7 @@ public final class EngineRunner: Sendable {
         "__init__.py",
         "__main__.py",
         "cli.py",
+        "codex_log.py",
         "core.py",
         "research_list.py",
         "research_table.py",
@@ -27,7 +28,7 @@ public final class EngineRunner: Sendable {
         payload: [String: Any],
         configuration: EngineConfiguration
     ) throws -> PreparedCommand {
-        guard !configuration.apiKey.isEmpty else {
+        guard !command.requiresAPIKey || !configuration.apiKey.isEmpty else {
             throw EngineError.missingAPIKey
         }
 
@@ -46,7 +47,11 @@ public final class EngineRunner: Sendable {
         var environment = ProcessInfo.processInfo.environment
         let existingPythonPath = environment["PYTHONPATH"].map { "\($0):" } ?? ""
         environment["PYTHONPATH"] = existingPythonPath + moduleRoot.path
-        environment["OPENAI_API_KEY"] = configuration.apiKey
+        if command.requiresAPIKey {
+            environment["OPENAI_API_KEY"] = configuration.apiKey
+        } else {
+            environment.removeValue(forKey: "OPENAI_API_KEY")
+        }
         environment["WERKZEUGKASTEN_RESEARCH_MODEL"] = configuration.researchModel
         environment["WERKZEUGKASTEN_SUMMARY_MODEL"] = configuration.summaryModel
 
