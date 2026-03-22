@@ -6,52 +6,50 @@ Werkzeugkasten is a macOS menu-bar app with a Finder action for lightweight rese
 
 ### 1. Summarize
 
-Availability: Menu bar, Finder action
-Input: File, files, text
-Output: Markdown and `###.summary.md` sidecar files
+| :inbox_tray: **Input** | :outbox_tray: **Output** | :mag: **Where** |
+| --- | --- | --- |
+| File(s)<br>Text | Markdown (creates `###.summary.md` sidecar) | MenuBar<br>FinderExtension |
 
 ### 2. Research List
 
-Availability: Menu bar
-Input: Markdown list plus a question
-Output: Markdown list with completed research
+| :inbox_tray: **Input** | :outbox_tray: **Output** | :mag: **Where** |
+| --- | --- | --- |
+| List + a question | Markdown: answers + derivative research table | MenuBar |
 
 ### 3. Research Table
 
-Availability: Menu bar
-Input: CSV or Markdown table from a file or pasted text
-Output: Markdown table
+| :inbox_tray: **Input** | :outbox_tray: **Output** | :mag: **Where** |
+| --- | --- | --- |
+| CSV<br>Markdown | Markdown: imputed table + derivative columns | MenuBar |
+
+:jigsaw: **Options:**
+
+- `include_sources`
+   Include the URLS of the web sources in a new column `"Sources"`
+- `include_source_raw`
+   Include the _content_ of the web sources in a new column `"Sources[RAW]"`
+- `auto_tagging`
+   Use the filled table to infer sensible categories, new column `"Tags"`
+- `nearest_neighbour`
+   Use the filled table to find closest subjects, new column `"Closest $OBJECT_TYPE"`
 
 ### 4. Prettify Codex Log
 
-Availability: Menu bar
-Input: Codex session `.jsonl` log
-Output: `<name>.jsonl.transcript.md` written next to the input log
+| :inbox_tray: **Input** | :outbox_tray: **Output** | :mag: **Where** |
+| --- | --- | --- |
+| Codex `.jsonl` log | `<name>.jsonl.transcript.md` written next to the input log | MenuBar |
 
-## Local setup
+# Installation
 
-Werkzeugkasten uses an external Python interpreter in v1. Install Python first, then point the app at that interpreter in Settings.
-
-1. Install Python 3.11 or newer.
-2. Install the Python dependencies:
-   - `python3 -m pip install -r requirements.txt`
-3. Regenerate the Xcode project:
-   - `xcodegen generate`
-4. Open `Werkzeugkasten.xcodeproj` in Xcode and run the `Werkzeugkasten` scheme.
-
-## First run
-
-1. Open `Settings` from the menu bar.
-2. Set:
-   - OpenAI API key
-   - research model
-   - summary model
-   - Python interpreter path
-3. Save the settings.
+1. Download the most recent release [Werkzeugkasten.zip](https://github.com/morris-frank/werkzeugkasten/releases)
+2. Install and/or start
+3. Open `Settings` from the menu bar:
+   - :key: OpenAI API key
+   - :key: [Jina API Key](https://jina.ai/)
+   - Python interpreter path, (`type python`)
+   - Optional(default: `gpt-5`): research model and summary model
 4. If Finder does not show the extension immediately, enable it in:
    - System Settings > Privacy & Security > Extensions
-
-Finder launches Werkzeugkasten for summaries. The app uses its own saved settings and keychain entry; the extension does not need shared secrets.
 
 ## Example table research
 
