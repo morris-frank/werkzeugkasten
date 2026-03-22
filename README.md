@@ -53,17 +53,6 @@ Werkzeugkasten uses an external Python interpreter in v1. Install Python first, 
 
 Saved settings are shared with the Finder action through the configured App Group and Keychain Sharing entitlements.
 
-## Finder action
-
-The Finder integration is a no-UI macOS Action extension. It reads the shared settings saved by the app and posts a notification when the summarize run completes or fails.
-
-If it does not appear:
-
-1. Confirm the app has been launched at least once.
-2. Save settings successfully in the app.
-3. Enable the extension in System Settings.
-4. Check Signing & Capabilities in Xcode for the App Group and Keychain Sharing configuration.
-
 ## Example table research
 
 **Request**
@@ -82,9 +71,3 @@ If it does not appear:
 | The Life and Death of Colonel Blimp | 1943 | UK | honor | Its most general theme is the endurance and evolution of honor and friendship across war and time. |
 | Possession | 1981 | France/West Germany | divorce | The movie’s most general theme is marital breakdown and separation. |
 
-## Releasing
-
-The GitHub release flow builds a signed and notarized macOS app zip.
-
-- Release checklist: [`docs/releasing.md`](docs/releasing.md)
-- GitHub Actions workflow: [`.github/workflows/release.yml`](.github/workflows/release.yml)
