@@ -76,6 +76,7 @@ public final class EngineRunner {
         }
         environment["WERKZEUGKASTEN_RESEARCH_MODEL"] = configuration.researchModel
         environment["WERKZEUGKASTEN_SUMMARY_MODEL"] = configuration.summaryModel
+        environment["WERKZEUGKASTEN_SUMMARY_MIRROR_LANGUAGES"] = configuration.summaryMirrorLanguages
 
         return PreparedCommand(
             executableURL: interpreterURL,

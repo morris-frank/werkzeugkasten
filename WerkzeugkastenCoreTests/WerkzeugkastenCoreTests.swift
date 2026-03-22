@@ -42,6 +42,7 @@ final class WerkzeugkastenCoreTests: XCTestCase {
             openMeteoAPIKey: "openmeteo-key",
             researchModel: "research-model",
             summaryModel: "summary-model",
+            summaryMirrorLanguages: "English,French",
             pythonInterpreterPath: "/bin/echo"
         )
 
@@ -59,6 +60,7 @@ final class WerkzeugkastenCoreTests: XCTestCase {
         XCTAssertEqual(prepared.environment["WERKZEUGKASTEN_OPEN_METEO_API_KEY"], "openmeteo-key")
         XCTAssertEqual(prepared.environment["WERKZEUGKASTEN_RESEARCH_MODEL"], "research-model")
         XCTAssertEqual(prepared.environment["WERKZEUGKASTEN_SUMMARY_MODEL"], "summary-model")
+        XCTAssertEqual(prepared.environment["WERKZEUGKASTEN_SUMMARY_MIRROR_LANGUAGES"], "English,French")
         XCTAssertEqual(prepared.workingDirectoryURL, temp)
     }
 
@@ -78,6 +80,7 @@ final class WerkzeugkastenCoreTests: XCTestCase {
             openMeteoAPIKey: "",
             researchModel: "research-model",
             summaryModel: "summary-model",
+            summaryMirrorLanguages: "English,German",
             pythonInterpreterPath: "/bin/echo"
         )
 
@@ -114,6 +117,7 @@ final class WerkzeugkastenCoreTests: XCTestCase {
             openMeteoAPIKey: "",
             researchModel: "research-model",
             summaryModel: "summary-model",
+            summaryMirrorLanguages: "English,German",
             pythonInterpreterPath: "/bin/echo"
         )
 
@@ -165,6 +169,7 @@ final class WerkzeugkastenCoreTests: XCTestCase {
         store.notionParentPage = "parent-id"
         store.researchModel = "research"
         store.summaryModel = "summary"
+        store.summaryMirrorLanguages = "English,Spanish"
         store.pythonInterpreterPath = "/bin/echo"
         try store.save()
 
@@ -186,6 +191,7 @@ final class WerkzeugkastenCoreTests: XCTestCase {
         XCTAssertEqual(reloaded.notionParentPage, "parent-id")
         XCTAssertEqual(reloaded.researchModel, "research")
         XCTAssertEqual(reloaded.summaryModel, "summary")
+        XCTAssertEqual(reloaded.summaryMirrorLanguages, "English,Spanish")
         XCTAssertEqual(reloaded.pythonInterpreterPath, "/bin/echo")
 
         try? KeychainStore.delete(service: service, account: openAIAccount)

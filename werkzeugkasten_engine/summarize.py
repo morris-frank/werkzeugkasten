@@ -9,9 +9,31 @@ from typing import Optional
 import markitdown
 from markitdown import MarkItDown
 
-from .core import openai_client, summary_model
+from .core import openai_client, summary_mirror_languages, summary_model
 
-PROMPT = """Summarise this file in Markdown.
+
+def mirror_languages_instruction(languages: list[str]) -> str:
+    """Build the 'match source language' instruction for the summary prompt."""
+    if not languages:
+        languages = summary_mirror_languages()
+    if len(languages) == 1:
+        lang = languages[0]
+        return f"If the text is in {lang}, produce the summary in {lang}."
+    if len(languages) == 2:
+        a, b = languages[0], languages[1]
+        return f"If the text is in {a} or {b}, produce the summary in that same language ({a} or {b})."
+    *rest, last = languages
+    phrase = ", ".join(rest) + f", or {last}"
+    return f"If the text is in {phrase}, produce the summary in the same language as the source text."
+
+
+def summary_prompt(filename: str, timestamp: str, text: str, *, languages: list[str] | None = None) -> str:
+    langs = languages if languages is not None else summary_mirror_languages()
+    mirror = mirror_languages_instruction(langs)
+    return f"""Summarise this file in Markdown.
+
+{mirror}
+For all other languages, produce the summary in English.
 
 Return exactly these sections:
 
@@ -30,7 +52,7 @@ Timestamp: {timestamp}
 
 
 Document content:
-{text}/
+{text}
 """
 
 MAX_SUMMARY_INPUT = 120_000
@@ -64,10 +86,10 @@ def convert_to_markdown(path: Path) -> str:
 def summarize_text_input(title: str, text: str) -> str:
     response = openai_client().responses.create(
         model=summary_model(),
-        input=PROMPT.format(
-            filename=title,
-            text=truncate_for_upload(text),
-            timestamp=datetime.now().isoformat(),
+        input=summary_prompt(
+            title,
+            datetime.now().isoformat(),
+            truncate_for_upload(text),
         ),
     )
     return (response.output_text or "").strip()

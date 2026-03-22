@@ -12,7 +12,7 @@ from unittest.mock import patch
 
 from werkzeugkasten_engine import codex_log, notion_export, research_list, research_table, summarize
 from werkzeugkasten_engine.cli import main as cli_main
-from werkzeugkasten_engine.core import choose_output_path, extract_json_block
+from werkzeugkasten_engine.core import choose_output_path, extract_json_block, summary_mirror_languages
 
 
 class ResearchListTests(unittest.TestCase):
@@ -298,12 +298,28 @@ class CoreTests(unittest.TestCase):
         self.assertEqual(core.reasoning_for_model("gpt-5.4"), {"effort": "medium"})
         self.assertIsNone(core.reasoning_for_model("gpt-4.1"))
 
+    def test_summary_mirror_languages_parses_env(self) -> None:
+        from werkzeugkasten_engine import core
+
+        with patch.dict(os.environ, {core.SUMMARY_MIRROR_LANGUAGES_ENV: " A , B "}):
+            self.assertEqual(summary_mirror_languages(), ["A", "B"])
+
 
 class SummarizeTests(unittest.TestCase):
     def test_truncate_for_upload(self) -> None:
         text = "x" * (summarize.MAX_SUMMARY_INPUT + 1)
         truncated = summarize.truncate_for_upload(text)
         self.assertIn("[Truncated before upload]", truncated)
+
+    def test_mirror_languages_instruction_phrasing(self) -> None:
+        self.assertIn("English or German", summarize.mirror_languages_instruction(["English", "German"]))
+        self.assertIn("French", summarize.mirror_languages_instruction(["French"]))
+        self.assertIn("English, Spanish, or Italian", summarize.mirror_languages_instruction(["English", "Spanish", "Italian"]))
+
+    def test_summary_prompt_uses_explicit_languages(self) -> None:
+        body = summarize.summary_prompt("doc.txt", "ts", "hello", languages=["Dutch", "Polish"])
+        self.assertIn("Dutch or Polish", body)
+        self.assertIn("For all other languages, produce the summary in English.", body)
 
 
 class CodexLogTests(unittest.TestCase):

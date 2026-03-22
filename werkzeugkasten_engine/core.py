@@ -14,12 +14,14 @@ DEFAULT_INTERPRETER_PATH = "/Users/mfr/mamba/envs/basic/bin/python"
 MAX_SLUG_LENGTH = 48
 RESEARCH_MODEL_ENV = "WERKZEUGKASTEN_RESEARCH_MODEL"
 SUMMARY_MODEL_ENV = "WERKZEUGKASTEN_SUMMARY_MODEL"
+SUMMARY_MIRROR_LANGUAGES_ENV = "WERKZEUGKASTEN_SUMMARY_MIRROR_LANGUAGES"
 JINA_API_KEY_ENV = "WERKZEUGKASTEN_JINA_API_KEY"
 NOTION_API_TOKEN_ENV = "WERKZEUGKASTEN_NOTION_API_TOKEN"
 NOTION_PARENT_PAGE_ENV = "WERKZEUGKASTEN_NOTION_PARENT_PAGE"
 OPEN_METEO_API_KEY_ENV = "WERKZEUGKASTEN_OPEN_METEO_API_KEY"
 DEFAULT_RESEARCH_MODEL = "gpt-5.4"
 DEFAULT_SUMMARY_MODEL = "gpt-5.4"
+DEFAULT_SUMMARY_MIRROR_LANGUAGES = "English,German"
 LATEST_NOTION_VERSION = "2026-03-11"
 
 
@@ -52,6 +54,13 @@ def research_model() -> str:
 
 def summary_model() -> str:
     return os.environ.get(SUMMARY_MODEL_ENV, DEFAULT_SUMMARY_MODEL)
+
+
+def summary_mirror_languages() -> list[str]:
+    raw = os.environ.get(SUMMARY_MIRROR_LANGUAGES_ENV, DEFAULT_SUMMARY_MIRROR_LANGUAGES)
+    parts = [p.strip() for p in raw.split(",")]
+    languages = [p for p in parts if p]
+    return languages if languages else [p.strip() for p in DEFAULT_SUMMARY_MIRROR_LANGUAGES.split(",") if p.strip()]
 
 
 def jina_api_key() -> str:

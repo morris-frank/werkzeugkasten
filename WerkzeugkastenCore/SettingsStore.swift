@@ -11,6 +11,7 @@ public final class SettingsStore: ObservableObject {
     @Published public var notionParentPage: String
     @Published public var researchModel: String
     @Published public var summaryModel: String
+    @Published public var summaryMirrorLanguages: String
     @Published public var pythonInterpreterPath: String
     @Published public private(set) var keychainIssue: String?
 
@@ -42,6 +43,9 @@ public final class SettingsStore: ObservableObject {
         self.notionParentPage = Self.loadDefault("notionParentPage", from: self.defaults) ?? ""
         self.researchModel = Self.loadDefault("researchModel", from: self.defaults) ?? WerkzeugkastenConstants.defaultResearchModel
         self.summaryModel = Self.loadDefault("summaryModel", from: self.defaults) ?? WerkzeugkastenConstants.defaultSummaryModel
+        self.summaryMirrorLanguages =
+            Self.loadDefault(WerkzeugkastenConstants.summaryMirrorLanguagesKey, from: self.defaults)
+            ?? WerkzeugkastenConstants.defaultSummaryMirrorLanguages
         self.pythonInterpreterPath = Self.loadDefault("pythonInterpreterPath", from: self.defaults) ?? WerkzeugkastenConstants.defaultPythonInterpreterPath
         self.keychainIssue = nil
         var resolvedKeychainIssue: String?
@@ -123,6 +127,7 @@ public final class SettingsStore: ObservableObject {
     public func save() throws {
         let normalizedResearchModel = researchModel.trimmingCharacters(in: .whitespacesAndNewlines)
         let normalizedSummaryModel = summaryModel.trimmingCharacters(in: .whitespacesAndNewlines)
+        let normalizedSummaryMirrorLanguages = summaryMirrorLanguages.trimmingCharacters(in: .whitespacesAndNewlines)
         let normalizedInterpreter = pythonInterpreterPath.trimmingCharacters(in: .whitespacesAndNewlines)
         let normalizedAPIKey = apiKey.trimmingCharacters(in: .whitespacesAndNewlines)
         let normalizedJinaAPIKey = jinaAPIKey.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -132,6 +137,10 @@ public final class SettingsStore: ObservableObject {
 
         defaults.set(normalizedResearchModel.isEmpty ? WerkzeugkastenConstants.defaultResearchModel : normalizedResearchModel, forKey: "researchModel")
         defaults.set(normalizedSummaryModel.isEmpty ? WerkzeugkastenConstants.defaultSummaryModel : normalizedSummaryModel, forKey: "summaryModel")
+        defaults.set(
+            normalizedSummaryMirrorLanguages.isEmpty ? WerkzeugkastenConstants.defaultSummaryMirrorLanguages : normalizedSummaryMirrorLanguages,
+            forKey: WerkzeugkastenConstants.summaryMirrorLanguagesKey
+        )
         defaults.set(normalizedInterpreter.isEmpty ? WerkzeugkastenConstants.defaultPythonInterpreterPath : normalizedInterpreter, forKey: "pythonInterpreterPath")
         defaults.set(normalizedNotionParentPage, forKey: "notionParentPage")
 
@@ -174,6 +183,9 @@ public final class SettingsStore: ObservableObject {
         notionParentPage = normalizedNotionParentPage
         researchModel = defaults.string(forKey: "researchModel") ?? WerkzeugkastenConstants.defaultResearchModel
         summaryModel = defaults.string(forKey: "summaryModel") ?? WerkzeugkastenConstants.defaultSummaryModel
+        summaryMirrorLanguages =
+            defaults.string(forKey: WerkzeugkastenConstants.summaryMirrorLanguagesKey)
+            ?? WerkzeugkastenConstants.defaultSummaryMirrorLanguages
         pythonInterpreterPath = defaults.string(forKey: "pythonInterpreterPath") ?? WerkzeugkastenConstants.defaultPythonInterpreterPath
     }
 
@@ -183,6 +195,9 @@ public final class SettingsStore: ObservableObject {
             throw EngineError.missingInterpreter(normalizedInterpreter)
         }
 
+        let trimmedMirror = summaryMirrorLanguages.trimmingCharacters(in: .whitespacesAndNewlines)
+        let resolvedMirror = trimmedMirror.isEmpty ? WerkzeugkastenConstants.defaultSummaryMirrorLanguages : trimmedMirror
+
         return EngineConfiguration(
             apiKey: apiKey.trimmingCharacters(in: .whitespacesAndNewlines),
             jinaAPIKey: jinaAPIKey.trimmingCharacters(in: .whitespacesAndNewlines),
@@ -191,6 +206,7 @@ public final class SettingsStore: ObservableObject {
             openMeteoAPIKey: openMeteoAPIKey.trimmingCharacters(in: .whitespacesAndNewlines),
             researchModel: researchModel.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? WerkzeugkastenConstants.defaultResearchModel : researchModel.trimmingCharacters(in: .whitespacesAndNewlines),
             summaryModel: summaryModel.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? WerkzeugkastenConstants.defaultSummaryModel : summaryModel.trimmingCharacters(in: .whitespacesAndNewlines),
+            summaryMirrorLanguages: resolvedMirror,
             pythonInterpreterPath: normalizedInterpreter
         )
     }
