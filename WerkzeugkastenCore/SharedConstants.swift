@@ -6,6 +6,7 @@ public enum WerkzeugkastenConstants {
     public static let keychainService = appBundleIdentifier
     public static let openAIKeychainAccount = "OPENAI_API_KEY"
     public static let jinaKeychainAccount = "JINA_API_KEY"
+    public static let notionKeychainAccount = "NOTION_API_TOKEN"
     public static let handoffURLScheme = "werkzeugkasten"
     public static var defaultPythonInterpreterPath: String {
         resolvedPythonInterpreterPath() ?? ""

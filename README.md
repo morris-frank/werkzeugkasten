@@ -32,6 +32,9 @@ Werkzeugkasten is a macOS menu-bar app with a Finder action for lightweight rese
    Use the filled table to infer sensible categories, new column `"Tags"`
 - `nearest_neighbour`
    Use the filled table to find closest subjects, new column `"Closest $OBJECT_TYPE"`
+- `export_to_notion`
+   Create a new Notion database from the normalized final table when a Notion token and parent page are configured
+- `merge` vs `overwrite` handling when generated columns already exist
 
 ### 4. Prettify Codex Log
 
@@ -46,6 +49,7 @@ Werkzeugkasten is a macOS menu-bar app with a Finder action for lightweight rese
 3. Open `Settings` from the menu bar:
    - :key: OpenAI API key
    - :key: [Jina API Key](https://jina.ai/)
+   - :key: Notion API token and a Notion parent page URL/ID if you want Notion export
    - Python interpreter path, (`type python`)
    - Optional(default: `gpt-5`): research model and summary model
 4. If Finder does not show the extension immediately, enable it in:

@@ -4,6 +4,7 @@ import csv
 import json
 import re
 import urllib.error
+import urllib.parse
 import urllib.request
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -11,16 +12,21 @@ from io import StringIO
 from pathlib import Path
 from typing import Callable
 
+from rapidfuzz import fuzz
+
 from .core import (
     choose_output_path,
     esc,
     extract_json_block,
     extract_sources,
     jina_api_key,
+    notion_api_token,
+    notion_parent_page,
     openai_client,
     research_model,
     response_create_kwargs,
 )
+from .notion_export import export_dataset_to_notion
 
 ProgressCallback = Callable[[int, int, str], None]
 
@@ -43,6 +49,16 @@ QUESTION_WORDS = {
     "would",
     "will",
 }
+MERGE_POLICY = "merge"
+OVERWRITE_POLICY = "overwrite"
+SOURCE_COLUMN = "Sources"
+SOURCE_RAW_COLUMN = "Sources[RAW]"
+TAG_COLUMN = "Tags"
+RECORD_ID_COLUMN = "Record ID"
+URL_RE = re.compile(r"https?://[^\s<>)\]]+|www\.[^\s<>)\]]+", re.IGNORECASE)
+MARKDOWN_LINK_RE = re.compile(r"\[([^\]]+)\]\((https?://[^)]+)\)")
+REF_RE = re.compile(r"\s*\(Ref\s+\d+\)\s*$", re.IGNORECASE)
+NOTION_PAGE_SIZE_LIMIT = 1800
 
 
 @dataclass(frozen=True)
@@ -51,6 +67,13 @@ class ResearchOptions:
     include_source_raw: bool = False
     auto_tagging: bool = False
     nearest_neighbour: bool = False
+    export_to_notion: bool = False
+    output_path: str = ""
+    source_column_policy: str = MERGE_POLICY
+    source_raw_column_policy: str = MERGE_POLICY
+    tag_column_policy: str = MERGE_POLICY
+    nearest_column_policy: str = MERGE_POLICY
+    record_id_column_policy: str = MERGE_POLICY
 
     def normalized(self) -> ResearchOptions:
         include_sources = self.include_sources or self.include_source_raw
@@ -60,6 +83,13 @@ class ResearchOptions:
             include_source_raw=self.include_source_raw,
             auto_tagging=auto_tagging,
             nearest_neighbour=self.nearest_neighbour and auto_tagging,
+            export_to_notion=self.export_to_notion,
+            output_path=self.output_path.strip(),
+            source_column_policy=normalize_policy(self.source_column_policy),
+            source_raw_column_policy=normalize_policy(self.source_raw_column_policy),
+            tag_column_policy=normalize_policy(self.tag_column_policy),
+            nearest_column_policy=normalize_policy(self.nearest_column_policy),
+            record_id_column_policy=normalize_policy(self.record_id_column_policy),
         )
 
 
@@ -74,12 +104,52 @@ class Failure:
 
 
 @dataclass
+class SourceFetchIssue:
+    row_number: int
+    key: str
+    url: str
+    status_code: int | None
+    error_class: str
+    message: str
+
+
+@dataclass
 class DatasetShape:
     source_name: str
     detected_format: str
     headers: list[str]
     rows: list[dict[str, str]]
     question_columns: list[str]
+
+
+@dataclass
+class DynamicColumn:
+    name: str
+    existed: bool
+    policy: str
+
+
+@dataclass
+class FetchResult:
+    text: str
+    status_code: int | None = None
+    error_class: str = ""
+    message: str = ""
+
+    @property
+    def is_error(self) -> bool:
+        return bool(self.error_class or self.status_code)
+
+
+@dataclass
+class NormalizationProfile:
+    list_like_columns: set[str]
+    url_like_columns: set[str]
+    long_text_columns: set[str]
+
+
+def normalize_policy(value: str) -> str:
+    return OVERWRITE_POLICY if str(value).strip().lower() == OVERWRITE_POLICY else MERGE_POLICY
 
 
 def guess_table_format(raw: str) -> str:
@@ -223,12 +293,10 @@ def make_dataset_shape(
     for row in rows:
         normalized_row = {header: (row.get(header, "") or "").strip() for header in normalized_headers}
         normalized_rows.append(normalized_row)
-
     if len(normalized_headers) < 2:
         raise ValueError("Need at least two columns.")
     if not normalized_rows:
         raise ValueError("No data rows found.")
-
     resolved_question_columns = [
         column for column in (question_columns or []) if column in normalized_headers[1:]
     ] or question_columns_from_headers(normalized_headers)
@@ -256,10 +324,8 @@ def build_prompt(
             missing_lines.append(f"- {column} [question]: {make_explicit_question(column, key, object_type)}")
         else:
             missing_lines.append(f"- {column} [attribute]: fill with a short tag or very short value only")
-
     known_section = "\n".join(known_values) if known_values else "- none"
     missing_section = "\n".join(missing_lines)
-
     return f"""Research this {object_type} using web search and fill the missing table fields.
 
 Key column: {key_header}
@@ -357,18 +423,32 @@ def unique_header_name(headers: list[str], preferred: str) -> str:
     return f"{candidate} {suffix}"
 
 
-def add_dynamic_column(headers: list[str], rows: list[dict[str, str]], preferred: str) -> str:
+def resolve_dynamic_column(headers: list[str], rows: list[dict[str, str]], preferred: str, policy: str) -> DynamicColumn:
+    if preferred in headers:
+        if policy == OVERWRITE_POLICY:
+            for row in rows:
+                row[preferred] = ""
+        return DynamicColumn(name=preferred, existed=True, policy=policy)
     name = unique_header_name(headers, preferred)
     headers.append(name)
     for row in rows:
         row[name] = ""
-    return name
+    return DynamicColumn(name=name, existed=False, policy=policy)
 
 
-def fetch_source_raw_text(url: str, cache: dict[str, str]) -> str:
+def should_preserve_existing(value: str, policy: str) -> bool:
+    return policy == MERGE_POLICY and bool(value.strip())
+
+
+def apply_dynamic_value(row: dict[str, str], column: DynamicColumn, value: str) -> None:
+    if should_preserve_existing(row.get(column.name, ""), column.policy):
+        return
+    row[column.name] = value
+
+
+def fetch_source_raw_text(url: str, cache: dict[str, FetchResult]) -> FetchResult:
     if url in cache:
         return cache[url]
-
     request = urllib.request.Request(
         f"https://r.jina.ai/{url}",
         headers={
@@ -379,26 +459,55 @@ def fetch_source_raw_text(url: str, cache: dict[str, str]) -> str:
     key = jina_api_key().strip()
     if key:
         request.add_header("Authorization", f"Bearer {key}")
-
     try:
         with urllib.request.urlopen(request, timeout=30) as response:
-            text = response.read().decode("utf-8", errors="replace").strip()
+            result = FetchResult(text=response.read().decode("utf-8", errors="replace").strip())
     except urllib.error.HTTPError as exc:
-        text = f"[Source fetch failed] {url}\nHTTP {exc.code}: {exc.reason}"
+        result = FetchResult(
+            text=f"[Source fetch failed] {url}\nHTTP {exc.code}: {exc.reason}",
+            status_code=exc.code,
+            error_class="HTTPError",
+            message=str(exc.reason),
+        )
     except urllib.error.URLError as exc:
-        text = f"[Source fetch failed] {url}\n{exc.reason}"
+        result = FetchResult(
+            text=f"[Source fetch failed] {url}\n{exc.reason}",
+            error_class="URLError",
+            message=str(exc.reason),
+        )
     except TimeoutError:
-        text = f"[Source fetch failed] {url}\nTimed out."
+        result = FetchResult(
+            text=f"[Source fetch failed] {url}\nTimed out.",
+            error_class="TimeoutError",
+            message="Timed out.",
+        )
+    cache[url] = result
+    return result
 
-    cache[url] = text
-    return text
 
-
-def combine_source_raw_text(urls: list[str], cache: dict[str, str]) -> str:
+def combine_source_raw_text(
+    urls: list[str],
+    *,
+    key: str,
+    row_number: int,
+    cache: dict[str, FetchResult],
+    issues: list[SourceFetchIssue],
+) -> str:
     parts: list[str] = []
     for url in urls:
-        raw_text = fetch_source_raw_text(url, cache)
-        parts.append(f"URL: {url}\n{raw_text}".strip())
+        raw_result = fetch_source_raw_text(url, cache)
+        if raw_result.is_error:
+            issues.append(
+                SourceFetchIssue(
+                    row_number=row_number,
+                    key=key,
+                    url=url,
+                    status_code=raw_result.status_code,
+                    error_class=raw_result.error_class,
+                    message=raw_result.message,
+                )
+            )
+        parts.append(f"URL: {url}\n{raw_result.text}".strip())
     return "\n\n".join(parts).strip()
 
 
@@ -446,7 +555,7 @@ def apply_auto_tags(
     key_header: str,
     headers: list[str],
     object_type: str,
-    tag_column: str,
+    tag_column: DynamicColumn,
     excluded_columns: set[str],
 ) -> None:
     minimum_tags, maximum_tags = recommended_tag_bounds(len(rows))
@@ -477,14 +586,13 @@ Rows:
         raise ValueError("Tag response is missing a valid `tags` list.")
     if not isinstance(assignments, dict):
         raise ValueError("Tag response is missing `assignments`.")
-
     allowed_tags = {tag.strip() for tag in tags}
     for index, row in enumerate(rows, start=1):
         values = assignments.get(f"row-{index}", [])
         if not isinstance(values, list):
             continue
         normalized = [tag.strip() for tag in values if isinstance(tag, str) and tag.strip() in allowed_tags]
-        row[tag_column] = ", ".join(dict.fromkeys(normalized))
+        apply_dynamic_value(row, tag_column, ", ".join(dict.fromkeys(normalized)))
 
 
 def apply_nearest_neighbours(
@@ -493,7 +601,7 @@ def apply_nearest_neighbours(
     key_header: str,
     headers: list[str],
     object_type: str,
-    nearest_column: str,
+    nearest_column: DynamicColumn,
     excluded_columns: set[str],
 ) -> None:
     row_payload = row_context_payload(rows, key_header=key_header, headers=headers, excluded_columns=excluded_columns)
@@ -518,7 +626,6 @@ Rows:
     neighbours = data.get("neighbors")
     if not isinstance(neighbours, dict):
         raise ValueError("Nearest-neighbour response is missing `neighbors`.")
-
     labels = {f"row-{index}": row.get(key_header, "").strip() or f"Row {index}" for index, row in enumerate(rows, start=1)}
     for row_id, row in labels.items():
         raw_matches = neighbours.get(row_id, [])
@@ -533,7 +640,7 @@ Rows:
                 matches.append(label)
             if len(matches) == 3:
                 break
-        rows[int(row_id.split("-")[1]) - 1][nearest_column] = ", ".join(matches)
+        apply_dynamic_value(rows[int(row_id.split("-")[1]) - 1], nearest_column, ", ".join(matches))
 
 
 def render_markdown(
@@ -546,6 +653,9 @@ def render_markdown(
     started_at: datetime,
     processed_rows: int,
     failures: list[Failure],
+    skipped_rows: list[str],
+    source_fetch_issues: list[SourceFetchIssue],
+    notion_export_result: dict[str, object] | None,
 ) -> str:
     key_header = headers[0]
     object_type = object_type_from_header(key_header)
@@ -570,12 +680,32 @@ def render_markdown(
     lines.extend([f"- {column}" for column in attribute_columns] or ["- none"])
     lines.extend(["", "## Merged Table", ""])
     lines.extend(render_markdown_table(headers, rows))
-
+    lines.extend(["", "## Skipped Rows", ""])
+    lines.extend([f"- {row}" for row in skipped_rows] or ["- none"])
+    lines.extend(["", "## Source Fetch Issues", ""])
+    if source_fetch_issues:
+        for issue in source_fetch_issues:
+            status = f"HTTP {issue.status_code}" if issue.status_code is not None else issue.error_class
+            lines.append(f"- Row {issue.row_number}: {issue.key} | {status} | {issue.url}")
+            if issue.message:
+                lines.append(f"  - {issue.message}")
+    else:
+        lines.append("- none")
+    if notion_export_result:
+        lines.extend(
+            [
+                "",
+                "## Notion Export",
+                "",
+                f"- Database ID: {notion_export_result.get('database_id', '')}",
+                f"- Data Source ID: {notion_export_result.get('data_source_id', '')}",
+                f"- URL: {notion_export_result.get('database_url', '') or 'not returned'}",
+            ]
+        )
     if processed_rows < len(rows):
         lines.extend(["", "## Pending Rows", ""])
         for row in rows[processed_rows:]:
             lines.append(f"- {row.get(key_header, '').strip() or '[blank]'}")
-
     lines.extend(["", "## Failed Responses", ""])
     if failures:
         for failure in failures:
@@ -587,11 +717,10 @@ def render_markdown(
                 lines.extend(["", f"_Note: {failure.error}_"])
             if failure.sources:
                 lines.extend(["", "Sources:"])
-                lines.extend(f"- {url}" for url in failure.sources[:5])
+                lines.extend(f"- {url}" for url in failure.sources[:10])
             lines.append("")
     else:
         lines.extend(["None.", ""])
-
     return "\n".join(lines).rstrip() + "\n"
 
 
@@ -606,6 +735,9 @@ def write_output(
     started_at: datetime,
     processed_rows: int,
     failures: list[Failure],
+    skipped_rows: list[str],
+    source_fetch_issues: list[SourceFetchIssue],
+    notion_export_result: dict[str, object] | None,
 ) -> None:
     path.write_text(
         render_markdown(
@@ -618,9 +750,241 @@ def write_output(
             started_at=started_at,
             processed_rows=processed_rows,
             failures=failures,
+            skipped_rows=skipped_rows,
+            source_fetch_issues=source_fetch_issues,
+            notion_export_result=notion_export_result,
         ),
         encoding="utf-8",
     )
+
+
+def normalize_dataset(
+    headers: list[str],
+    rows: list[dict[str, str]],
+    *,
+    key_header: str,
+    question_columns: list[str],
+    source_column: str | None,
+    source_raw_column: str | None,
+    tag_column: str | None,
+    nearest_column: str | None,
+) -> NormalizationProfile:
+    url_like_columns = detect_url_like_columns(headers, rows, source_column=source_column)
+    list_like_columns = detect_list_like_columns(
+        headers,
+        rows,
+        question_columns=question_columns,
+        known_columns={column for column in [source_column, tag_column, nearest_column] if column},
+    )
+    long_text_columns = detect_long_text_columns(headers, rows, source_raw_column=source_raw_column)
+
+    canonical_maps: dict[str, dict[str, str]] = {}
+    for header in headers:
+        if header == key_header:
+            continue
+        if header in long_text_columns or header in question_columns:
+            continue
+        observed_items: list[str] = []
+        for row in rows:
+            value = row.get(header, "").strip()
+            if not value:
+                continue
+            items = split_and_clean_items(value, url_mode=header in url_like_columns)
+            observed_items.extend(items if header in list_like_columns or header in url_like_columns else items[:1])
+        canonical_maps[header] = build_canonical_map(observed_items, url_mode=header in url_like_columns)
+
+    for row in rows:
+        for header in headers:
+            if header == key_header:
+                continue
+            value = row.get(header, "").strip()
+            if not value:
+                continue
+            if header in long_text_columns:
+                row[header] = value.strip()
+                continue
+            if header in url_like_columns:
+                items = split_and_clean_items(value, url_mode=True)
+                row[header] = ",".join(canonical_maps.get(header, {}).get(item, item) for item in items)
+                continue
+            if header in list_like_columns:
+                items = split_and_clean_items(value, url_mode=False)
+                mapped = [canonical_maps.get(header, {}).get(item, item) for item in items]
+                row[header] = ",".join(dict.fromkeys(mapped))
+                continue
+            normalized_scalar = normalize_scalar_value(value)
+            row[header] = canonical_maps.get(header, {}).get(normalized_scalar, normalized_scalar)
+
+    return NormalizationProfile(
+        list_like_columns=list_like_columns,
+        url_like_columns=url_like_columns,
+        long_text_columns=long_text_columns,
+    )
+
+
+def detect_url_like_columns(headers: list[str], rows: list[dict[str, str]], *, source_column: str | None) -> set[str]:
+    result: set[str] = set()
+    if source_column:
+        result.add(source_column)
+    for header in headers[1:]:
+        values = [row.get(header, "").strip() for row in rows if row.get(header, "").strip()]
+        if not values:
+            continue
+        score = sum(1 for value in values[:25] if len(extract_urls(value)) > 0)
+        if score and score >= max(2, len(values[:25]) // 2):
+            result.add(header)
+    return result
+
+
+def detect_list_like_columns(
+    headers: list[str],
+    rows: list[dict[str, str]],
+    *,
+    question_columns: list[str],
+    known_columns: set[str],
+) -> set[str]:
+    result = set(known_columns)
+    for header in headers[1:]:
+        if header in question_columns:
+            continue
+        values = [row.get(header, "").strip() for row in rows if row.get(header, "").strip()]
+        if not values:
+            continue
+        delimiter_hits = sum(1 for value in values[:25] if re.search(r"\s*(?:/|\+|,|;)\s*", value))
+        if delimiter_hits >= max(2, len(values[:25]) // 3):
+            result.add(header)
+    return result
+
+
+def detect_long_text_columns(headers: list[str], rows: list[dict[str, str]], *, source_raw_column: str | None) -> set[str]:
+    result: set[str] = set()
+    if source_raw_column:
+        result.add(source_raw_column)
+    for header in headers[1:]:
+        values = [row.get(header, "").strip() for row in rows if row.get(header, "").strip()]
+        if not values:
+            continue
+        avg_length = sum(len(value) for value in values[:25]) / len(values[:25])
+        multiline = any("\n" in value for value in values[:25])
+        if avg_length > 180 or multiline:
+            result.add(header)
+    return result
+
+
+def build_canonical_map(values: list[str], *, url_mode: bool) -> dict[str, str]:
+    canonical_map: dict[str, str] = {}
+    canonicals: list[str] = []
+    for value in values:
+        candidate = normalize_url_value(value) if url_mode else normalize_scalar_value(value)
+        if not candidate:
+            continue
+        match = best_canonical(candidate, canonicals)
+        if match is None:
+            canonicals.append(candidate)
+            canonical_map[candidate] = candidate
+            continue
+        canonical_map[candidate] = match
+    return canonical_map
+
+
+def best_canonical(candidate: str, canonicals: list[str]) -> str | None:
+    lowered = candidate.lower()
+    for canonical in canonicals:
+        if canonical.lower() == lowered:
+            return canonical
+    best_score = 0.0
+    best_value: str | None = None
+    for canonical in canonicals:
+        score = fuzz.ratio(candidate.lower(), canonical.lower())
+        if score > best_score:
+            best_score = score
+            best_value = canonical
+    if best_score >= 92:
+        return best_value
+    return None
+
+
+def split_and_clean_items(value: str, *, url_mode: bool) -> list[str]:
+    if url_mode:
+        urls = [normalize_url_value(url) for url in extract_urls(value)]
+        return [url for url in dict.fromkeys(urls) if url]
+    working = replace_markdown_links_with_labels(value)
+    working = REF_RE.sub("", working)
+    working = re.sub(r"\((?:https?://|www\.)[^)]+\)", "", working)
+    working = re.sub(r"\([^)]*\.[^)]*\)", "", working)
+    working = re.sub(r"\s*(?:/|\+|;)\s*", ",", working)
+    working = re.sub(r"\s*,\s*", ",", working.strip())
+    parts = [normalize_scalar_value(part) for part in working.split(",")]
+    return [part for part in dict.fromkeys(parts) if part]
+
+
+def normalize_scalar_value(value: str) -> str:
+    text = value.strip()
+    if not text:
+        return ""
+    urls = extract_urls(text)
+    if urls and len(urls) == 1 and len(text) < 140:
+        return normalize_url_value(urls[0])
+    text = replace_markdown_links_with_labels(text)
+    text = REF_RE.sub("", text)
+    text = re.sub(r"\((?:https?://|www\.)[^)]+\)", "", text).strip()
+    text = re.sub(r"\([^)]*\.[^)]*\)", "", text).strip()
+    text = re.sub(r"\s+", " ", text)
+
+    cookbook = {
+        "operational": "Operational",
+        "recs": "Recommendation",
+        "species lists": "Species lists",
+        "metrics": "Metrics",
+        "shotgun": "Shotgun",
+        "env assets": "env assets",
+    }
+    lowered = text.lower()
+    if lowered in cookbook:
+        return cookbook[lowered]
+    if lowered == "recs+env assets":
+        return "Recommendation,env assets"
+    if re.fullmatch(r"[A-Z0-9]{2,}", text):
+        return text
+    if text.islower() and len(text.split()) <= 4:
+        return " ".join(word if word.isupper() else word.capitalize() for word in text.split())
+    return text
+
+
+def replace_markdown_links_with_labels(text: str) -> str:
+    return MARKDOWN_LINK_RE.sub(lambda match: match.group(1), text)
+
+
+def extract_urls(text: str) -> list[str]:
+    urls = [match.group(0) for match in URL_RE.finditer(text or "")]
+    urls.extend(match.group(2) for match in MARKDOWN_LINK_RE.finditer(text or ""))
+    normalized = [normalize_url_value(url) for url in urls]
+    return [url for url in dict.fromkeys(normalized) if url]
+
+
+def normalize_url_value(value: str) -> str:
+    text = value.strip().strip("[]()")
+    if not text:
+        return ""
+    if text.startswith("www."):
+        text = f"https://{text}"
+    elif not re.match(r"^[a-z]+://", text, re.IGNORECASE):
+        text = f"https://{text}"
+    parsed = urllib.parse.urlparse(text)
+    host = parsed.netloc.lower()
+    path = parsed.path or ""
+    query_pairs = urllib.parse.parse_qsl(parsed.query, keep_blank_values=False)
+    filtered_query = [(key, val) for key, val in query_pairs if not key.lower().startswith("utm_")]
+    query = urllib.parse.urlencode(filtered_query)
+    rebuilt = urllib.parse.urlunparse(("https", host, path.rstrip("/"), "", query, ""))
+    return rebuilt.rstrip("/") if rebuilt.endswith("/") and path in {"", "/"} else rebuilt
+
+
+def generate_record_id(key: str, row_index: int) -> str:
+    safe = re.sub(r"[^a-z0-9]+", "-", key.strip().lower()).strip("-")
+    if not safe:
+        safe = f"row-{row_index}"
+    return f"{safe}-{row_index}"
 
 
 def run_research_dataset(
@@ -631,6 +995,12 @@ def run_research_dataset(
     options: ResearchOptions | None = None,
 ) -> dict[str, object]:
     options = (options or ResearchOptions()).normalized()
+    if options.export_to_notion:
+        if not notion_api_token().strip():
+            raise ValueError("Set a Notion API Token in Settings before exporting to Notion.")
+        if not notion_parent_page().strip():
+            raise ValueError("Set a Notion Parent Page ID or URL in Settings before exporting to Notion.")
+
     headers = list(dataset.headers)
     rows = [dict(row) for row in dataset.rows]
     question_columns = [column for column in dataset.question_columns if column in headers[1:]]
@@ -638,23 +1008,34 @@ def run_research_dataset(
     key_header = headers[0]
     object_type = object_type_from_header(key_header)
 
-    source_column: str | None = None
-    source_raw_column: str | None = None
-    tag_column: str | None = None
-    nearest_column: str | None = None
+    source_column: DynamicColumn | None = None
+    source_raw_column: DynamicColumn | None = None
+    tag_column: DynamicColumn | None = None
+    nearest_column: DynamicColumn | None = None
+    record_id_column: DynamicColumn | None = None
 
     if options.include_sources:
-        source_column = add_dynamic_column(headers, rows, "Sources")
-        attribute_columns.append(source_column)
+        source_column = resolve_dynamic_column(headers, rows, SOURCE_COLUMN, options.source_column_policy)
+        if source_column.name not in attribute_columns:
+            attribute_columns.append(source_column.name)
     if options.include_source_raw:
-        source_raw_column = add_dynamic_column(headers, rows, "Sources[RAW]")
-        attribute_columns.append(source_raw_column)
+        source_raw_column = resolve_dynamic_column(headers, rows, SOURCE_RAW_COLUMN, options.source_raw_column_policy)
+        if source_raw_column.name not in attribute_columns:
+            attribute_columns.append(source_raw_column.name)
 
     started_at = datetime.now().astimezone()
-    output_path = choose_output_path(started_at, build_output_label(dataset.source_name, headers), output_dir)
+    output_path = choose_output_path(
+        started_at,
+        build_output_label(dataset.source_name, headers),
+        output_dir,
+        explicit_path=options.output_path,
+    )
     failures: list[Failure] = []
+    skipped_rows: list[str] = []
+    source_fetch_issues: list[SourceFetchIssue] = []
+    notion_export_result: dict[str, object] | None = None
     processed_rows = 0
-    source_raw_cache: dict[str, str] = {}
+    source_raw_cache: dict[str, FetchResult] = {}
 
     write_output(
         output_path,
@@ -667,19 +1048,29 @@ def run_research_dataset(
         started_at,
         processed_rows,
         failures,
+        skipped_rows,
+        source_fetch_issues,
+        notion_export_result,
     )
 
     question_set = set(question_columns)
+    excluded_research_columns = {column.name for column in [source_column, source_raw_column] if column is not None}
+    if options.auto_tagging:
+        excluded_research_columns.add(TAG_COLUMN)
+    if options.nearest_neighbour:
+        excluded_research_columns.add(f"Closest {object_type.title()}")
+    if options.export_to_notion:
+        excluded_research_columns.add(RECORD_ID_COLUMN)
+    research_columns = [header for header in dataset.headers[1:] if header not in excluded_research_columns]
     for index, row in enumerate(rows, start=1):
         key = row.get(key_header, "").strip() or f"Row {index}"
         if progress:
             progress(index - 1, len(rows), key)
-        research_columns = [
-            header for header in headers[1:] if header not in {source_column, source_raw_column, tag_column, nearest_column}
-        ]
         missing_columns = [header for header in research_columns if not row.get(header, "").strip()]
         sources: list[str] = []
-        if missing_columns:
+        if not missing_columns:
+            skipped_rows.append(key)
+        else:
             try:
                 updates, raw_text, sources, error = research_row(row, key_header, missing_columns, question_set)
                 if updates is not None:
@@ -706,10 +1097,20 @@ def run_research_dataset(
                     )
                 )
 
-        if source_column is not None:
-            row[source_column] = "\n".join(sources)
-        if source_raw_column is not None and sources:
-            row[source_raw_column] = combine_source_raw_text(sources, source_raw_cache)
+        if source_column is not None and sources:
+            apply_dynamic_value(row, source_column, "\n".join(sources))
+        if (
+            source_raw_column is not None
+            and sources
+            and not should_preserve_existing(row.get(source_raw_column.name, ""), source_raw_column.policy)
+        ):
+            row[source_raw_column.name] = combine_source_raw_text(
+                sources,
+                key=key,
+                row_number=index,
+                cache=source_raw_cache,
+                issues=source_fetch_issues,
+            )
 
         processed_rows = index
         write_output(
@@ -723,15 +1124,19 @@ def run_research_dataset(
             started_at,
             processed_rows,
             failures,
+            skipped_rows,
+            source_fetch_issues,
+            notion_export_result,
         )
         if progress:
             progress(index, len(rows), key)
 
-    excluded_columns = {column for column in [source_raw_column] if column}
+    excluded_columns = {column.name for column in [source_raw_column] if column}
 
     if options.auto_tagging:
-        tag_column = add_dynamic_column(headers, rows, "Tags")
-        attribute_columns.append(tag_column)
+        tag_column = resolve_dynamic_column(headers, rows, TAG_COLUMN, options.tag_column_policy)
+        if tag_column.name not in attribute_columns:
+            attribute_columns.append(tag_column.name)
         try:
             apply_auto_tags(
                 rows,
@@ -746,15 +1151,16 @@ def run_research_dataset(
                 Failure(
                     row_number=None,
                     key="Auto Tagging",
-                    columns=[tag_column],
+                    columns=[tag_column.name],
                     raw_text=f"[Auto tagging failed] {exc}",
                     error=str(exc),
                 )
             )
 
     if options.nearest_neighbour and tag_column is not None:
-        nearest_column = add_dynamic_column(headers, rows, f"Closest {object_type.title()}")
-        attribute_columns.append(nearest_column)
+        nearest_column = resolve_dynamic_column(headers, rows, f"Closest {object_type.title()}", options.nearest_column_policy)
+        if nearest_column.name not in attribute_columns:
+            attribute_columns.append(nearest_column.name)
         try:
             apply_nearest_neighbours(
                 rows,
@@ -769,8 +1175,55 @@ def run_research_dataset(
                 Failure(
                     row_number=None,
                     key="Nearest Neighbour",
-                    columns=[nearest_column],
+                    columns=[nearest_column.name],
                     raw_text=f"[Nearest-neighbour analysis failed] {exc}",
+                    error=str(exc),
+                )
+            )
+
+    if options.export_to_notion:
+        record_id_column = resolve_dynamic_column(headers, rows, RECORD_ID_COLUMN, options.record_id_column_policy)
+        if record_id_column.name not in attribute_columns:
+            attribute_columns.append(record_id_column.name)
+        for index, row in enumerate(rows, start=1):
+            if should_preserve_existing(row.get(record_id_column.name, ""), record_id_column.policy):
+                continue
+            row[record_id_column.name] = generate_record_id(row.get(key_header, ""), index)
+
+    normalization_profile = normalize_dataset(
+        headers,
+        rows,
+        key_header=key_header,
+        question_columns=question_columns,
+        source_column=source_column.name if source_column else None,
+        source_raw_column=source_raw_column.name if source_raw_column else None,
+        tag_column=tag_column.name if tag_column else None,
+        nearest_column=nearest_column.name if nearest_column else None,
+    )
+
+    if options.export_to_notion:
+        try:
+            notion_export_result = export_dataset_to_notion(
+                title=build_output_label(dataset.source_name, headers),
+                headers=headers,
+                rows=rows,
+                key_header=key_header,
+                sources_column=source_column.name if source_column else None,
+                source_raw_column=source_raw_column.name if source_raw_column else None,
+                tags_column=tag_column.name if tag_column else None,
+                nearest_column=nearest_column.name if nearest_column else None,
+                record_id_column=record_id_column.name if record_id_column else None,
+                list_like_columns=normalization_profile.list_like_columns,
+                url_like_columns=normalization_profile.url_like_columns,
+                long_text_columns=normalization_profile.long_text_columns,
+            )
+        except Exception as exc:
+            failures.append(
+                Failure(
+                    row_number=None,
+                    key="Notion Export",
+                    columns=[],
+                    raw_text=f"[Notion export failed] {exc}",
                     error=str(exc),
                 )
             )
@@ -786,8 +1239,10 @@ def run_research_dataset(
         started_at,
         len(rows),
         failures,
+        skipped_rows,
+        source_fetch_issues,
+        notion_export_result,
     )
-
     return {
         "output_path": str(output_path),
         "detected_format": dataset.detected_format,
@@ -830,5 +1285,7 @@ def run_self_tests() -> None:
     assert object_type_from_header("company name") == "company"
     assert object_type_from_header("research_concept") == "research concept"
     assert make_explicit_question("legal form", "OpenAI", "company") == "What is the legal form of the company OpenAI?"
-    headers = ["Name", "Sources", "Tags"]
-    assert unique_header_name(headers, "Sources") == "Sources 2"
+    assert unique_header_name(["Name", "Sources"], "Sources") == "Sources 2"
+    assert split_and_clean_items("water/air/soil", url_mode=False) == ["Water", "Air", "Soil"]
+    assert split_and_clean_items("shotgun+16S/18S+LR", url_mode=False) == ["Shotgun", "16S", "18S", "LR"]
+    assert normalize_url_value("[mywebsite.com](http://mywebsite.com)".replace("[", "").replace("]", "")) == "https://mywebsite.com"

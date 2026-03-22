@@ -142,6 +142,17 @@ private func chooseFiles(allowsMultiple: Bool, allowedContentTypes: [UTType] = [
 }
 
 @MainActor
+private func chooseSavePath(startingAt path: String, allowedContentTypes: [UTType] = [.plainText]) -> String? {
+    let panel = NSSavePanel()
+    panel.canCreateDirectories = true
+    panel.allowedContentTypes = allowedContentTypes
+    let url = URL(fileURLWithPath: path)
+    panel.directoryURL = url.deletingLastPathComponent()
+    panel.nameFieldStringValue = url.lastPathComponent
+    return panel.runModal() == .OK ? panel.url?.path : nil
+}
+
+@MainActor
 private func copyToPasteboard(_ text: String) {
     let pasteboard = NSPasteboard.general
     pasteboard.clearContents()
@@ -158,11 +169,117 @@ private func openURL(_ url: URL) {
     NSWorkspace.shared.open(url)
 }
 
+private func sanitizedOutputSlug(_ text: String) -> String {
+    let slug = text.lowercased()
+        .replacingOccurrences(of: "[^a-z0-9]+", with: "-", options: .regularExpression)
+        .trimmingCharacters(in: CharacterSet(charactersIn: "-"))
+    return slug.isEmpty ? "research" : slug
+}
+
+private func suggestedResearchOutputPath(label: String) -> String {
+    let formatter = DateFormatter()
+    formatter.dateFormat = "yyyy-MM-dd_HH-mm"
+    let fileName = "\(formatter.string(from: Date()))-\(sanitizedOutputSlug(label)).md"
+    return FileManager.default.homeDirectoryForCurrentUser
+        .appendingPathComponent("Desktop", isDirectory: true)
+        .appendingPathComponent(fileName)
+        .path
+}
+
+private enum GeneratedColumnPolicy: String, CaseIterable, Identifiable {
+    case merge
+    case overwrite
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .merge: "Merge"
+        case .overwrite: "Overwrite"
+        }
+    }
+}
+
+private struct CopyableTagList: View {
+    let title: String
+    let values: [String]
+    private let columns = [GridItem(.adaptive(minimum: 140), alignment: .leading)]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text(title)
+                    .font(.subheadline.weight(.semibold))
+                Spacer()
+                Button("Copy all") {
+                    copyToPasteboard(values.joined(separator: "\n"))
+                }
+                .disabled(values.isEmpty)
+            }
+            if values.isEmpty {
+                Text("None")
+                    .foregroundStyle(.secondary)
+            } else {
+                LazyVGrid(columns: columns, alignment: .leading, spacing: 8) {
+                    ForEach(values, id: \.self) { value in
+                        HStack(spacing: 6) {
+                            Text(value)
+                                .textSelection(.enabled)
+                                .lineLimit(nil)
+                            Button {
+                                copyToPasteboard(value)
+                            } label: {
+                                Image(systemName: "doc.on.doc")
+                            }
+                            .buttonStyle(.plain)
+                        }
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(Capsule(style: .continuous).fill(.tertiary.opacity(0.55)))
+                    }
+                }
+            }
+        }
+    }
+}
+
+private struct OutputPathCard: View {
+    let defaultPath: String
+    @Binding var outputPath: String
+
+    var body: some View {
+        SectionCard(title: "Output") {
+            TextField("Output Path", text: $outputPath)
+                .textFieldStyle(.roundedBorder)
+                .font(.body.monospaced())
+            HStack {
+                Button("Choose…") {
+                    if let chosen = chooseSavePath(startingAt: outputPath.isEmpty ? defaultPath : outputPath) {
+                        outputPath = chosen
+                    }
+                }
+                Button("Reset") {
+                    outputPath = defaultPath
+                }
+                Spacer()
+                Text("Edit this path to override the generated markdown file name.")
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+}
+
 private struct ResearchRunOptionsState {
     var includeSources = false
     var includeSourceRaw = false
     var autoTagging = false
     var nearestNeighbour = false
+    var exportToNotion = false
+    var sourcePolicy: GeneratedColumnPolicy = .merge
+    var sourceRawPolicy: GeneratedColumnPolicy = .merge
+    var tagPolicy: GeneratedColumnPolicy = .merge
+    var nearestPolicy: GeneratedColumnPolicy = .merge
+    var recordIDPolicy: GeneratedColumnPolicy = .merge
 
     mutating func setIncludeSources(_ value: Bool) {
         includeSources = value
@@ -192,18 +309,26 @@ private struct ResearchRunOptionsState {
         }
     }
 
-    var payload: [String: Bool] {
+    var payload: [String: Any] {
         [
             "include_sources": includeSources || includeSourceRaw,
             "include_source_raw": includeSourceRaw,
             "auto_tagging": autoTagging || nearestNeighbour,
             "nearest_neighbour": nearestNeighbour,
+            "export_to_notion": exportToNotion,
+            "source_column_policy": sourcePolicy.rawValue,
+            "source_raw_column_policy": sourceRawPolicy.rawValue,
+            "tag_column_policy": tagPolicy.rawValue,
+            "nearest_column_policy": nearestPolicy.rawValue,
+            "record_id_column_policy": recordIDPolicy.rawValue,
         ]
     }
 }
 
 private struct ResearchOptionsCard: View {
     @Binding var options: ResearchRunOptionsState
+    let collisions: Set<String>
+    let objectType: String
 
     var body: some View {
         SectionCard(title: "Options") {
@@ -223,9 +348,32 @@ private struct ResearchOptionsCard: View {
                 get: { options.nearestNeighbour },
                 set: { options.setNearestNeighbour($0) }
             ))
+            Toggle("Export to Notion", isOn: $options.exportToNotion)
+            collisionControl(title: "Sources", enabled: options.includeSources, selection: $options.sourcePolicy)
+            collisionControl(title: "Sources[RAW]", enabled: options.includeSourceRaw, selection: $options.sourceRawPolicy)
+            collisionControl(title: "Tags", enabled: options.autoTagging || options.nearestNeighbour, selection: $options.tagPolicy)
+            collisionControl(title: "Closest \(objectType.capitalized)", enabled: options.nearestNeighbour, selection: $options.nearestPolicy)
+            collisionControl(title: "Record ID", enabled: options.exportToNotion, selection: $options.recordIDPolicy)
             Text("`Sources[RAW]` fetches source pages through Jina and can make the output much larger. `Nearest Neighbour` uses a second pass over the generated table and depends on `Auto Tagging`.")
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    @ViewBuilder
+    private func collisionControl(title: String, enabled: Bool, selection: Binding<GeneratedColumnPolicy>) -> some View {
+        if enabled && collisions.contains(title) {
+            HStack {
+                Text("\(title) exists")
+                    .foregroundStyle(.secondary)
+                Picker("", selection: selection) {
+                    ForEach(GeneratedColumnPolicy.allCases) { policy in
+                        Text(policy.title).tag(policy)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .frame(maxWidth: 220)
+            }
         }
     }
 }
@@ -238,12 +386,32 @@ struct ResearchListWindow: View {
     @State private var question = ""
     @State private var isRunning = false
     @State private var status = "Paste a list or drop a UTF-8 text file."
-    @State private var outputPath: String?
+    @State private var outputPath = ""
     @State private var errorText: String?
     @State private var options = ResearchRunOptionsState()
 
     private var parsedItems: [String] {
         InputNormalizer.parseResearchItems(inputText)
+    }
+
+    private var defaultOutputPath: String {
+        let label = question.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "research-list" : question
+        return suggestedResearchOutputPath(label: label)
+    }
+
+    private var detectedHeaders: [String] {
+        let trimmed = question.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return ["Item"] }
+        let header = trimmed.hasSuffix("?") ? trimmed : "\(trimmed)?"
+        return ["Item", header]
+    }
+
+    private var collisionColumns: Set<String> {
+        Set(detectedHeaders)
+    }
+
+    private var hasWrittenOutput: Bool {
+        !outputPath.isEmpty && FileManager.default.fileExists(atPath: outputPath)
     }
 
     var body: some View {
@@ -266,9 +434,12 @@ struct ResearchListWindow: View {
                         TextField("Question", text: $question)
                         Text("\(parsedItems.count) parsed item(s)")
                             .foregroundStyle(.secondary)
+                        CopyableTagList(title: "Parsed Items", values: parsedItems)
                     }
 
-                    ResearchOptionsCard(options: $options)
+                    OutputPathCard(defaultPath: defaultOutputPath, outputPath: $outputPath)
+
+                    ResearchOptionsCard(options: $options, collisions: collisionColumns, objectType: "item")
 
                     SectionCard(title: "Run") {
                         if isRunning {
@@ -284,7 +455,7 @@ struct ResearchListWindow: View {
                         HStack {
                             Button("Run Research") { run() }
                                 .disabled(isRunning || parsedItems.isEmpty || question.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                            if let outputPath {
+                            if hasWrittenOutput {
                                 Button("Open Output") { openPath(outputPath) }
                             }
                         }
@@ -292,6 +463,10 @@ struct ResearchListWindow: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
+        }
+        .onAppear { seedOutputPathIfNeeded(force: true) }
+        .onChange(of: question) {
+            seedOutputPathIfNeeded(force: false)
         }
     }
 
@@ -301,8 +476,15 @@ struct ResearchListWindow: View {
             inputText = try InputNormalizer.loadTextFile(url)
             status = "Loaded \(url.lastPathComponent)"
             errorText = nil
+            seedOutputPathIfNeeded(force: false)
         } catch {
             errorText = error.localizedDescription
+        }
+    }
+
+    private func seedOutputPathIfNeeded(force: Bool) {
+        if force || outputPath.isEmpty {
+            outputPath = defaultOutputPath
         }
     }
 
@@ -319,13 +501,13 @@ struct ResearchListWindow: View {
                     payload: [
                         "items": items,
                         "question": question,
+                        "output_path": outputPath,
                     ].merging(options.payload) { _, new in new },
                     configuration: try settings.configuration()
                 )
                 outputPath = response.outputPath
                 status = "Wrote \(URL(fileURLWithPath: response.outputPath).lastPathComponent)"
             } catch {
-                outputPath = nil
                 errorText = error.localizedDescription
             }
         }
@@ -342,9 +524,22 @@ struct ResearchTableWindow: View {
     @State private var isRunning = false
     @State private var isInspecting = false
     @State private var status = "Paste a CSV/Markdown table or drop a file."
-    @State private var outputPath: String?
+    @State private var outputPath = ""
     @State private var errorText: String?
     @State private var options = ResearchRunOptionsState()
+
+    private var defaultOutputPath: String {
+        let label = sourceName == "pasted-table" ? "research-table" : URL(fileURLWithPath: sourceName).deletingPathExtension().lastPathComponent
+        return suggestedResearchOutputPath(label: label)
+    }
+
+    private var collisionColumns: Set<String> {
+        Set(preview?.headers ?? [])
+    }
+
+    private var hasWrittenOutput: Bool {
+        !outputPath.isEmpty && FileManager.default.fileExists(atPath: outputPath)
+    }
 
     var body: some View {
         WindowSurface(minWidth: 600) {
@@ -373,12 +568,18 @@ struct ResearchTableWindow: View {
                             Text("Format: \(preview.detectedFormat)")
                             Text("Rows: \(preview.rowCount)")
                             Text("Key column: \(preview.keyHeader)")
-                            Text("Question columns: \(preview.questionColumns.joined(separator: ", ").isEmpty ? "none" : preview.questionColumns.joined(separator: ", "))")
-                            Text("Attribute columns: \(preview.attributeColumns.joined(separator: ", ").isEmpty ? "none" : preview.attributeColumns.joined(separator: ", "))")
+                            CopyableTagList(title: "Question Columns", values: preview.questionColumns)
+                            CopyableTagList(title: "Attribute Columns", values: preview.attributeColumns)
                         }
                     }
 
-                    ResearchOptionsCard(options: $options)
+                    OutputPathCard(defaultPath: defaultOutputPath, outputPath: $outputPath)
+
+                    ResearchOptionsCard(
+                        options: $options,
+                        collisions: collisionColumns,
+                        objectType: preview?.objectType ?? "object"
+                    )
 
                     SectionCard(title: "Run") {
                         if isRunning || isInspecting {
@@ -394,7 +595,7 @@ struct ResearchTableWindow: View {
                         HStack {
                             Button("Run Table Research") { run() }
                                 .disabled(isRunning || inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                            if let outputPath {
+                            if hasWrittenOutput {
                                 Button("Open Output") { openPath(outputPath) }
                             }
                         }
@@ -403,6 +604,7 @@ struct ResearchTableWindow: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
+        .onAppear { seedOutputPathIfNeeded(force: true) }
     }
 
     private func loadTextFile(_ url: URL?) {
@@ -412,6 +614,7 @@ struct ResearchTableWindow: View {
             sourceName = url.lastPathComponent
             status = "Loaded \(url.lastPathComponent)"
             errorText = nil
+            outputPath = defaultOutputPath
             inspectInput()
         } catch {
             errorText = error.localizedDescription
@@ -430,10 +633,17 @@ struct ResearchTableWindow: View {
                     configuration: try settings.configuration()
                 )
                 status = "Detected \(preview?.rowCount ?? 0) row(s)"
+                seedOutputPathIfNeeded(force: false)
             } catch {
                 preview = nil
                 errorText = error.localizedDescription
             }
+        }
+    }
+
+    private func seedOutputPathIfNeeded(force: Bool) {
+        if force || outputPath.isEmpty {
+            outputPath = defaultOutputPath
         }
     }
 
@@ -449,6 +659,7 @@ struct ResearchTableWindow: View {
                     payload: [
                         "raw_table_text": inputText,
                         "source_name": sourceName,
+                        "output_path": outputPath,
                     ].merging(options.payload) { _, new in new },
                     configuration: try settings.configuration()
                 )
@@ -466,7 +677,6 @@ struct ResearchTableWindow: View {
                     objectType: preview?.objectType ?? ""
                 )
             } catch {
-                outputPath = nil
                 errorText = error.localizedDescription
             }
         }
@@ -683,6 +893,14 @@ struct SettingsWindow: View {
                         }
                         SettingsFieldRow(title: "Jina API Key") {
                             SecureField("jina_...", text: $settings.jinaAPIKey)
+                                .textFieldStyle(.roundedBorder)
+                        }
+                        SettingsFieldRow(title: "Notion API Token") {
+                            SecureField("secret_...", text: $settings.notionToken)
+                                .textFieldStyle(.roundedBorder)
+                        }
+                        SettingsFieldRow(title: "Notion Parent Page") {
+                            TextField("Page URL or UUID", text: $settings.notionParentPage)
                                 .textFieldStyle(.roundedBorder)
                         }
                         SettingsFieldRow(title: "Research model") {

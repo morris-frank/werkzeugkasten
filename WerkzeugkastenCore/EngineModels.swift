@@ -3,6 +3,8 @@ import Foundation
 public struct EngineConfiguration: Equatable, Sendable {
     public var apiKey: String
     public var jinaAPIKey: String
+    public var notionToken: String
+    public var notionParentPage: String
     public var researchModel: String
     public var summaryModel: String
     public var pythonInterpreterPath: String
@@ -10,12 +12,16 @@ public struct EngineConfiguration: Equatable, Sendable {
     public init(
         apiKey: String,
         jinaAPIKey: String,
+        notionToken: String,
+        notionParentPage: String,
         researchModel: String,
         summaryModel: String,
         pythonInterpreterPath: String
     ) {
         self.apiKey = apiKey
         self.jinaAPIKey = jinaAPIKey
+        self.notionToken = notionToken
+        self.notionParentPage = notionParentPage
         self.researchModel = researchModel
         self.summaryModel = summaryModel
         self.pythonInterpreterPath = pythonInterpreterPath

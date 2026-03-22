@@ -15,8 +15,11 @@ MAX_SLUG_LENGTH = 48
 RESEARCH_MODEL_ENV = "WERKZEUGKASTEN_RESEARCH_MODEL"
 SUMMARY_MODEL_ENV = "WERKZEUGKASTEN_SUMMARY_MODEL"
 JINA_API_KEY_ENV = "WERKZEUGKASTEN_JINA_API_KEY"
+NOTION_API_TOKEN_ENV = "WERKZEUGKASTEN_NOTION_API_TOKEN"
+NOTION_PARENT_PAGE_ENV = "WERKZEUGKASTEN_NOTION_PARENT_PAGE"
 DEFAULT_RESEARCH_MODEL = "gpt-5.4"
 DEFAULT_SUMMARY_MODEL = "gpt-5.4"
+LATEST_NOTION_VERSION = "2026-03-11"
 
 
 def current_timezone() -> str:
@@ -54,6 +57,14 @@ def jina_api_key() -> str:
     return os.environ.get(JINA_API_KEY_ENV, "") or os.environ.get("JINA_API_KEY", "") or os.environ.get("JINA_API_TOKEN", "")
 
 
+def notion_api_token() -> str:
+    return os.environ.get(NOTION_API_TOKEN_ENV, "") or os.environ.get("NOTION_API_TOKEN", "") or os.environ.get("NOTION_TOKEN", "")
+
+
+def notion_parent_page() -> str:
+    return os.environ.get(NOTION_PARENT_PAGE_ENV, "") or os.environ.get("NOTION_PARENT_PAGE", "")
+
+
 def reasoning_for_model(model: str) -> dict[str, Any] | None:
     normalized = model.strip().lower()
     if normalized.startswith("gpt-5"):
@@ -85,7 +96,16 @@ def slugify(text: str) -> str:
     return slug or "research"
 
 
-def choose_output_path(started_at: datetime, label: str, output_dir: Path | None = None) -> Path:
+def choose_output_path(
+    started_at: datetime,
+    label: str,
+    output_dir: Path | None = None,
+    explicit_path: str | Path | None = None,
+) -> Path:
+    if explicit_path:
+        candidate = Path(explicit_path).expanduser()
+        candidate.parent.mkdir(parents=True, exist_ok=True)
+        return candidate
     destination = (output_dir or DEFAULT_OUTPUT_DIR).expanduser()
     destination.mkdir(parents=True, exist_ok=True)
     base_name = f"{started_at.strftime('%Y-%m-%d_%H-%M')}-{slugify(label)}"

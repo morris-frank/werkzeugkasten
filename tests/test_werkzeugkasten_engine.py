@@ -33,6 +33,13 @@ class ResearchListTests(unittest.TestCase):
             second = choose_output_path(datetime(2026, 3, 21), "Hello", Path(tmpdir))
             self.assertTrue(second.name.endswith("-2.md"))
 
+    def test_choose_output_path_uses_explicit_path(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            explicit = Path(tmpdir) / "custom" / "result.md"
+            selected = choose_output_path(datetime(2026, 3, 21), "Hello", explicit_path=explicit)
+            self.assertEqual(selected, explicit)
+            self.assertTrue(explicit.parent.exists())
+
 
 class ResearchTableTests(unittest.TestCase):
     def test_guess_table_format(self) -> None:
@@ -59,6 +66,102 @@ class ResearchTableTests(unittest.TestCase):
         self.assertTrue(options.include_source_raw)
         self.assertTrue(options.auto_tagging)
         self.assertTrue(options.nearest_neighbour)
+
+    def test_normalization_examples(self) -> None:
+        self.assertEqual(research_table.split_and_clean_items("water/air/soil", url_mode=False), ["Water", "Air", "Soil"])
+        self.assertEqual(research_table.split_and_clean_items("shotgun+16S/18S+LR", url_mode=False), ["Shotgun", "16S", "18S", "LR"])
+        self.assertEqual(research_table.split_and_clean_items("B2B/NGO ([naturemetrics.com](http://naturemetrics.com/))", url_mode=False), ["B2B", "NGO"])
+        self.assertEqual(research_table.normalize_url_value("https://www.useyardstick.com/?utm_source=openai"), "https://www.useyardstick.com")
+
+    def test_run_research_dataset_respects_explicit_output_and_skip_logic(self) -> None:
+        dataset = research_table.make_dataset_shape(
+            source_name="pasted-table",
+            detected_format="csv",
+            headers=["Company", "What do they do?"],
+            rows=[{"Company": "OpenAI", "What do they do?": "AI lab"}],
+        )
+        with tempfile.TemporaryDirectory() as tmpdir:
+            output = Path(tmpdir) / "custom.md"
+            result = research_table.run_research_dataset(
+                dataset,
+                options=research_table.ResearchOptions(output_path=str(output)),
+            )
+            self.assertEqual(result["output_path"], str(output))
+            rendered = output.read_text(encoding="utf-8")
+            self.assertIn("## Skipped Rows", rendered)
+            self.assertIn("- OpenAI", rendered)
+
+    def test_run_research_dataset_merge_preserves_existing_dynamic_values(self) -> None:
+        dataset = research_table.make_dataset_shape(
+            source_name="pasted-table",
+            detected_format="csv",
+            headers=["Company", "What do they do?", "Sources"],
+            rows=[{"Company": "OpenAI", "What do they do?": "", "Sources": "https://existing.example"}],
+        )
+
+        def fake_research_row(*_args, **_kwargs):
+            return ({"What do they do?": "AI lab"}, '{"updates":{}}', ["https://new.example"], "")
+
+        with tempfile.TemporaryDirectory() as tmpdir, patch.object(research_table, "research_row", fake_research_row):
+            output = Path(tmpdir) / "merge.md"
+            research_table.run_research_dataset(
+                dataset,
+                options=research_table.ResearchOptions(
+                    include_sources=True,
+                    source_column_policy="merge",
+                    output_path=str(output),
+                ),
+            )
+            rendered = output.read_text(encoding="utf-8")
+            self.assertIn("https://existing.example", rendered)
+            self.assertNotIn("https://new.example", rendered)
+
+    def test_source_fetch_issues_are_reported(self) -> None:
+        dataset = research_table.make_dataset_shape(
+            source_name="pasted-table",
+            detected_format="csv",
+            headers=["Company", "What do they do?"],
+            rows=[{"Company": "OpenAI", "What do they do?": ""}],
+        )
+
+        def fake_research_row(*_args, **_kwargs):
+            return ({"What do they do?": "AI lab"}, '{"updates":{}}', ["https://blocked.example"], "")
+
+        def fake_fetch(*_args, **_kwargs):
+            return research_table.FetchResult(
+                text="[Source fetch failed] https://blocked.example\nHTTP 403: Forbidden",
+                status_code=403,
+                error_class="HTTPError",
+                message="Forbidden",
+            )
+
+        with tempfile.TemporaryDirectory() as tmpdir, patch.object(research_table, "research_row", fake_research_row), patch.object(research_table, "fetch_source_raw_text", fake_fetch):
+            output = Path(tmpdir) / "source-raw.md"
+            research_table.run_research_dataset(
+                dataset,
+                options=research_table.ResearchOptions(
+                    include_sources=True,
+                    include_source_raw=True,
+                    output_path=str(output),
+                ),
+            )
+            rendered = output.read_text(encoding="utf-8")
+            self.assertIn("## Source Fetch Issues", rendered)
+            self.assertIn("HTTP 403", rendered)
+
+    def test_notion_export_requires_configuration(self) -> None:
+        dataset = research_table.make_dataset_shape(
+            source_name="pasted-table",
+            detected_format="csv",
+            headers=["Company", "What do they do?"],
+            rows=[{"Company": "OpenAI", "What do they do?": "AI lab"}],
+        )
+        with patch.dict(os.environ, {}, clear=True):
+            with self.assertRaisesRegex(ValueError, "Notion API Token"):
+                research_table.run_research_dataset(
+                    dataset,
+                    options=research_table.ResearchOptions(export_to_notion=True),
+                )
 
 
 class CoreTests(unittest.TestCase):
@@ -289,6 +392,7 @@ class CliTests(unittest.TestCase):
         dataset = run_dataset.call_args.args[0]
         self.assertEqual(dataset.headers, ["Item", "What?"])
         self.assertEqual(dataset.question_columns, ["What?"])
+        self.assertTrue(run_dataset.call_args.kwargs["options"].include_sources)
 
     def test_research_list_json_contract(self) -> None:
         with patch(
@@ -318,6 +422,49 @@ class CliTests(unittest.TestCase):
                 "attribute_columns": [],
             },
         )
+
+    def test_research_options_parse_collision_policies(self) -> None:
+        captured: dict[str, object] = {}
+
+        def fake_research_list(items, question, progress=None, options=None):
+            captured["options"] = options
+            return {
+                "output_path": "/tmp/out.md",
+                "item_count": 1,
+                "completed_count": 1,
+                "headers": ["Item", "Question"],
+                "question_columns": ["Question"],
+                "attribute_columns": [],
+            }
+
+        payload = {
+            "items": ["A"],
+            "question": "Q",
+            "include_source_raw": True,
+            "nearest_neighbour": True,
+            "source_column_policy": "overwrite",
+            "source_raw_column_policy": "merge",
+            "tag_column_policy": "overwrite",
+            "nearest_column_policy": "overwrite",
+            "record_id_column_policy": "overwrite",
+            "output_path": "/tmp/custom.md",
+            "export_to_notion": True,
+        }
+        with patch("werkzeugkasten_engine.cli.run_research_list", side_effect=fake_research_list):
+            with patch("sys.stdin", io.StringIO(json.dumps(payload))):
+                stdout = io.StringIO()
+                with redirect_stdout(stdout):
+                    rc = cli_main(["research-list"])
+        self.assertEqual(rc, 0)
+        options = captured["options"]
+        self.assertTrue(options.include_sources)
+        self.assertTrue(options.include_source_raw)
+        self.assertTrue(options.auto_tagging)
+        self.assertTrue(options.nearest_neighbour)
+        self.assertTrue(options.export_to_notion)
+        self.assertEqual(options.output_path, "/tmp/custom.md")
+        self.assertEqual(options.source_column_policy, "overwrite")
+        self.assertEqual(options.tag_column_policy, "overwrite")
 
     def test_summarize_text_json_contract(self) -> None:
         with patch("werkzeugkasten_engine.cli.summarize_text_input", return_value="# Summary\nOk"):

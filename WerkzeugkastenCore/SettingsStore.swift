@@ -6,6 +6,8 @@ import Security
 public final class SettingsStore: ObservableObject {
     @Published public var apiKey: String
     @Published public var jinaAPIKey: String
+    @Published public var notionToken: String
+    @Published public var notionParentPage: String
     @Published public var researchModel: String
     @Published public var summaryModel: String
     @Published public var pythonInterpreterPath: String
@@ -15,6 +17,7 @@ public final class SettingsStore: ObservableObject {
     private let keychainService: String
     private let openAIKeychainAccount: String
     private let jinaKeychainAccount: String
+    private let notionKeychainAccount: String
     private let keychainAccessGroup: String?
 
     public init(
@@ -22,6 +25,7 @@ public final class SettingsStore: ObservableObject {
         keychainService: String = WerkzeugkastenConstants.keychainService,
         openAIKeychainAccount: String = WerkzeugkastenConstants.openAIKeychainAccount,
         jinaKeychainAccount: String = WerkzeugkastenConstants.jinaKeychainAccount,
+        notionKeychainAccount: String = WerkzeugkastenConstants.notionKeychainAccount,
         keychainAccessGroup: String? = nil,
         requireSharedCapabilities _: Bool = false
     ) {
@@ -29,7 +33,9 @@ public final class SettingsStore: ObservableObject {
         self.keychainService = keychainService
         self.openAIKeychainAccount = openAIKeychainAccount
         self.jinaKeychainAccount = jinaKeychainAccount
+        self.notionKeychainAccount = notionKeychainAccount
         self.keychainAccessGroup = keychainAccessGroup
+        self.notionParentPage = Self.loadDefault("notionParentPage", from: self.defaults) ?? ""
         self.researchModel = Self.loadDefault("researchModel", from: self.defaults) ?? WerkzeugkastenConstants.defaultResearchModel
         self.summaryModel = Self.loadDefault("summaryModel", from: self.defaults) ?? WerkzeugkastenConstants.defaultSummaryModel
         self.pythonInterpreterPath = Self.loadDefault("pythonInterpreterPath", from: self.defaults) ?? WerkzeugkastenConstants.defaultPythonInterpreterPath
@@ -65,6 +71,21 @@ public final class SettingsStore: ObservableObject {
                 fallback: resolvedKeychainIssue
             )
         }
+
+        do {
+            self.notionToken = try KeychainStore.load(
+                service: keychainService,
+                account: notionKeychainAccount,
+                accessGroup: keychainAccessGroup
+            ) ?? ""
+        } catch {
+            self.notionToken = ""
+            resolvedKeychainIssue = Self.describeKeychainFailure(
+                error,
+                accessGroup: keychainAccessGroup,
+                fallback: resolvedKeychainIssue
+            )
+        }
         self.keychainIssue = resolvedKeychainIssue
     }
 
@@ -86,10 +107,13 @@ public final class SettingsStore: ObservableObject {
         let normalizedInterpreter = pythonInterpreterPath.trimmingCharacters(in: .whitespacesAndNewlines)
         let normalizedAPIKey = apiKey.trimmingCharacters(in: .whitespacesAndNewlines)
         let normalizedJinaAPIKey = jinaAPIKey.trimmingCharacters(in: .whitespacesAndNewlines)
+        let normalizedNotionToken = notionToken.trimmingCharacters(in: .whitespacesAndNewlines)
+        let normalizedNotionParentPage = notionParentPage.trimmingCharacters(in: .whitespacesAndNewlines)
 
         defaults.set(normalizedResearchModel.isEmpty ? WerkzeugkastenConstants.defaultResearchModel : normalizedResearchModel, forKey: "researchModel")
         defaults.set(normalizedSummaryModel.isEmpty ? WerkzeugkastenConstants.defaultSummaryModel : normalizedSummaryModel, forKey: "summaryModel")
         defaults.set(normalizedInterpreter.isEmpty ? WerkzeugkastenConstants.defaultPythonInterpreterPath : normalizedInterpreter, forKey: "pythonInterpreterPath")
+        defaults.set(normalizedNotionParentPage, forKey: "notionParentPage")
 
         do {
             if normalizedAPIKey.isEmpty {
@@ -103,6 +127,12 @@ public final class SettingsStore: ObservableObject {
             } else {
                 try KeychainStore.save(value: normalizedJinaAPIKey, service: keychainService, account: jinaKeychainAccount, accessGroup: keychainAccessGroup)
             }
+
+            if normalizedNotionToken.isEmpty {
+                try KeychainStore.delete(service: keychainService, account: notionKeychainAccount, accessGroup: keychainAccessGroup)
+            } else {
+                try KeychainStore.save(value: normalizedNotionToken, service: keychainService, account: notionKeychainAccount, accessGroup: keychainAccessGroup)
+            }
         } catch let error as EngineError {
             throw error
         } catch {
@@ -113,6 +143,8 @@ public final class SettingsStore: ObservableObject {
 
         apiKey = normalizedAPIKey
         jinaAPIKey = normalizedJinaAPIKey
+        notionToken = normalizedNotionToken
+        notionParentPage = normalizedNotionParentPage
         researchModel = defaults.string(forKey: "researchModel") ?? WerkzeugkastenConstants.defaultResearchModel
         summaryModel = defaults.string(forKey: "summaryModel") ?? WerkzeugkastenConstants.defaultSummaryModel
         pythonInterpreterPath = defaults.string(forKey: "pythonInterpreterPath") ?? WerkzeugkastenConstants.defaultPythonInterpreterPath
@@ -127,6 +159,8 @@ public final class SettingsStore: ObservableObject {
         return EngineConfiguration(
             apiKey: apiKey.trimmingCharacters(in: .whitespacesAndNewlines),
             jinaAPIKey: jinaAPIKey.trimmingCharacters(in: .whitespacesAndNewlines),
+            notionToken: notionToken.trimmingCharacters(in: .whitespacesAndNewlines),
+            notionParentPage: notionParentPage.trimmingCharacters(in: .whitespacesAndNewlines),
             researchModel: researchModel.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? WerkzeugkastenConstants.defaultResearchModel : researchModel.trimmingCharacters(in: .whitespacesAndNewlines),
             summaryModel: summaryModel.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? WerkzeugkastenConstants.defaultSummaryModel : summaryModel.trimmingCharacters(in: .whitespacesAndNewlines),
             pythonInterpreterPath: normalizedInterpreter

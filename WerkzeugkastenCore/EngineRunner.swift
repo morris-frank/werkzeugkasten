@@ -9,6 +9,7 @@ public final class EngineRunner {
         "cli.py",
         "codex_log.py",
         "core.py",
+        "notion_export.py",
         "research_list.py",
         "research_table.py",
         "summarize.py",
@@ -57,6 +58,16 @@ public final class EngineRunner {
             environment.removeValue(forKey: "WERKZEUGKASTEN_JINA_API_KEY")
         } else {
             environment["WERKZEUGKASTEN_JINA_API_KEY"] = configuration.jinaAPIKey
+        }
+        if configuration.notionToken.isEmpty {
+            environment.removeValue(forKey: "WERKZEUGKASTEN_NOTION_API_TOKEN")
+        } else {
+            environment["WERKZEUGKASTEN_NOTION_API_TOKEN"] = configuration.notionToken
+        }
+        if configuration.notionParentPage.isEmpty {
+            environment.removeValue(forKey: "WERKZEUGKASTEN_NOTION_PARENT_PAGE")
+        } else {
+            environment["WERKZEUGKASTEN_NOTION_PARENT_PAGE"] = configuration.notionParentPage
         }
         environment["WERKZEUGKASTEN_RESEARCH_MODEL"] = configuration.researchModel
         environment["WERKZEUGKASTEN_SUMMARY_MODEL"] = configuration.summaryModel

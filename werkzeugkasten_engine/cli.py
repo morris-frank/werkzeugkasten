@@ -34,6 +34,13 @@ def _research_options(payload: dict[str, Any]) -> ResearchOptions:
         include_source_raw=bool(payload.get("include_source_raw", False)),
         auto_tagging=bool(payload.get("auto_tagging", False)),
         nearest_neighbour=bool(payload.get("nearest_neighbour", False)),
+        export_to_notion=bool(payload.get("export_to_notion", False)),
+        output_path=str(payload.get("output_path", "") or ""),
+        source_column_policy=str(payload.get("source_column_policy", "merge") or "merge"),
+        source_raw_column_policy=str(payload.get("source_raw_column_policy", "merge") or "merge"),
+        tag_column_policy=str(payload.get("tag_column_policy", "merge") or "merge"),
+        nearest_column_policy=str(payload.get("nearest_column_policy", "merge") or "merge"),
+        record_id_column_policy=str(payload.get("record_id_column_policy", "merge") or "merge"),
     ).normalized()
 
 
