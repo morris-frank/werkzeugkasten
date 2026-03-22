@@ -73,8 +73,6 @@ targets:
     platform: macOS
     sources:
       - path: WerkzeugkastenActionExtension
-    info:
-      path: Config/WerkzeugkastenActionExtension-Info.plist
     entitlements:
       path: Config/WerkzeugkastenActionExtension.entitlements
     dependencies:
@@ -82,6 +80,8 @@ targets:
         embed: true
     settings:
       base:
+        GENERATE_INFOPLIST_FILE: NO
+        INFOPLIST_FILE: Config/WerkzeugkastenActionExtension-Info.plist
         ENABLE_HARDENED_RUNTIME: YES
         PRODUCT_BUNDLE_IDENTIFIER: com.mauricefrank.werkzeugkasten.action
       configs:
