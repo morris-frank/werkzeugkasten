@@ -4,15 +4,14 @@ import csv
 import json
 import re
 import traceback
-import urllib.error
 import urllib.parse
-import urllib.request
 from dataclasses import dataclass, field
 from datetime import datetime
 from io import StringIO
 from pathlib import Path
 from typing import Callable
 
+import requests
 from rapidfuzz import fuzz
 
 from .core import (
@@ -546,10 +545,6 @@ def fetch_source_raw_text(
     api_key = jina_api_key().strip()
     if api_key:
         headers["Authorization"] = f"Bearer {api_key}"
-    request = urllib.request.Request(
-        request_url,
-        headers=headers,
-    )
     if debug_logger is not None:
         debug_logger.log(
             "jina_request",
@@ -561,59 +556,8 @@ def fetch_source_raw_text(
             has_authorization=bool(api_key),
         )
     try:
-        with urllib.request.urlopen(request, timeout=30) as response:
-            body = response.read().decode("utf-8", errors="replace").strip()
-            status_code = getattr(response, "status", None)
-            result = FetchResult(text=body, status_code=status_code)
-            if debug_logger is not None:
-                debug_logger.log(
-                    "jina_response",
-                    row_number=row_number,
-                    key=key,
-                    source_url=url,
-                    request_url=request_url,
-                    headers=headers,
-                    status_code=status_code,
-                    text_length=len(body),
-                    text_preview=body[:1000],
-                )
-    except urllib.error.HTTPError as exc:
-        result = FetchResult(
-            text=f"[Source fetch failed] {url}\nHTTP {exc.code}: {exc.reason}",
-            status_code=exc.code,
-            error_class="HTTPError",
-            message=str(exc.reason),
-        )
-        if debug_logger is not None:
-            debug_logger.log(
-                "jina_response_error",
-                row_number=row_number,
-                key=key,
-                source_url=url,
-                request_url=request_url,
-                headers=headers,
-                status_code=exc.code,
-                error_class="HTTPError",
-                message=str(exc.reason),
-            )
-    except urllib.error.URLError as exc:
-        result = FetchResult(
-            text=f"[Source fetch failed] {url}\n{exc.reason}",
-            error_class="URLError",
-            message=str(exc.reason),
-        )
-        if debug_logger is not None:
-            debug_logger.log(
-                "jina_response_error",
-                row_number=row_number,
-                key=key,
-                source_url=url,
-                request_url=request_url,
-                headers=headers,
-                error_class="URLError",
-                message=str(exc.reason),
-            )
-    except TimeoutError:
+        response = requests.get(request_url, headers=headers, timeout=30)
+    except requests.exceptions.Timeout:
         result = FetchResult(
             text=f"[Source fetch failed] {url}\nTimed out.",
             error_class="TimeoutError",
@@ -630,6 +574,60 @@ def fetch_source_raw_text(
                 error_class="TimeoutError",
                 message="Timed out.",
             )
+    except requests.exceptions.RequestException as exc:
+        result = FetchResult(
+            text=f"[Source fetch failed] {url}\n{exc}",
+            error_class="URLError",
+            message=str(exc),
+        )
+        if debug_logger is not None:
+            debug_logger.log(
+                "jina_response_error",
+                row_number=row_number,
+                key=key,
+                source_url=url,
+                request_url=request_url,
+                headers=headers,
+                error_class="URLError",
+                message=str(exc),
+            )
+    else:
+        if response.status_code >= 400:
+            reason = response.reason or ""
+            result = FetchResult(
+                text=f"[Source fetch failed] {url}\nHTTP {response.status_code}: {reason}",
+                status_code=response.status_code,
+                error_class="HTTPError",
+                message=reason,
+            )
+            if debug_logger is not None:
+                debug_logger.log(
+                    "jina_response_error",
+                    row_number=row_number,
+                    key=key,
+                    source_url=url,
+                    request_url=request_url,
+                    headers=headers,
+                    status_code=response.status_code,
+                    error_class="HTTPError",
+                    message=reason,
+                )
+        else:
+            body = response.text.strip()
+            status_code = response.status_code
+            result = FetchResult(text=body, status_code=status_code)
+            if debug_logger is not None:
+                debug_logger.log(
+                    "jina_response",
+                    row_number=row_number,
+                    key=key,
+                    source_url=url,
+                    request_url=request_url,
+                    headers=headers,
+                    status_code=status_code,
+                    text_length=len(body),
+                    text_preview=body[:1000],
+                )
     cache[url] = result
     return result
 

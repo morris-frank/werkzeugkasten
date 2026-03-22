@@ -2,11 +2,11 @@ from __future__ import annotations
 
 import json
 import re
-import urllib.error
 import urllib.parse
-import urllib.request
 from dataclasses import dataclass
 from typing import Any
+
+import requests
 
 from .core import LATEST_NOTION_VERSION, notion_api_token, notion_parent_page, open_meteo_api_key
 
@@ -48,13 +48,18 @@ def notion_request(method: str, path: str, body: dict[str, Any] | None = None) -
     if not token:
         raise ValueError("Set a Notion API Token in Settings to export to Notion.")
     url = f"{NOTION_API_BASE}{path}"
-    data = json.dumps(body).encode("utf-8") if body is not None else None
-    request = urllib.request.Request(url, data=data, method=method, headers=notion_headers(token))
     try:
-        with urllib.request.urlopen(request, timeout=60) as response:
-            return json.loads(response.read().decode("utf-8"))
-    except urllib.error.HTTPError as exc:
-        payload = exc.read().decode("utf-8", errors="replace").strip()
+        response = requests.request(
+            method,
+            url,
+            headers=notion_headers(token),
+            json=body,
+            timeout=60,
+        )
+    except requests.exceptions.RequestException as exc:
+        raise RuntimeError(f"Notion API request failed: {exc}") from exc
+    if response.status_code >= 400:
+        payload = response.text.strip()
         if payload:
             try:
                 detail = json.loads(payload)
@@ -62,10 +67,9 @@ def notion_request(method: str, path: str, body: dict[str, Any] | None = None) -
             except json.JSONDecodeError:
                 message = payload
         else:
-            message = exc.reason
-        raise RuntimeError(f"Notion API {exc.code}: {message}") from exc
-    except urllib.error.URLError as exc:
-        raise RuntimeError(f"Notion API request failed: {exc.reason}") from exc
+            message = response.reason or ""
+        raise RuntimeError(f"Notion API {response.status_code}: {message}")
+    return response.json()
 
 
 def page_parent_id() -> str:
@@ -348,11 +352,15 @@ def geocode_place_value(
         "apikey": open_meteo_key,
     }
     url = f"{OPEN_METEO_GEOCODING_API}?{urllib.parse.urlencode(params)}"
-    request = urllib.request.Request(url, headers={"Accept": "application/json"})
     try:
-        with urllib.request.urlopen(request, timeout=30) as response:
-            payload = json.loads(response.read().decode("utf-8"))
-    except (urllib.error.URLError, urllib.error.HTTPError, json.JSONDecodeError):
+        response = requests.get(
+            url,
+            headers={"Accept": "application/json"},
+            timeout=30,
+        )
+        response.raise_for_status()
+        payload = response.json()
+    except (requests.exceptions.RequestException, json.JSONDecodeError):
         cache[cleaned] = None
         return None
     results = payload.get("results")
