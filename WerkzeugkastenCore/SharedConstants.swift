@@ -4,13 +4,20 @@ public enum WerkzeugkastenConstants {
     public static let appBundleIdentifier = "com.mauricefrank.werkzeugkasten"
     public static let actionExtensionBundleIdentifier = "com.mauricefrank.werkzeugkasten.action"
     public static let keychainService = appBundleIdentifier
-    public static let keychainAccount = "OPENAI_API_KEY"
+    public static let openAIKeychainAccount = "OPENAI_API_KEY"
+    public static let jinaKeychainAccount = "JINA_API_KEY"
     public static let handoffURLScheme = "werkzeugkasten"
     public static var defaultPythonInterpreterPath: String {
         resolvedPythonInterpreterPath() ?? ""
     }
     public static let defaultResearchModel = "gpt-5.4"
     public static let defaultSummaryModel = "gpt-5.4"
+    public static var defaultCodexDirectoryURL: URL {
+        FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".codex", isDirectory: true)
+    }
+    public static var defaultCodexLogsDirectoryURL: URL {
+        defaultCodexDirectoryURL.appendingPathComponent("archived_sessions", isDirectory: true)
+    }
 
     public static func resolvedPythonInterpreterPath() -> String? {
         for candidate in pythonInterpreterCandidates() {

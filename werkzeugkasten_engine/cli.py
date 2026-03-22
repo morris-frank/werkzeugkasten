@@ -8,7 +8,7 @@ from typing import Any
 from .codex_log import prettify_codex_log
 from .core import read_json_stdin
 from .research_list import run_research_list
-from .research_table import inspect_table, run_research_table
+from .research_table import ResearchOptions, inspect_table, run_research_table
 from .summarize import summarize_files, summarize_text_input
 
 
@@ -26,6 +26,15 @@ def _progress(enabled: bool):
 def _print_json(data: dict[str, Any]) -> int:
     print(json.dumps(data))
     return 0
+
+
+def _research_options(payload: dict[str, Any]) -> ResearchOptions:
+    return ResearchOptions(
+        include_sources=bool(payload.get("include_sources", False)),
+        include_source_raw=bool(payload.get("include_source_raw", False)),
+        auto_tagging=bool(payload.get("auto_tagging", False)),
+        nearest_neighbour=bool(payload.get("nearest_neighbour", False)),
+    ).normalized()
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -60,7 +69,14 @@ def main(argv: list[str] | None = None) -> int:
             question = payload.get("question", "")
             if not isinstance(items, list) or not all(isinstance(item, str) for item in items):
                 raise ValueError("`items` must be an array of strings.")
-            return _print_json(run_research_list(items, question, progress=_progress(args.progress)))
+            return _print_json(
+                run_research_list(
+                    items,
+                    question,
+                    progress=_progress(args.progress),
+                    options=_research_options(payload),
+                )
+            )
 
         if args.command == "inspect-table":
             raw_table_text = payload.get("raw_table_text", "")
@@ -77,6 +93,7 @@ def main(argv: list[str] | None = None) -> int:
                     raw_table_text,
                     source_name=payload.get("source_name", args.source_name),
                     progress=_progress(args.progress),
+                    options=_research_options(payload),
                 )
             )
 

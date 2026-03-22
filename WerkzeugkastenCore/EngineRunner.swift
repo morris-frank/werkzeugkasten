@@ -1,6 +1,7 @@
 import Foundation
 
-public final class EngineRunner: Sendable {
+@MainActor
+public final class EngineRunner {
     private final class BundleMarker {}
     private static let moduleFileNames = [
         "__init__.py",
@@ -51,6 +52,11 @@ public final class EngineRunner: Sendable {
             environment["OPENAI_API_KEY"] = configuration.apiKey
         } else {
             environment.removeValue(forKey: "OPENAI_API_KEY")
+        }
+        if configuration.jinaAPIKey.isEmpty {
+            environment.removeValue(forKey: "WERKZEUGKASTEN_JINA_API_KEY")
+        } else {
+            environment["WERKZEUGKASTEN_JINA_API_KEY"] = configuration.jinaAPIKey
         }
         environment["WERKZEUGKASTEN_RESEARCH_MODEL"] = configuration.researchModel
         environment["WERKZEUGKASTEN_SUMMARY_MODEL"] = configuration.summaryModel
@@ -111,7 +117,7 @@ public final class EngineRunner: Sendable {
         }
     }
 
-    public static func decode<Response: Decodable>(_ type: Response.Type, from data: Data) throws -> Response {
+    nonisolated public static func decode<Response: Decodable>(_ type: Response.Type, from data: Data) throws -> Response {
         do {
             return try JSONDecoder().decode(type, from: data)
         } catch {

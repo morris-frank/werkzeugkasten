@@ -45,6 +45,29 @@ class ResearchTableTests(unittest.TestCase):
         self.assertEqual(preview["question_columns"], ["What do they do?"])
         self.assertEqual(preview["attribute_columns"], ["country"])
 
+    def test_unique_header_name_suffixes_dynamic_columns(self) -> None:
+        self.assertEqual(research_table.unique_header_name(["Name", "Sources"], "Sources"), "Sources 2")
+
+    def test_research_options_normalize_dependencies(self) -> None:
+        options = research_table.ResearchOptions(
+            include_sources=False,
+            include_source_raw=True,
+            auto_tagging=False,
+            nearest_neighbour=True,
+        ).normalized()
+        self.assertTrue(options.include_sources)
+        self.assertTrue(options.include_source_raw)
+        self.assertTrue(options.auto_tagging)
+        self.assertTrue(options.nearest_neighbour)
+
+
+class CoreTests(unittest.TestCase):
+    def test_gpt5_models_get_medium_reasoning(self) -> None:
+        from werkzeugkasten_engine import core
+
+        self.assertEqual(core.reasoning_for_model("gpt-5.4"), {"effort": "medium"})
+        self.assertIsNone(core.reasoning_for_model("gpt-4.1"))
+
 
 class SummarizeTests(unittest.TestCase):
     def test_truncate_for_upload(self) -> None:
@@ -244,17 +267,57 @@ class CodexLogTests(unittest.TestCase):
 
 
 class CliTests(unittest.TestCase):
+    def test_research_list_delegates_to_shared_dataset_pipeline(self) -> None:
+        with patch(
+            "werkzeugkasten_engine.research_list.run_research_dataset",
+            return_value={
+                "output_path": "/tmp/out.md",
+                "headers": ["Item", "What?"],
+                "question_columns": ["What?"],
+                "attribute_columns": ["Sources"],
+            },
+        ) as run_dataset:
+            result = research_list.run_research_list(
+                ["A", "B"],
+                "What",
+                options=research_table.ResearchOptions(include_sources=True),
+            )
+
+        self.assertEqual(result["output_path"], "/tmp/out.md")
+        self.assertEqual(result["item_count"], 2)
+        self.assertEqual(result["completed_count"], 2)
+        dataset = run_dataset.call_args.args[0]
+        self.assertEqual(dataset.headers, ["Item", "What?"])
+        self.assertEqual(dataset.question_columns, ["What?"])
+
     def test_research_list_json_contract(self) -> None:
         with patch(
             "werkzeugkasten_engine.cli.run_research_list",
-            return_value={"output_path": "/tmp/out.md", "item_count": 2, "completed_count": 2},
+            return_value={
+                "output_path": "/tmp/out.md",
+                "item_count": 2,
+                "completed_count": 2,
+                "headers": ["Item", "Question"],
+                "question_columns": ["Question"],
+                "attribute_columns": [],
+            },
         ):
             with patch("sys.stdin", io.StringIO(json.dumps({"items": ["A", "B"], "question": "Q"}))):
                 stdout = io.StringIO()
                 with redirect_stdout(stdout):
                     rc = cli_main(["research-list"])
         self.assertEqual(rc, 0)
-        self.assertEqual(json.loads(stdout.getvalue()), {"output_path": "/tmp/out.md", "item_count": 2, "completed_count": 2})
+        self.assertEqual(
+            json.loads(stdout.getvalue()),
+            {
+                "output_path": "/tmp/out.md",
+                "item_count": 2,
+                "completed_count": 2,
+                "headers": ["Item", "Question"],
+                "question_columns": ["Question"],
+                "attribute_columns": [],
+            },
+        )
 
     def test_summarize_text_json_contract(self) -> None:
         with patch("werkzeugkasten_engine.cli.summarize_text_input", return_value="# Summary\nOk"):

@@ -5,6 +5,7 @@ import Security
 @MainActor
 public final class SettingsStore: ObservableObject {
     @Published public var apiKey: String
+    @Published public var jinaAPIKey: String
     @Published public var researchModel: String
     @Published public var summaryModel: String
     @Published public var pythonInterpreterPath: String
@@ -12,39 +13,59 @@ public final class SettingsStore: ObservableObject {
 
     private let defaults: UserDefaults
     private let keychainService: String
-    private let keychainAccount: String
+    private let openAIKeychainAccount: String
+    private let jinaKeychainAccount: String
     private let keychainAccessGroup: String?
 
     public init(
         defaults: UserDefaults = .standard,
         keychainService: String = WerkzeugkastenConstants.keychainService,
-        keychainAccount: String = WerkzeugkastenConstants.keychainAccount,
+        openAIKeychainAccount: String = WerkzeugkastenConstants.openAIKeychainAccount,
+        jinaKeychainAccount: String = WerkzeugkastenConstants.jinaKeychainAccount,
         keychainAccessGroup: String? = nil,
         requireSharedCapabilities _: Bool = false
     ) {
         self.defaults = defaults
         self.keychainService = keychainService
-        self.keychainAccount = keychainAccount
+        self.openAIKeychainAccount = openAIKeychainAccount
+        self.jinaKeychainAccount = jinaKeychainAccount
         self.keychainAccessGroup = keychainAccessGroup
         self.researchModel = Self.loadDefault("researchModel", from: self.defaults) ?? WerkzeugkastenConstants.defaultResearchModel
         self.summaryModel = Self.loadDefault("summaryModel", from: self.defaults) ?? WerkzeugkastenConstants.defaultSummaryModel
         self.pythonInterpreterPath = Self.loadDefault("pythonInterpreterPath", from: self.defaults) ?? WerkzeugkastenConstants.defaultPythonInterpreterPath
         self.keychainIssue = nil
+        var resolvedKeychainIssue: String?
 
         do {
             self.apiKey = try KeychainStore.load(
                 service: keychainService,
-                account: keychainAccount,
+                account: openAIKeychainAccount,
                 accessGroup: keychainAccessGroup
             ) ?? ""
         } catch {
             self.apiKey = ""
-            self.keychainIssue = Self.describeKeychainFailure(
+            resolvedKeychainIssue = Self.describeKeychainFailure(
                 error,
                 accessGroup: keychainAccessGroup,
-                fallback: self.keychainIssue
+                fallback: resolvedKeychainIssue
             )
         }
+
+        do {
+            self.jinaAPIKey = try KeychainStore.load(
+                service: keychainService,
+                account: jinaKeychainAccount,
+                accessGroup: keychainAccessGroup
+            ) ?? ""
+        } catch {
+            self.jinaAPIKey = ""
+            resolvedKeychainIssue = Self.describeKeychainFailure(
+                error,
+                accessGroup: keychainAccessGroup,
+                fallback: resolvedKeychainIssue
+            )
+        }
+        self.keychainIssue = resolvedKeychainIssue
     }
 
     private static func loadDefault(_ key: String, from defaults: UserDefaults) -> String? {
@@ -64,6 +85,7 @@ public final class SettingsStore: ObservableObject {
         let normalizedSummaryModel = summaryModel.trimmingCharacters(in: .whitespacesAndNewlines)
         let normalizedInterpreter = pythonInterpreterPath.trimmingCharacters(in: .whitespacesAndNewlines)
         let normalizedAPIKey = apiKey.trimmingCharacters(in: .whitespacesAndNewlines)
+        let normalizedJinaAPIKey = jinaAPIKey.trimmingCharacters(in: .whitespacesAndNewlines)
 
         defaults.set(normalizedResearchModel.isEmpty ? WerkzeugkastenConstants.defaultResearchModel : normalizedResearchModel, forKey: "researchModel")
         defaults.set(normalizedSummaryModel.isEmpty ? WerkzeugkastenConstants.defaultSummaryModel : normalizedSummaryModel, forKey: "summaryModel")
@@ -71,9 +93,15 @@ public final class SettingsStore: ObservableObject {
 
         do {
             if normalizedAPIKey.isEmpty {
-                try KeychainStore.delete(service: keychainService, account: keychainAccount, accessGroup: keychainAccessGroup)
+                try KeychainStore.delete(service: keychainService, account: openAIKeychainAccount, accessGroup: keychainAccessGroup)
             } else {
-                try KeychainStore.save(value: normalizedAPIKey, service: keychainService, account: keychainAccount, accessGroup: keychainAccessGroup)
+                try KeychainStore.save(value: normalizedAPIKey, service: keychainService, account: openAIKeychainAccount, accessGroup: keychainAccessGroup)
+            }
+
+            if normalizedJinaAPIKey.isEmpty {
+                try KeychainStore.delete(service: keychainService, account: jinaKeychainAccount, accessGroup: keychainAccessGroup)
+            } else {
+                try KeychainStore.save(value: normalizedJinaAPIKey, service: keychainService, account: jinaKeychainAccount, accessGroup: keychainAccessGroup)
             }
         } catch let error as EngineError {
             throw error
@@ -84,6 +112,7 @@ public final class SettingsStore: ObservableObject {
         }
 
         apiKey = normalizedAPIKey
+        jinaAPIKey = normalizedJinaAPIKey
         researchModel = defaults.string(forKey: "researchModel") ?? WerkzeugkastenConstants.defaultResearchModel
         summaryModel = defaults.string(forKey: "summaryModel") ?? WerkzeugkastenConstants.defaultSummaryModel
         pythonInterpreterPath = defaults.string(forKey: "pythonInterpreterPath") ?? WerkzeugkastenConstants.defaultPythonInterpreterPath
@@ -97,6 +126,7 @@ public final class SettingsStore: ObservableObject {
 
         return EngineConfiguration(
             apiKey: apiKey.trimmingCharacters(in: .whitespacesAndNewlines),
+            jinaAPIKey: jinaAPIKey.trimmingCharacters(in: .whitespacesAndNewlines),
             researchModel: researchModel.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? WerkzeugkastenConstants.defaultResearchModel : researchModel.trimmingCharacters(in: .whitespacesAndNewlines),
             summaryModel: summaryModel.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? WerkzeugkastenConstants.defaultSummaryModel : summaryModel.trimmingCharacters(in: .whitespacesAndNewlines),
             pythonInterpreterPath: normalizedInterpreter

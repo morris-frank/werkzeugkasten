@@ -153,6 +153,83 @@ private func openPath(_ path: String) {
     NSWorkspace.shared.open(URL(fileURLWithPath: path))
 }
 
+@MainActor
+private func openURL(_ url: URL) {
+    NSWorkspace.shared.open(url)
+}
+
+private struct ResearchRunOptionsState {
+    var includeSources = false
+    var includeSourceRaw = false
+    var autoTagging = false
+    var nearestNeighbour = false
+
+    mutating func setIncludeSources(_ value: Bool) {
+        includeSources = value
+        if !value {
+            includeSourceRaw = false
+        }
+    }
+
+    mutating func setIncludeSourceRaw(_ value: Bool) {
+        includeSourceRaw = value
+        if value {
+            includeSources = true
+        }
+    }
+
+    mutating func setAutoTagging(_ value: Bool) {
+        autoTagging = value
+        if !value {
+            nearestNeighbour = false
+        }
+    }
+
+    mutating func setNearestNeighbour(_ value: Bool) {
+        nearestNeighbour = value
+        if value {
+            autoTagging = true
+        }
+    }
+
+    var payload: [String: Bool] {
+        [
+            "include_sources": includeSources || includeSourceRaw,
+            "include_source_raw": includeSourceRaw,
+            "auto_tagging": autoTagging || nearestNeighbour,
+            "nearest_neighbour": nearestNeighbour,
+        ]
+    }
+}
+
+private struct ResearchOptionsCard: View {
+    @Binding var options: ResearchRunOptionsState
+
+    var body: some View {
+        SectionCard(title: "Options") {
+            Toggle("Include Sources", isOn: Binding(
+                get: { options.includeSources },
+                set: { options.setIncludeSources($0) }
+            ))
+            Toggle("Include Sources[RAW]", isOn: Binding(
+                get: { options.includeSourceRaw },
+                set: { options.setIncludeSourceRaw($0) }
+            ))
+            Toggle("Auto Tagging", isOn: Binding(
+                get: { options.autoTagging },
+                set: { options.setAutoTagging($0) }
+            ))
+            Toggle("Nearest Neighbour", isOn: Binding(
+                get: { options.nearestNeighbour },
+                set: { options.setNearestNeighbour($0) }
+            ))
+            Text("`Sources[RAW]` fetches source pages through Jina and can make the output much larger. `Nearest Neighbour` uses a second pass over the generated table and depends on `Auto Tagging`.")
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+}
+
 struct ResearchListWindow: View {
     @EnvironmentObject private var settings: SettingsStore
     private let runner = EngineRunner()
@@ -163,6 +240,7 @@ struct ResearchListWindow: View {
     @State private var status = "Paste a list or drop a UTF-8 text file."
     @State private var outputPath: String?
     @State private var errorText: String?
+    @State private var options = ResearchRunOptionsState()
 
     private var parsedItems: [String] {
         InputNormalizer.parseResearchItems(inputText)
@@ -189,6 +267,8 @@ struct ResearchListWindow: View {
                         Text("\(parsedItems.count) parsed item(s)")
                             .foregroundStyle(.secondary)
                     }
+
+                    ResearchOptionsCard(options: $options)
 
                     SectionCard(title: "Run") {
                         if isRunning {
@@ -236,7 +316,10 @@ struct ResearchListWindow: View {
             do {
                 let response: ResearchListResponse = try await runner.run(
                     .researchList,
-                    payload: ["items": items, "question": question],
+                    payload: [
+                        "items": items,
+                        "question": question,
+                    ].merging(options.payload) { _, new in new },
                     configuration: try settings.configuration()
                 )
                 outputPath = response.outputPath
@@ -261,6 +344,7 @@ struct ResearchTableWindow: View {
     @State private var status = "Paste a CSV/Markdown table or drop a file."
     @State private var outputPath: String?
     @State private var errorText: String?
+    @State private var options = ResearchRunOptionsState()
 
     var body: some View {
         WindowSurface(minWidth: 600) {
@@ -293,6 +377,8 @@ struct ResearchTableWindow: View {
                             Text("Attribute columns: \(preview.attributeColumns.joined(separator: ", ").isEmpty ? "none" : preview.attributeColumns.joined(separator: ", "))")
                         }
                     }
+
+                    ResearchOptionsCard(options: $options)
 
                     SectionCard(title: "Run") {
                         if isRunning || isInspecting {
@@ -360,7 +446,10 @@ struct ResearchTableWindow: View {
             do {
                 let response: ResearchTableResponse = try await runner.run(
                     .researchTable,
-                    payload: ["raw_table_text": inputText, "source_name": sourceName],
+                    payload: [
+                        "raw_table_text": inputText,
+                        "source_name": sourceName,
+                    ].merging(options.payload) { _, new in new },
                     configuration: try settings.configuration()
                 )
                 outputPath = response.outputPath
@@ -496,6 +585,9 @@ struct PrettifyCodexLogWindow: View {
                                 outputPath = nil
                             }
                         }
+                        Button("Open Codex Logs") {
+                            openURL(defaultCodexLogLocation)
+                        }
                     }
                     if let logURL {
                         Text(logURL.path)
@@ -524,6 +616,19 @@ struct PrettifyCodexLogWindow: View {
                 }
             }
         }
+    }
+
+    private var defaultCodexLogLocation: URL {
+        let logs = WerkzeugkastenConstants.defaultCodexLogsDirectoryURL
+        let codex = WerkzeugkastenConstants.defaultCodexDirectoryURL
+        let fileManager = FileManager.default
+        if fileManager.fileExists(atPath: logs.path) {
+            return logs
+        }
+        if fileManager.fileExists(atPath: codex.path) {
+            return codex
+        }
+        return fileManager.homeDirectoryForCurrentUser
     }
 
     private func selectLog(_ url: URL?) {
@@ -574,6 +679,10 @@ struct SettingsWindow: View {
                     Grid(alignment: .leading, horizontalSpacing: 16, verticalSpacing: 12) {
                         SettingsFieldRow(title: "OpenAI API Key") {
                             SecureField("sk-proj-...", text: $settings.apiKey)
+                                .textFieldStyle(.roundedBorder)
+                        }
+                        SettingsFieldRow(title: "Jina API Key") {
+                            SecureField("jina_...", text: $settings.jinaAPIKey)
                                 .textFieldStyle(.roundedBorder)
                         }
                         SettingsFieldRow(title: "Research model") {

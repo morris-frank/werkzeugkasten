@@ -14,6 +14,7 @@ DEFAULT_INTERPRETER_PATH = "/Users/mfr/mamba/envs/basic/bin/python"
 MAX_SLUG_LENGTH = 48
 RESEARCH_MODEL_ENV = "WERKZEUGKASTEN_RESEARCH_MODEL"
 SUMMARY_MODEL_ENV = "WERKZEUGKASTEN_SUMMARY_MODEL"
+JINA_API_KEY_ENV = "WERKZEUGKASTEN_JINA_API_KEY"
 DEFAULT_RESEARCH_MODEL = "gpt-5.4"
 DEFAULT_SUMMARY_MODEL = "gpt-5.4"
 
@@ -47,6 +48,38 @@ def research_model() -> str:
 
 def summary_model() -> str:
     return os.environ.get(SUMMARY_MODEL_ENV, DEFAULT_SUMMARY_MODEL)
+
+
+def jina_api_key() -> str:
+    return (
+        os.environ.get(JINA_API_KEY_ENV, "")
+        or os.environ.get("JINA_API_KEY", "")
+        or os.environ.get("JINA_API_TOKEN", "")
+    )
+
+
+def reasoning_for_model(model: str) -> dict[str, Any] | None:
+    normalized = model.strip().lower()
+    if normalized.startswith("gpt-5"):
+        return {"effort": "medium"}
+    return None
+
+
+def response_create_kwargs(
+    model: str,
+    *,
+    use_web_search: bool = False,
+    include_web_sources: bool = False,
+) -> dict[str, Any]:
+    kwargs: dict[str, Any] = {"model": model}
+    reasoning = reasoning_for_model(model)
+    if reasoning is not None:
+        kwargs["reasoning"] = reasoning
+    if use_web_search:
+        kwargs["tools"] = [web_search_tool()]
+    if include_web_sources:
+        kwargs["include"] = ["web_search_call.action.sources"]
+    return kwargs
 
 
 def slugify(text: str) -> str:

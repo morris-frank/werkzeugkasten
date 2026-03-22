@@ -26,6 +26,7 @@ final class WerkzeugkastenCoreTests: XCTestCase {
         XCTAssertEqual(decodedURLs, urls)
     }
 
+    @MainActor
     func testPreparedCommandInjectsEnvironment() throws {
         let temp = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         try FileManager.default.createDirectory(at: temp, withIntermediateDirectories: true)
@@ -35,6 +36,7 @@ final class WerkzeugkastenCoreTests: XCTestCase {
 
         let configuration = EngineConfiguration(
             apiKey: "key",
+            jinaAPIKey: "jina-key",
             researchModel: "research-model",
             summaryModel: "summary-model",
             pythonInterpreterPath: "/bin/echo"
@@ -48,11 +50,13 @@ final class WerkzeugkastenCoreTests: XCTestCase {
 
         XCTAssertEqual(prepared.arguments, ["-m", "werkzeugkasten_engine", "summarize-text"])
         XCTAssertEqual(prepared.environment["OPENAI_API_KEY"], "key")
+        XCTAssertEqual(prepared.environment["WERKZEUGKASTEN_JINA_API_KEY"], "jina-key")
         XCTAssertEqual(prepared.environment["WERKZEUGKASTEN_RESEARCH_MODEL"], "research-model")
         XCTAssertEqual(prepared.environment["WERKZEUGKASTEN_SUMMARY_MODEL"], "summary-model")
         XCTAssertEqual(prepared.workingDirectoryURL, temp)
     }
 
+    @MainActor
     func testPreparedCommandSkipsAPIKeyForPrettifyCodexLog() throws {
         let temp = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         try FileManager.default.createDirectory(at: temp, withIntermediateDirectories: true)
@@ -62,6 +66,7 @@ final class WerkzeugkastenCoreTests: XCTestCase {
 
         let configuration = EngineConfiguration(
             apiKey: "",
+            jinaAPIKey: "",
             researchModel: "research-model",
             summaryModel: "summary-model",
             pythonInterpreterPath: "/bin/echo"
@@ -83,6 +88,7 @@ final class WerkzeugkastenCoreTests: XCTestCase {
         XCTAssertEqual(decoded.summaryMarkdown, "Summary\nOk")
     }
 
+    @MainActor
     func testPreparedCommandStagesFlatBundleResources() throws {
         let temp = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         try FileManager.default.createDirectory(at: temp, withIntermediateDirectories: true)
@@ -93,6 +99,7 @@ final class WerkzeugkastenCoreTests: XCTestCase {
 
         let configuration = EngineConfiguration(
             apiKey: "key",
+            jinaAPIKey: "",
             researchModel: "research-model",
             summaryModel: "summary-model",
             pythonInterpreterPath: "/bin/echo"
@@ -119,18 +126,22 @@ final class WerkzeugkastenCoreTests: XCTestCase {
         let defaults = UserDefaults(suiteName: suiteName)!
         defaults.removePersistentDomain(forName: suiteName)
         let service = "tests.werkzeugkasten.service.\(UUID().uuidString)"
-        let account = "OPENAI_API_KEY"
+        let openAIAccount = "OPENAI_API_KEY"
+        let jinaAccount = "JINA_API_KEY"
 
-        try? KeychainStore.delete(service: service, account: account)
+        try? KeychainStore.delete(service: service, account: openAIAccount)
+        try? KeychainStore.delete(service: service, account: jinaAccount)
 
         let store = SettingsStore(
             defaults: defaults,
             keychainService: service,
-            keychainAccount: account,
+            openAIKeychainAccount: openAIAccount,
+            jinaKeychainAccount: jinaAccount,
             keychainAccessGroup: nil,
             requireSharedCapabilities: false
         )
         store.apiKey = "secret"
+        store.jinaAPIKey = "jina-secret"
         store.researchModel = "research"
         store.summaryModel = "summary"
         store.pythonInterpreterPath = "/bin/echo"
@@ -139,22 +150,26 @@ final class WerkzeugkastenCoreTests: XCTestCase {
         let reloaded = SettingsStore(
             defaults: defaults,
             keychainService: service,
-            keychainAccount: account,
+            openAIKeychainAccount: openAIAccount,
+            jinaKeychainAccount: jinaAccount,
             keychainAccessGroup: nil,
             requireSharedCapabilities: false
         )
 
         XCTAssertEqual(reloaded.apiKey, "secret")
+        XCTAssertEqual(reloaded.jinaAPIKey, "jina-secret")
         XCTAssertEqual(reloaded.researchModel, "research")
         XCTAssertEqual(reloaded.summaryModel, "summary")
         XCTAssertEqual(reloaded.pythonInterpreterPath, "/bin/echo")
 
-        try? KeychainStore.delete(service: service, account: account)
+        try? KeychainStore.delete(service: service, account: openAIAccount)
+        try? KeychainStore.delete(service: service, account: jinaAccount)
         defaults.removePersistentDomain(forName: suiteName)
     }
 
     func testEngineCommandRequirements() {
         XCTAssertFalse(EngineCommand.prettifyCodexLog.requiresAPIKey)
+        XCTAssertFalse(EngineCommand.inspectTable.requiresAPIKey)
         XCTAssertTrue(EngineCommand.summarizeText.requiresAPIKey)
     }
 }

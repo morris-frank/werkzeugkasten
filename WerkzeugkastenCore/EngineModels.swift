@@ -2,17 +2,20 @@ import Foundation
 
 public struct EngineConfiguration: Equatable, Sendable {
     public var apiKey: String
+    public var jinaAPIKey: String
     public var researchModel: String
     public var summaryModel: String
     public var pythonInterpreterPath: String
 
     public init(
         apiKey: String,
+        jinaAPIKey: String,
         researchModel: String,
         summaryModel: String,
         pythonInterpreterPath: String
     ) {
         self.apiKey = apiKey
+        self.jinaAPIKey = jinaAPIKey
         self.researchModel = researchModel
         self.summaryModel = summaryModel
         self.pythonInterpreterPath = pythonInterpreterPath
@@ -29,9 +32,9 @@ public enum EngineCommand: String, Sendable {
 
     public var requiresAPIKey: Bool {
         switch self {
-        case .prettifyCodexLog:
+        case .inspectTable, .prettifyCodexLog:
             return false
-        case .researchList, .inspectTable, .researchTable, .summarizeFiles, .summarizeText:
+        case .researchList, .researchTable, .summarizeFiles, .summarizeText:
             return true
         }
     }
@@ -63,11 +66,17 @@ public struct ResearchListResponse: Decodable, Equatable, Sendable {
     public let outputPath: String
     public let itemCount: Int
     public let completedCount: Int
+    public let headers: [String]
+    public let questionColumns: [String]
+    public let attributeColumns: [String]
 
     enum CodingKeys: String, CodingKey {
         case outputPath = "output_path"
         case itemCount = "item_count"
         case completedCount = "completed_count"
+        case headers
+        case questionColumns = "question_columns"
+        case attributeColumns = "attribute_columns"
     }
 }
 
