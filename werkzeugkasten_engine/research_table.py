@@ -5,13 +5,13 @@ import json
 import re
 import urllib.error
 import urllib.parse
-import urllib.request
 from dataclasses import dataclass, field
 from datetime import datetime
 from io import StringIO
 from pathlib import Path
 from typing import Callable
 
+import requests
 from rapidfuzz import fuzz
 
 from .core import (
@@ -449,19 +449,17 @@ def apply_dynamic_value(row: dict[str, str], column: DynamicColumn, value: str) 
 def fetch_source_raw_text(url: str, cache: dict[str, FetchResult]) -> FetchResult:
     if url in cache:
         return cache[url]
-    request = urllib.request.Request(
-        f"https://r.jina.ai/{url}",
-        headers={
-            "X-Engine": "direct",
-            "X-Retain-Images": "none",
-        },
-    )
-    key = jina_api_key().strip()
-    if key:
-        request.add_header("Authorization", f"Bearer {key}")
+
+    endpoint = "https://r.jina.ai/"  # TODO: move to config
+    headers = {"X-Cache-Tolerance": "43000", "X-Md-Link-Style": "referenced", "X-Retain-Images": "none"}  # TODO: move to config
+    api_key = jina_api_key().strip()
+    if api_key:
+        headers["Authorization"] = f"Bearer {api_key}"
+
     try:
-        with urllib.request.urlopen(request, timeout=30) as response:
-            result = FetchResult(text=response.read().decode("utf-8", errors="replace").strip())
+        response = requests.get(f"{endpoint}{url}", headers=headers)
+        response.raise_for_status()
+        return FetchResult(text=response.text)
     except urllib.error.HTTPError as exc:
         result = FetchResult(
             text=f"[Source fetch failed] {url}\nHTTP {exc.code}: {exc.reason}",

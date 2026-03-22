@@ -1,3 +1,4 @@
 openai
 markitdown[all]
 rapidfuzz
+requests
