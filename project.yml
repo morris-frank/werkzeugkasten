@@ -35,7 +35,7 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.mauricefrank.werkzeugkasten.core
       configs:
         Debug:
-          CODE_SIGN_STYLE: Automatic
+          CODE_SIGN_STYLE: Manual
           CODE_SIGN_IDENTITY: Apple Development
         Release:
           CODE_SIGN_STYLE: Manual
@@ -62,7 +62,7 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.mauricefrank.werkzeugkasten
       configs:
         Debug:
-          CODE_SIGN_STYLE: Automatic
+          CODE_SIGN_STYLE: Manual
           CODE_SIGN_IDENTITY: Apple Development
         Release:
           CODE_SIGN_STYLE: Manual
@@ -86,7 +86,7 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.mauricefrank.werkzeugkasten.action
       configs:
         Debug:
-          CODE_SIGN_STYLE: Automatic
+          CODE_SIGN_STYLE: Manual
           CODE_SIGN_IDENTITY: Apple Development
         Release:
           CODE_SIGN_STYLE: Manual
@@ -107,10 +107,10 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.mauricefrank.werkzeugkasten.core.tests
       configs:
         Debug:
-          CODE_SIGN_STYLE: Automatic
+          CODE_SIGN_STYLE: Manual
           CODE_SIGN_IDENTITY: Apple Development
         Release:
-          CODE_SIGN_STYLE: Automatic
+          CODE_SIGN_STYLE: Manual
           CODE_SIGN_IDENTITY: Apple Development
 schemes:
   Werkzeugkasten:
