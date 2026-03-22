@@ -118,7 +118,7 @@ def choose_output_path(
 
 
 def esc(text: str) -> str:
-    return text.replace("|", "\\|").replace("\n", "<br>").strip()
+    return text.replace("|", "\\|").replace("\n", ", ").strip()
 
 
 def extract_json_block(text: str) -> str:

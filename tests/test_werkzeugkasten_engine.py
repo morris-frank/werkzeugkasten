@@ -10,7 +10,7 @@ from datetime import datetime
 from pathlib import Path
 from unittest.mock import patch
 
-from werkzeugkasten_engine import codex_log, research_list, research_table, summarize
+from werkzeugkasten_engine import codex_log, notion_export, research_list, research_table, summarize
 from werkzeugkasten_engine.cli import main as cli_main
 from werkzeugkasten_engine.core import choose_output_path, extract_json_block
 
@@ -72,6 +72,8 @@ class ResearchTableTests(unittest.TestCase):
         self.assertEqual(research_table.split_and_clean_items("shotgun+16S/18S+LR", url_mode=False), ["Shotgun", "16S", "18S", "LR"])
         self.assertEqual(research_table.split_and_clean_items("B2B/NGO ([naturemetrics.com](http://naturemetrics.com/))", url_mode=False), ["B2B", "NGO"])
         self.assertEqual(research_table.normalize_url_value("https://www.useyardstick.com/?utm_source=openai"), "https://www.useyardstick.com")
+        self.assertEqual(research_table.normalize_scalar_value("soil microbiome ([rhizebio.com](https://rhizebio.com/approach/))"), "Soil Microbiome")
+        self.assertEqual(research_table.normalize_scalar_value("startup (rhizebio.com)"), "Startup")
 
     def test_run_research_dataset_respects_explicit_output_and_skip_logic(self) -> None:
         dataset = research_table.make_dataset_shape(
@@ -162,6 +164,33 @@ class ResearchTableTests(unittest.TestCase):
                     dataset,
                     options=research_table.ResearchOptions(export_to_notion=True),
                 )
+
+    def test_notion_grouped_sources_and_place_inference(self) -> None:
+        specs = notion_export.infer_column_specs(
+            headers=["Company", "Location", "Sources", "Record ID"],
+            rows=[{"Company": "OpenAI", "Location": "Amsterdam, NL", "Sources": "https://a.example,https://b.example", "Record ID": "row-1"}],
+            key_header="Company",
+            sources_column="Sources",
+            tags_column=None,
+            nearest_column=None,
+            record_id_column="Record ID",
+            list_like_columns={"Sources"},
+            url_like_columns={"Sources"},
+            long_text_columns=set(),
+        )
+        kinds = {spec.name: spec.kind for spec in specs}
+        self.assertEqual(kinds["Location"], "place")
+        self.assertNotIn("Record ID", kinds)
+        blocks = notion_export.render_row_children(
+            {
+                "Sources": "https://a.example/one,https://a.example/two,https://b.example/three",
+                "Sources[RAW]": "URL: https://a.example/one\nBody one\n\nURL: https://b.example/three\nBody three",
+            },
+            {"Sources[RAW]"},
+            "Sources",
+            "Sources[RAW]",
+        )
+        self.assertTrue(any(block["type"] == "toggle" for block in blocks))
 
 
 class CoreTests(unittest.TestCase):

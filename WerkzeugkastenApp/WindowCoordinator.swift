@@ -60,6 +60,11 @@ final class WindowCoordinator: ObservableObject {
 
     private func configure(_ window: NSWindow) {
         window.tabbingMode = .disallowed
+        window.titleVisibility = .hidden
+        window.titlebarAppearsTransparent = true
+        window.isOpaque = false
+        window.backgroundColor = .clear
+        window.toolbar = nil
     }
 }
 

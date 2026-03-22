@@ -77,6 +77,18 @@ def rich_text_array(text: str, *, max_chars: int = 1800) -> list[dict[str, Any]]
     return [{"type": "text", "text": {"content": chunk}} for chunk in chunks[:100]]
 
 
+def linked_rich_text(url: str, label: str | None = None) -> list[dict[str, Any]]:
+    return [
+        {
+            "type": "text",
+            "text": {
+                "content": label or url,
+                "link": {"url": url},
+            },
+        }
+    ]
+
+
 def infer_column_specs(
     headers: list[str],
     rows: list[dict[str, str]],
@@ -101,7 +113,6 @@ def infer_column_specs(
         if header in long_text_columns:
             continue
         if header == record_id_column:
-            specs.append(NotionColumnSpec(name=header, kind="rich_text", property_definition={"rich_text": {}}))
             continue
         if header == sources_column:
             specs.append(NotionColumnSpec(name=header, kind="rich_text", property_definition={"rich_text": {}}))
@@ -109,6 +120,9 @@ def infer_column_specs(
         values = [row.get(header, "").strip() for row in rows if row.get(header, "").strip()]
         if not values:
             specs.append(NotionColumnSpec(name=header, kind="rich_text", property_definition={"rich_text": {}}))
+            continue
+        if is_location_column(header):
+            specs.append(NotionColumnSpec(name=header, kind="place", property_definition={"place": {}}))
             continue
         if header in url_like_columns and all(value.startswith(("http://", "https://")) for value in values[:25]):
             specs.append(NotionColumnSpec(name=header, kind="url", property_definition={"url": {}}))
@@ -149,6 +163,9 @@ def _property_value(spec: NotionColumnSpec, value: str) -> dict[str, Any] | None
             return {"rich_text": rich_text_array(value)}
     if spec.kind == "url":
         return {"url": value}
+    if spec.kind == "place":
+        place = parse_place_value(value)
+        return {"place": place} if place else {"rich_text": rich_text_array(value)}
     if spec.kind == "select":
         return {"select": {"name": value[:100]}}
     if spec.kind == "multi_select":
@@ -181,34 +198,86 @@ def bulleted_block(text: str) -> dict[str, Any]:
     return {"object": "block", "type": "bulleted_list_item", "bulleted_list_item": {"rich_text": rich_text_array(text, max_chars=180)}}
 
 
+def linked_bulleted_block(url: str) -> dict[str, Any]:
+    return {"object": "block", "type": "bulleted_list_item", "bulleted_list_item": {"rich_text": linked_rich_text(url)}}
+
+
+def toggle_block(title: str, children: list[dict[str, Any]], *, url: str | None = None) -> dict[str, Any]:
+    rich_text = linked_rich_text(url, title) if url else rich_text_array(title, max_chars=180)
+    return {
+        "object": "block",
+        "type": "toggle",
+        "toggle": {
+            "rich_text": rich_text,
+            "children": children[:50],
+        },
+    }
+
+
 def render_row_children(
     row: dict[str, str], long_text_columns: set[str], sources_column: str | None, source_raw_column: str | None
 ) -> list[dict[str, Any]]:
     blocks: list[dict[str, Any]] = []
     if sources_column and row.get(sources_column, "").strip():
         blocks.append(heading_block("Sources", level=2))
-        for url in split_multi_value(row[sources_column].replace("\n", ",")):
-            blocks.append(bulleted_block(url))
+        source_urls = split_multi_value(row[sources_column].replace("\n", ","))
+        raw_map = parse_source_raw_map(row.get(source_raw_column, "")) if source_raw_column else {}
+        for domain, urls in group_urls_by_domain(source_urls).items():
+            blocks.append(heading_block(domain, level=3))
+            for url in urls:
+                raw_body = raw_map.get(url, "")
+                if raw_body:
+                    children = [paragraph_block(chunk) for chunk in _chunk_text(raw_body)]
+                    blocks.append(toggle_block(url, children, url=url))
+                else:
+                    blocks.append(linked_bulleted_block(url))
     for column in sorted(long_text_columns):
         value = row.get(column, "").strip()
         if not value:
             continue
-        blocks.append(heading_block(column, level=2))
         if column == source_raw_column:
-            parts = [part.strip() for part in re.split(r"\n(?=URL:\s)", value) if part.strip()]
-            if parts:
-                for part in parts[:50]:
-                    lines = part.splitlines()
-                    if lines:
-                        blocks.append(heading_block(lines[0].replace("URL:", "").strip() or "Source", level=3))
-                        body = "\n".join(lines[1:]).strip()
-                        if body:
-                            for chunk in _chunk_text(body):
-                                blocks.append(paragraph_block(chunk))
-                continue
+            continue
+        blocks.append(heading_block(column, level=2))
         for chunk in _chunk_text(value):
             blocks.append(paragraph_block(chunk))
     return blocks[:100]
+
+
+def group_urls_by_domain(urls: list[str]) -> dict[str, list[str]]:
+    grouped: dict[str, list[str]] = {}
+    for url in urls:
+        domain = urllib.parse.urlparse(url).netloc or "unknown"
+        grouped.setdefault(domain, []).append(url)
+    return {domain: sorted(values) for domain, values in sorted(grouped.items())}
+
+
+def parse_source_raw_map(value: str) -> dict[str, str]:
+    mapping: dict[str, str] = {}
+    for part in [part.strip() for part in re.split(r"\n(?=URL:\s)", value or "") if part.strip()]:
+        lines = part.splitlines()
+        if not lines:
+            continue
+        url = lines[0].replace("URL:", "").strip()
+        body = "\n".join(lines[1:]).strip()
+        if url:
+            mapping[url] = body
+    return mapping
+
+
+def is_location_column(header: str) -> bool:
+    lowered = header.strip().lower()
+    return any(token in lowered for token in ["location", "address", "adress"])
+
+
+def parse_place_value(value: str) -> dict[str, Any] | None:
+    cleaned = value.strip()
+    if not cleaned:
+        return None
+    parts = [part.strip() for part in cleaned.split(",") if part.strip()]
+    return {
+        "name": parts[0],
+        "address": ", ".join(parts),
+    }
 
 
 def _chunk_text(text: str, limit: int = 1800) -> list[str]:

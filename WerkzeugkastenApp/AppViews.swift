@@ -37,15 +37,7 @@ private struct SectionCard<Content: View>: View {
             content
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(16)
-        .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(.quaternary.opacity(0.3))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .strokeBorder(.white.opacity(0.06))
-        )
+        .padding(.vertical, 10)
     }
 }
 
@@ -55,21 +47,47 @@ private struct WindowSurface<Content: View>: View {
 
     var body: some View {
         ZStack {
-            LinearGradient(
-                colors: [
-                    Color(nsColor: .windowBackgroundColor),
-                    Color(nsColor: .underPageBackgroundColor).opacity(0.82),
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .ignoresSafeArea()
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            Color(nsColor: .controlBackgroundColor),
+                            Color(nsColor: .windowBackgroundColor),
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .shadow(color: .black.opacity(0.12), radius: 18, x: 0, y: 10)
+                .padding(10)
 
             content
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-                .padding(20)
+                .padding(28)
         }
         .frame(minWidth: minWidth, alignment: .topLeading)
+        .preferredColorScheme(.light)
+    }
+}
+
+private struct PrimaryEditor: ViewModifier {
+    let minHeight: CGFloat
+
+    func body(content: Content) -> some View {
+        content
+            .font(.body.monospaced())
+            .frame(minHeight: minHeight, maxHeight: .infinity, alignment: .topLeading)
+            .scrollContentBackground(.hidden)
+            .background(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(.white.opacity(0.8))
+            )
+    }
+}
+
+private extension View {
+    func primaryEditor(minHeight: CGFloat) -> some View {
+        modifier(PrimaryEditor(minHeight: minHeight))
     }
 }
 
@@ -251,6 +269,7 @@ private struct OutputPathCard: View {
         SectionCard(title: "Output") {
             TextField("Output Path", text: $outputPath)
                 .textFieldStyle(.roundedBorder)
+                .controlSize(.large)
                 .font(.body.monospaced())
             HStack {
                 Button("Choose…") {
@@ -420,8 +439,7 @@ struct ResearchListWindow: View {
                 VStack(alignment: .leading, spacing: 16) {
                     SectionCard(title: "Input") {
                         TextEditor(text: $inputText)
-                            .font(.body.monospaced())
-                            .frame(minHeight: 180)
+                            .primaryEditor(minHeight: 220)
                         FileDropArea(label: "Drop a text file here") { urls in
                             loadTextFile(urls.first)
                         }
@@ -432,6 +450,8 @@ struct ResearchListWindow: View {
 
                     SectionCard(title: "Question") {
                         TextField("Question", text: $question)
+                            .textFieldStyle(.roundedBorder)
+                            .controlSize(.large)
                         Text("\(parsedItems.count) parsed item(s)")
                             .foregroundStyle(.secondary)
                         CopyableTagList(title: "Parsed Items", values: parsedItems)
@@ -547,8 +567,7 @@ struct ResearchTableWindow: View {
                 VStack(alignment: .leading, spacing: 16) {
                     SectionCard(title: "Input") {
                         TextEditor(text: $inputText)
-                            .font(.body.monospaced())
-                            .frame(minHeight: 200)
+                            .primaryEditor(minHeight: 240)
                         FileDropArea(label: "Drop a CSV or Markdown file here") { urls in
                             loadTextFile(urls.first)
                         }
@@ -693,8 +712,7 @@ struct SummarizeWindow: View {
                 VStack(alignment: .leading, spacing: 16) {
                     SectionCard(title: "Input") {
                         TextEditor(text: $session.inputText)
-                            .font(.body.monospaced())
-                            .frame(minHeight: 180)
+                            .primaryEditor(minHeight: 220)
                         FileDropArea(label: "Drop one or more files here") { urls in
                             session.addFiles(urls)
                         }
@@ -890,32 +908,39 @@ struct SettingsWindow: View {
                         SettingsFieldRow(title: "OpenAI API Key") {
                             SecureField("sk-proj-...", text: $settings.apiKey)
                                 .textFieldStyle(.roundedBorder)
+                                .controlSize(.large)
                         }
                         SettingsFieldRow(title: "Jina API Key") {
                             SecureField("jina_...", text: $settings.jinaAPIKey)
                                 .textFieldStyle(.roundedBorder)
+                                .controlSize(.large)
                         }
                         SettingsFieldRow(title: "Notion API Token") {
                             SecureField("secret_...", text: $settings.notionToken)
                                 .textFieldStyle(.roundedBorder)
+                                .controlSize(.large)
                         }
                         SettingsFieldRow(title: "Notion Parent Page") {
                             TextField("Page URL or UUID", text: $settings.notionParentPage)
                                 .textFieldStyle(.roundedBorder)
+                                .controlSize(.large)
                         }
                         SettingsFieldRow(title: "Research model") {
                             TextField("gpt-5.4", text: $settings.researchModel)
                                 .textFieldStyle(.roundedBorder)
+                                .controlSize(.large)
                         }
                         SettingsFieldRow(title: "Summary model") {
                             TextField("gpt-5.4", text: $settings.summaryModel)
                                 .textFieldStyle(.roundedBorder)
+                                .controlSize(.large)
                         }
                         SettingsFieldRow(title: "Python interpreter") {
                             VStack(alignment: .leading, spacing: 8) {
                                 HStack {
                                     TextField("/opt/homebrew/bin/python3", text: $settings.pythonInterpreterPath)
                                         .textFieldStyle(.roundedBorder)
+                                        .controlSize(.large)
                                     Button("Browse") {
                                         settings.pythonInterpreterPath = chooseFiles(allowsMultiple: false).first?.path ?? settings.pythonInterpreterPath
                                     }

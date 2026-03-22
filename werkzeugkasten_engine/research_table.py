@@ -370,7 +370,7 @@ def research_row(
         **response_create_kwargs(model, use_web_search=True, include_web_sources=True),
     )
     raw_text = (response.output_text or "").strip()
-    sources = extract_sources(response)
+    sources = normalize_source_urls(extract_sources(response))
     try:
         data = json.loads(extract_json_block(raw_text))
         if data.get("key") != key:
@@ -449,17 +449,20 @@ def apply_dynamic_value(row: dict[str, str], column: DynamicColumn, value: str) 
 def fetch_source_raw_text(url: str, cache: dict[str, FetchResult]) -> FetchResult:
     if url in cache:
         return cache[url]
-
-    endpoint = "https://r.jina.ai/"  # TODO: move to config
-    headers = {"X-Cache-Tolerance": "43000", "X-Md-Link-Style": "referenced", "X-Retain-Images": "none"}  # TODO: move to config
+    request = urllib.request.Request(
+        f"https://r.jina.ai/{url}",
+        headers={
+            "X-Engine": "direct",
+            "X-Retain-Images": "none",
+            "X-Md-Link-Style": "referenced",
+        },
+    )
     api_key = jina_api_key().strip()
     if api_key:
-        headers["Authorization"] = f"Bearer {api_key}"
-
+        request.add_header("Authorization", f"Bearer {api_key}")
     try:
-        response = requests.get(f"{endpoint}{url}", headers=headers)
-        response.raise_for_status()
-        return FetchResult(text=response.text)
+        with urllib.request.urlopen(request, timeout=30) as response:
+            result = FetchResult(text=response.read().decode("utf-8", errors="replace").strip())
     except urllib.error.HTTPError as exc:
         result = FetchResult(
             text=f"[Source fetch failed] {url}\nHTTP {exc.code}: {exc.reason}",
@@ -780,7 +783,7 @@ def normalize_dataset(
     for header in headers:
         if header == key_header:
             continue
-        if header in long_text_columns or header in question_columns:
+        if header in long_text_columns or header in question_columns or is_locationish_header(header):
             continue
         observed_items: list[str] = []
         for row in rows:
@@ -800,6 +803,9 @@ def normalize_dataset(
                 continue
             if header in long_text_columns:
                 row[header] = value.strip()
+                continue
+            if is_locationish_header(header):
+                row[header] = normalize_location_value(value)
                 continue
             if header in url_like_columns:
                 items = split_and_clean_items(value, url_mode=True)
@@ -825,11 +831,14 @@ def detect_url_like_columns(headers: list[str], rows: list[dict[str, str]], *, s
     if source_column:
         result.add(source_column)
     for header in headers[1:]:
+        if is_locationish_header(header):
+            continue
         values = [row.get(header, "").strip() for row in rows if row.get(header, "").strip()]
         if not values:
             continue
-        score = sum(1 for value in values[:25] if len(extract_urls(value)) > 0)
-        if score and score >= max(2, len(values[:25]) // 2):
+        sample = values[:25]
+        score = sum(1 for value in sample if is_url_only(value))
+        if score and score == len(sample):
             result.add(header)
     return result
 
@@ -843,7 +852,7 @@ def detect_list_like_columns(
 ) -> set[str]:
     result = set(known_columns)
     for header in headers[1:]:
-        if header in question_columns:
+        if header in question_columns or is_locationish_header(header):
             continue
         values = [row.get(header, "").strip() for row in rows if row.get(header, "").strip()]
         if not values:
@@ -904,7 +913,7 @@ def best_canonical(candidate: str, canonicals: list[str]) -> str | None:
 
 def split_and_clean_items(value: str, *, url_mode: bool) -> list[str]:
     if url_mode:
-        urls = [normalize_url_value(url) for url in extract_urls(value)]
+        urls = normalize_source_urls(extract_urls(value))
         return [url for url in dict.fromkeys(urls) if url]
     working = replace_markdown_links_with_labels(value)
     working = REF_RE.sub("", working)
@@ -920,9 +929,10 @@ def normalize_scalar_value(value: str) -> str:
     text = value.strip()
     if not text:
         return ""
-    urls = extract_urls(text)
-    if urls and len(urls) == 1 and len(text) < 140:
-        return normalize_url_value(urls[0])
+    if is_url_only(text):
+        urls = extract_urls(text)
+        if urls:
+            return normalize_url_value(urls[0])
     text = replace_markdown_links_with_labels(text)
     text = REF_RE.sub("", text)
     text = re.sub(r"\((?:https?://|www\.)[^)]+\)", "", text).strip()
@@ -949,6 +959,14 @@ def normalize_scalar_value(value: str) -> str:
     return text
 
 
+def normalize_location_value(value: str) -> str:
+    text = value.strip()
+    text = replace_markdown_links_with_labels(text)
+    text = re.sub(r"\((?:https?://|www\.)[^)]+\)", "", text).strip()
+    text = re.sub(r"\s+", " ", text)
+    return text
+
+
 def replace_markdown_links_with_labels(text: str) -> str:
     return MARKDOWN_LINK_RE.sub(lambda match: match.group(1), text)
 
@@ -958,6 +976,28 @@ def extract_urls(text: str) -> list[str]:
     urls.extend(match.group(2) for match in MARKDOWN_LINK_RE.finditer(text or ""))
     normalized = [normalize_url_value(url) for url in urls]
     return [url for url in dict.fromkeys(normalized) if url]
+
+
+def normalize_source_urls(urls: list[str]) -> list[str]:
+    normalized = [normalize_url_value(url) for url in urls if url.strip()]
+    return sorted({url for url in normalized if url})
+
+
+def is_url_only(text: str) -> bool:
+    stripped = text.strip()
+    urls = extract_urls(stripped)
+    if not urls:
+        return False
+    candidate = stripped
+    candidate = MARKDOWN_LINK_RE.sub(lambda match: match.group(2), candidate)
+    candidate = re.sub(r"\((?:https?://|www\.)[^)]+\)", "", candidate).strip()
+    candidate = re.sub(r"\s+", "", candidate)
+    return candidate in {url.replace("https://", "").replace("http://", "") for url in urls} or candidate in urls
+
+
+def is_locationish_header(header: str) -> bool:
+    lowered = header.strip().lower()
+    return any(token in lowered for token in ["location", "address", "adress", "city", "country", "region", "state"])
 
 
 def normalize_url_value(value: str) -> str:
@@ -972,7 +1012,13 @@ def normalize_url_value(value: str) -> str:
     host = parsed.netloc.lower()
     path = parsed.path or ""
     query_pairs = urllib.parse.parse_qsl(parsed.query, keep_blank_values=False)
-    filtered_query = [(key, val) for key, val in query_pairs if not key.lower().startswith("utm_")]
+    filtered_query = [
+        (key, val)
+        for key, val in query_pairs
+        if not key.lower().startswith("utm_")
+        and "openai" not in key.lower()
+        and "openai" not in val.lower()
+    ]
     query = urllib.parse.urlencode(filtered_query)
     rebuilt = urllib.parse.urlunparse(("https", host, path.rstrip("/"), "", query, ""))
     return rebuilt.rstrip("/") if rebuilt.endswith("/") and path in {"", "/"} else rebuilt
@@ -1096,7 +1142,7 @@ def run_research_dataset(
                 )
 
         if source_column is not None and sources:
-            apply_dynamic_value(row, source_column, "\n".join(sources))
+            apply_dynamic_value(row, source_column, ", ".join(sources))
         if (
             source_raw_column is not None
             and sources
