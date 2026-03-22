@@ -18,8 +18,7 @@ This project is set up for a signed and notarized GitHub release of the macOS ap
 
 1. Create or export a `Developer ID Application` certificate.
 2. Export it as a `.p12` file with a password.
-3. If your Apple entitlements require provisioning profiles for Developer ID distribution, export one for the app target and one for the action extension target.
-4. Generate notarization credentials for CI:
+3. Generate notarization credentials for CI:
    - Apple ID
    - app-specific password
    - Team ID
@@ -34,13 +33,6 @@ Add these repository secrets:
 - `APPLE_NOTARY_APPLE_ID`
 - `APPLE_NOTARY_PASSWORD`
 - `APPLE_NOTARY_TEAM_ID`
-
-Optional provisioning-profile secrets:
-
-- `APPLE_APP_PROVISIONING_PROFILE_BASE64`
-- `APPLE_EXTENSION_PROVISIONING_PROFILE_BASE64`
-
-The certificate and provisioning-profile secrets should contain raw base64 of the exported files.
 
 ## 4. Verify local release prerequisites
 
