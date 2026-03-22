@@ -12,7 +12,6 @@
 		0C0D1518C19F8FA71AC6F36C /* WerkzeugkastenCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = F092DBDA7FAF38A0B178EAC8 /* WerkzeugkastenCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		2FD628DF8D8665D1FE044337 /* SharedConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01EF0C5C530CE082E8B2B547 /* SharedConstants.swift */; };
 		36E203BD2236F80809D0EC88 /* KeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 291E600BE0B8ACFC5051E150 /* KeychainStore.swift */; };
-		3A586AEBE7938898ED428330 /* legacy.py in Resources */ = {isa = PBXBuildFile; fileRef = FFFD6CB2C8B194A34B30A8B7 /* legacy.py */; };
 		3FD5AFFDDE11483A0B8A7AD3 /* NotificationHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A097660C4E07FDE236F3F60 /* NotificationHelper.swift */; };
 		4241B653BA8FBCB1A9E7A67A /* __init__.py in Resources */ = {isa = PBXBuildFile; fileRef = E9A38693E5762C44DBBF1884 /* __init__.py */; };
 		7EED355B360ECEE774009E13 /* AppViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35C1467AD8376C9CEE5F6337 /* AppViews.swift */; };
@@ -136,7 +135,6 @@
 		A31F019728D6D2BE8004CE0F /* WerkzeugkastenMenuBarApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WerkzeugkastenMenuBarApp.swift; sourceTree = "<group>"; };
 		E9A38693E5762C44DBBF1884 /* __init__.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = __init__.py; sourceTree = "<group>"; };
 		F092DBDA7FAF38A0B178EAC8 /* WerkzeugkastenCore.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = WerkzeugkastenCore.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		FFFD6CB2C8B194A34B30A8B7 /* legacy.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = legacy.py; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -227,7 +225,6 @@
 				6680F31899AC9941FF773ED8 /* __main__.py */,
 				59529C372C6D31287D8CBFB9 /* cli.py */,
 				0A861B92A63C05B5F04D30EB /* core.py */,
-				FFFD6CB2C8B194A34B30A8B7 /* legacy.py */,
 				2EF749C5BD54E46DD9BE9D29 /* research_list.py */,
 				16C26B07EBA9E0BB3924BC3F /* research_table.py */,
 				11958C6AF087D6D836897533 /* summarize.py */,
@@ -369,7 +366,6 @@
 				83D6BB825686AD2D0D955AF9 /* __main__.py in Resources */,
 				8B1D51BECAFD093B99E87AC0 /* cli.py in Resources */,
 				A49FE4BEAFCC0C2FB326512F /* core.py in Resources */,
-				3A586AEBE7938898ED428330 /* legacy.py in Resources */,
 				BF1097745F06A7D309ABBE02 /* research_list.py in Resources */,
 				BA8E417DAC7FE1B642F3AB01 /* research_table.py in Resources */,
 				88D2D41766C068ECF76FDE22 /* summarize.py in Resources */,

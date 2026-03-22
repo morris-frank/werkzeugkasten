@@ -7,7 +7,6 @@ public final class EngineRunner: Sendable {
         "__main__.py",
         "cli.py",
         "core.py",
-        "legacy.py",
         "research_list.py",
         "research_table.py",
         "summarize.py",

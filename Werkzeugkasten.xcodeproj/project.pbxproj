@@ -10,7 +10,6 @@
 		0749B831A36742F4200B0FC0 /* NotificationHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = C01734DF3F4E31D70B38C5D9 /* NotificationHelper.swift */; };
 		105A4A2CA9AF4F9DC96F2CDD /* WerkzeugkastenCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C3716AF63EA89C0FA62605D6 /* WerkzeugkastenCore.framework */; };
 		225F5A5DA5CBD43EDEBF2390 /* cli.py in Resources */ = {isa = PBXBuildFile; fileRef = 039EB08BEECA476732008F17 /* cli.py */; };
-		2FE5F21CBA2893D7E217ED47 /* legacy.py in Resources */ = {isa = PBXBuildFile; fileRef = B66ED939F75208E1334A8B47 /* legacy.py */; };
 		31E4949EC527760EE14E1AB2 /* WerkzeugkastenCoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B844258B07D5787549A4477A /* WerkzeugkastenCoreTests.swift */; };
 		38A6A020425CCC29160AAD35 /* WerkzeugkastenMenuBarApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF116B93A5A9E598B27B31BC /* WerkzeugkastenMenuBarApp.swift */; };
 		5DC44BDE0C627EC3241B4E3A /* KeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 265FDCCD369231C633885AAD /* KeychainStore.swift */; };
@@ -126,7 +125,6 @@
 		818867BAF39880CCC88DEA9A /* EngineRunner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EngineRunner.swift; sourceTree = "<group>"; };
 		9499CF6083CAC465D709D574 /* __main__.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = __main__.py; sourceTree = "<group>"; };
 		AF116B93A5A9E598B27B31BC /* WerkzeugkastenMenuBarApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WerkzeugkastenMenuBarApp.swift; sourceTree = "<group>"; };
-		B66ED939F75208E1334A8B47 /* legacy.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = legacy.py; sourceTree = "<group>"; };
 		B844258B07D5787549A4477A /* WerkzeugkastenCoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WerkzeugkastenCoreTests.swift; sourceTree = "<group>"; };
 		BD018E23146E8C7F5B91F4E2 /* __init__.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = __init__.py; sourceTree = "<group>"; };
 		C014451E1B72793D458B2729 /* SettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsStore.swift; sourceTree = "<group>"; };
@@ -197,7 +195,6 @@
 				9499CF6083CAC465D709D574 /* __main__.py */,
 				039EB08BEECA476732008F17 /* cli.py */,
 				384F8D7E79173F8B32D47901 /* core.py */,
-				B66ED939F75208E1334A8B47 /* legacy.py */,
 				37FB0436162635ED3D9F7960 /* research_list.py */,
 				11F0B000F6303B8D593B022D /* research_table.py */,
 				D14CE0A75D016134236341E6 /* summarize.py */,
@@ -367,7 +364,6 @@
 				FD2D1F6B343D36D086789510 /* __main__.py in Resources */,
 				225F5A5DA5CBD43EDEBF2390 /* cli.py in Resources */,
 				7294D9C96F0F3F778B747E6A /* core.py in Resources */,
-				2FE5F21CBA2893D7E217ED47 /* legacy.py in Resources */,
 				E7E8CAD4CE5FBC9FC1A8CE19 /* research_list.py in Resources */,
 				EF19CBB597D4378D3E65E2B9 /* research_table.py in Resources */,
 				C58474CC62AF4A58749511D1 /* summarize.py in Resources */,

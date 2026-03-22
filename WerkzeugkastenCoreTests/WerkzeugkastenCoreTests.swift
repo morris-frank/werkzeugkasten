@@ -51,7 +51,7 @@ final class WerkzeugkastenCoreTests: XCTestCase {
         let temp = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         try FileManager.default.createDirectory(at: temp, withIntermediateDirectories: true)
 
-        for name in ["__init__.py", "__main__.py", "cli.py", "core.py", "legacy.py", "research_list.py", "research_table.py", "summarize.py"] {
+        for name in ["__init__.py", "__main__.py", "cli.py", "core.py", "research_list.py", "research_table.py", "summarize.py"] {
             try "print('ok')".write(to: temp.appendingPathComponent(name), atomically: true, encoding: .utf8)
         }
 
