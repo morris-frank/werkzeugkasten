@@ -471,6 +471,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.mauricefrank.werkzeugkasten;
 				PRODUCT_NAME = Werkzeugkasten;
 				PROVISIONING_PROFILE_SPECIFIER = "";
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=macosx*]" = "";
 				SDKROOT = macosx;
 			};
 			name = Debug;
@@ -567,6 +568,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.mauricefrank.werkzeugkasten.action;
 				PROVISIONING_PROFILE_SPECIFIER = "";
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=macosx*]" = "";
 				SDKROOT = macosx;
 			};
 			name = Release;
@@ -764,6 +766,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.mauricefrank.werkzeugkasten;
 				PRODUCT_NAME = Werkzeugkasten;
 				PROVISIONING_PROFILE_SPECIFIER = "";
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=macosx*]" = "";
 				SDKROOT = macosx;
 			};
 			name = Release;
@@ -787,6 +790,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.mauricefrank.werkzeugkasten.action;
 				PROVISIONING_PROFILE_SPECIFIER = "";
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=macosx*]" = "";
 				SDKROOT = macosx;
 			};
 			name = Debug;
