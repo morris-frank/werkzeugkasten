@@ -411,17 +411,77 @@ private struct OutputPathCard: View {
     }
 }
 
-private struct ResearchRunOptionsState {
-    var includeSources = false
-    var includeSourceRaw = false
-    var autoTagging = false
-    var nearestNeighbour = false
-    var exportToNotion = false
-    var sourcePolicy: GeneratedColumnPolicy = .merge
-    var sourceRawPolicy: GeneratedColumnPolicy = .merge
-    var tagPolicy: GeneratedColumnPolicy = .merge
-    var nearestPolicy: GeneratedColumnPolicy = .merge
-    var recordIDPolicy: GeneratedColumnPolicy = .merge
+private struct ResearchRunOptionsState: Equatable {
+    var includeSources: Bool
+    var includeSourceRaw: Bool
+    var autoTagging: Bool
+    var nearestNeighbour: Bool
+    var exportToNotion: Bool
+    var sourcePolicy: GeneratedColumnPolicy
+    var sourceRawPolicy: GeneratedColumnPolicy
+    var tagPolicy: GeneratedColumnPolicy
+    var nearestPolicy: GeneratedColumnPolicy
+    var recordIDPolicy: GeneratedColumnPolicy
+
+    init(
+        includeSources: Bool = WerkzeugkastenConstants.defaultResearchIncludeSources,
+        includeSourceRaw: Bool = WerkzeugkastenConstants.defaultResearchIncludeSourceRaw,
+        autoTagging: Bool = WerkzeugkastenConstants.defaultResearchAutoTagging,
+        nearestNeighbour: Bool = WerkzeugkastenConstants.defaultResearchNearestNeighbour,
+        exportToNotion: Bool = WerkzeugkastenConstants.defaultResearchExportToNotion,
+        sourcePolicy: GeneratedColumnPolicy = GeneratedColumnPolicy(rawValue: WerkzeugkastenConstants.defaultResearchColumnPolicyRawValue) ?? .merge,
+        sourceRawPolicy: GeneratedColumnPolicy = GeneratedColumnPolicy(rawValue: WerkzeugkastenConstants.defaultResearchColumnPolicyRawValue) ?? .merge,
+        tagPolicy: GeneratedColumnPolicy = GeneratedColumnPolicy(rawValue: WerkzeugkastenConstants.defaultResearchColumnPolicyRawValue) ?? .merge,
+        nearestPolicy: GeneratedColumnPolicy = GeneratedColumnPolicy(rawValue: WerkzeugkastenConstants.defaultResearchColumnPolicyRawValue) ?? .merge,
+        recordIDPolicy: GeneratedColumnPolicy = GeneratedColumnPolicy(rawValue: WerkzeugkastenConstants.defaultResearchColumnPolicyRawValue) ?? .merge
+    ) {
+        self.includeSources = includeSources
+        self.includeSourceRaw = includeSourceRaw
+        self.autoTagging = autoTagging
+        self.nearestNeighbour = nearestNeighbour
+        self.exportToNotion = exportToNotion
+        self.sourcePolicy = sourcePolicy
+        self.sourceRawPolicy = sourceRawPolicy
+        self.tagPolicy = tagPolicy
+        self.nearestPolicy = nearestPolicy
+        self.recordIDPolicy = recordIDPolicy
+    }
+
+    static func load(from defaults: UserDefaults = .standard) -> ResearchRunOptionsState {
+        func storedBool(_ key: String, default def: Bool) -> Bool {
+            if defaults.object(forKey: key) == nil { return def }
+            return defaults.bool(forKey: key)
+        }
+        func storedPolicy(_ key: String) -> GeneratedColumnPolicy {
+            let raw = defaults.string(forKey: key) ?? WerkzeugkastenConstants.defaultResearchColumnPolicyRawValue
+            return GeneratedColumnPolicy(rawValue: raw) ?? .merge
+        }
+        return ResearchRunOptionsState(
+            includeSources: storedBool(WerkzeugkastenConstants.researchRunIncludeSourcesKey, default: WerkzeugkastenConstants.defaultResearchIncludeSources),
+            includeSourceRaw: storedBool(WerkzeugkastenConstants.researchRunIncludeSourceRawKey, default: WerkzeugkastenConstants.defaultResearchIncludeSourceRaw),
+            autoTagging: storedBool(WerkzeugkastenConstants.researchRunAutoTaggingKey, default: WerkzeugkastenConstants.defaultResearchAutoTagging),
+            nearestNeighbour: storedBool(WerkzeugkastenConstants.researchRunNearestNeighbourKey, default: WerkzeugkastenConstants.defaultResearchNearestNeighbour),
+            exportToNotion: storedBool(WerkzeugkastenConstants.researchRunExportToNotionKey, default: WerkzeugkastenConstants.defaultResearchExportToNotion),
+            sourcePolicy: storedPolicy(WerkzeugkastenConstants.researchRunSourcePolicyKey),
+            sourceRawPolicy: storedPolicy(WerkzeugkastenConstants.researchRunSourceRawPolicyKey),
+            tagPolicy: storedPolicy(WerkzeugkastenConstants.researchRunTagPolicyKey),
+            nearestPolicy: storedPolicy(WerkzeugkastenConstants.researchRunNearestPolicyKey),
+            recordIDPolicy: storedPolicy(WerkzeugkastenConstants.researchRunRecordIDPolicyKey)
+        )
+    }
+
+    func save(to defaults: UserDefaults = .standard) {
+        defaults.set(includeSources, forKey: WerkzeugkastenConstants.researchRunIncludeSourcesKey)
+        defaults.set(includeSourceRaw, forKey: WerkzeugkastenConstants.researchRunIncludeSourceRawKey)
+        defaults.set(autoTagging, forKey: WerkzeugkastenConstants.researchRunAutoTaggingKey)
+        defaults.set(nearestNeighbour, forKey: WerkzeugkastenConstants.researchRunNearestNeighbourKey)
+        defaults.set(exportToNotion, forKey: WerkzeugkastenConstants.researchRunExportToNotionKey)
+        defaults.set(sourcePolicy.rawValue, forKey: WerkzeugkastenConstants.researchRunSourcePolicyKey)
+        defaults.set(sourceRawPolicy.rawValue, forKey: WerkzeugkastenConstants.researchRunSourceRawPolicyKey)
+        defaults.set(tagPolicy.rawValue, forKey: WerkzeugkastenConstants.researchRunTagPolicyKey)
+        defaults.set(nearestPolicy.rawValue, forKey: WerkzeugkastenConstants.researchRunNearestPolicyKey)
+        defaults.set(recordIDPolicy.rawValue, forKey: WerkzeugkastenConstants.researchRunRecordIDPolicyKey)
+    }
 
     mutating func setIncludeSources(_ value: Bool) {
         includeSources = value
@@ -530,7 +590,7 @@ struct ResearchListWindow: View {
     @State private var status = "Paste a list or drop a UTF-8 text file."
     @State private var outputPath = ""
     @State private var errorText: String?
-    @State private var options = ResearchRunOptionsState()
+    @State private var options = ResearchRunOptionsState.load()
 
     private var parsedItems: [String] {
         InputNormalizer.parseResearchItems(inputText)
@@ -611,6 +671,9 @@ struct ResearchListWindow: View {
         .onChange(of: question) {
             seedOutputPathIfNeeded(force: false)
         }
+        .onChange(of: options) { _, new in
+            new.save()
+        }
     }
 
     private func loadTextFile(_ url: URL?) {
@@ -669,7 +732,7 @@ struct ResearchTableWindow: View {
     @State private var status = "Paste a CSV/Markdown table or drop a file."
     @State private var outputPath = ""
     @State private var errorText: String?
-    @State private var options = ResearchRunOptionsState()
+    @State private var options = ResearchRunOptionsState.load()
 
     private var defaultOutputPath: String {
         let label = sourceName == "pasted-table" ? "research-table" : URL(fileURLWithPath: sourceName).deletingPathExtension().lastPathComponent
@@ -747,6 +810,9 @@ struct ResearchTableWindow: View {
             }
         }
         .onAppear { seedOutputPathIfNeeded(force: true) }
+        .onChange(of: options) { _, new in
+            new.save()
+        }
     }
 
     private func loadTextFile(_ url: URL?) {
