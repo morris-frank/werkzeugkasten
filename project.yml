@@ -32,7 +32,7 @@ targets:
     settings:
       base:
         GENERATE_INFOPLIST_FILE: YES
-        PRODUCT_BUNDLE_IDENTIFIER: com.morrisfrank.werkzeugkasten.core
+        PRODUCT_BUNDLE_IDENTIFIER: com.mauricefrank.werkzeugkasten.core
   WerkzeugkastenApp:
     type: application
     platform: macOS
@@ -50,13 +50,13 @@ targets:
         GENERATE_INFOPLIST_FILE: YES
         ENABLE_HARDENED_RUNTIME: YES
         PRODUCT_NAME: Werkzeugkasten
-        PRODUCT_BUNDLE_IDENTIFIER: com.morrisfrank.werkzeugkasten
+        PRODUCT_BUNDLE_IDENTIFIER: com.mauricefrank.werkzeugkasten
         INFOPLIST_KEY_CFBundleDisplayName: Shortcut Shelf
         INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.productivity
         INFOPLIST_KEY_LSUIElement: YES
         INFOPLIST_KEY_CFBundleShortVersionString: $(MARKETING_VERSION)
         INFOPLIST_KEY_CFBundleVersion: $(CURRENT_PROJECT_VERSION)
-        INFOPLIST_KEY_WerkzeugkastenKeychainAccessGroup: $(AppIdentifierPrefix)com.morrisfrank.werkzeugkasten.shared
+        INFOPLIST_KEY_WerkzeugkastenKeychainAccessGroup: $(AppIdentifierPrefix)com.mauricefrank.werkzeugkasten.shared
   WerkzeugkastenActionExtension:
     type: app-extension
     platform: macOS
@@ -72,8 +72,8 @@ targets:
     settings:
       base:
         ENABLE_HARDENED_RUNTIME: YES
-        PRODUCT_BUNDLE_IDENTIFIER: com.morrisfrank.werkzeugkasten.action
-        INFOPLIST_KEY_WerkzeugkastenKeychainAccessGroup: $(AppIdentifierPrefix)com.morrisfrank.werkzeugkasten.shared
+        PRODUCT_BUNDLE_IDENTIFIER: com.mauricefrank.werkzeugkasten.action
+        INFOPLIST_KEY_WerkzeugkastenKeychainAccessGroup: $(AppIdentifierPrefix)com.mauricefrank.werkzeugkasten.shared
   WerkzeugkastenCoreTests:
     type: bundle.unit-test
     platform: macOS
@@ -86,7 +86,7 @@ targets:
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_CFBundleShortVersionString: $(MARKETING_VERSION)
         INFOPLIST_KEY_CFBundleVersion: $(CURRENT_PROJECT_VERSION)
-        PRODUCT_BUNDLE_IDENTIFIER: com.morrisfrank.werkzeugkasten.core.tests
+        PRODUCT_BUNDLE_IDENTIFIER: com.mauricefrank.werkzeugkasten.core.tests
 schemes:
   Werkzeugkasten:
     build:

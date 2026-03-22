@@ -1,12 +1,12 @@
 import Foundation
 
 public enum WerkzeugkastenConstants {
-    public static let appBundleIdentifier = "com.morrisfrank.werkzeugkasten"
-    public static let actionExtensionBundleIdentifier = "com.morrisfrank.werkzeugkasten.action"
-    public static let appGroup = "group.com.morrisfrank.werkzeugkasten"
+    public static let appBundleIdentifier = "com.mauricefrank.werkzeugkasten"
+    public static let actionExtensionBundleIdentifier = "com.mauricefrank.werkzeugkasten.action"
+    public static let appGroup = "group.com.mauricefrank.werkzeugkasten"
     public static let keychainService = appBundleIdentifier
     public static let keychainAccount = "OPENAI_API_KEY"
-    public static let keychainAccessGroupSuffix = "com.morrisfrank.werkzeugkasten.shared"
+    public static let keychainAccessGroupSuffix = "com.mauricefrank.werkzeugkasten.shared"
     public static var defaultPythonInterpreterPath: String {
         resolvedPythonInterpreterPath() ?? ""
     }

@@ -5,12 +5,12 @@ This project is set up for a signed and notarized GitHub release of the macOS ap
 ## 1. Finalize Apple identifiers and capabilities
 
 1. Create or confirm these bundle identifiers in Apple Developer:
-   - `com.morrisfrank.werkzeugkasten`
-   - `com.morrisfrank.werkzeugkasten.action`
+   - `com.mauricefrank.werkzeugkasten`
+   - `com.mauricefrank.werkzeugkasten.action`
 2. Create or confirm the shared App Group:
-   - `group.com.morrisfrank.werkzeugkasten`
+   - `group.com.mauricefrank.werkzeugkasten`
 3. Enable Keychain Sharing and use this shared access-group suffix:
-   - `com.morrisfrank.werkzeugkasten.shared`
+   - `com.mauricefrank.werkzeugkasten.shared`
 4. Make sure the app target and the action extension target both include the App Group and Keychain Sharing capabilities in Xcode.
 5. Add an actual `icon.icns` for the action extension before the public release if you want Finder preview UI to show a branded icon instead of the template fallback.
 
