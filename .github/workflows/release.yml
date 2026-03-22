@@ -36,6 +36,7 @@ jobs:
           security default-keychain -s build.keychain
           security unlock-keychain -p "$RUNNER_TEMP" build.keychain
           security set-keychain-settings -lut 21600 build.keychain
+          security list-keychains -d user -s build.keychain login.keychain-db
 
       - name: Import Developer ID certificate
         env:
@@ -58,6 +59,22 @@ jobs:
             -T /usr/bin/security \
             -T /usr/bin/xcodebuild
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$RUNNER_TEMP" build.keychain
+          security find-identity -v -p codesigning build.keychain
+
+      - name: Show resolved signing settings
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          xcodebuild \
+            -project Werkzeugkasten.xcodeproj \
+            -scheme "$SCHEME" \
+            -configuration Release \
+            DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_IDENTITY="Developer ID Application" \
+            OTHER_CODE_SIGN_FLAGS="--keychain build.keychain" \
+            -showBuildSettings | \
+            egrep "TARGET_NAME =|PRODUCT_BUNDLE_IDENTIFIER =|DEVELOPMENT_TEAM =|CODE_SIGN_STYLE =|CODE_SIGN_IDENTITY =|PROVISIONING_PROFILE_SPECIFIER ="
 
       - name: Archive release build
         env:
@@ -69,6 +86,8 @@ jobs:
             -configuration Release \
             -archivePath "$ARCHIVE_PATH" \
             DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_IDENTITY="Developer ID Application" \
             OTHER_CODE_SIGN_FLAGS="--keychain build.keychain" \
             archive
 

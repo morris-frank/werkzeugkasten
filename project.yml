@@ -33,6 +33,14 @@ targets:
       base:
         GENERATE_INFOPLIST_FILE: YES
         PRODUCT_BUNDLE_IDENTIFIER: com.mauricefrank.werkzeugkasten.core
+      configs:
+        Debug:
+          CODE_SIGN_STYLE: Automatic
+          CODE_SIGN_IDENTITY: Apple Development
+        Release:
+          CODE_SIGN_STYLE: Manual
+          CODE_SIGN_IDENTITY: Developer ID Application
+          PROVISIONING_PROFILE_SPECIFIER: ""
   WerkzeugkastenApp:
     type: application
     platform: macOS
@@ -57,6 +65,14 @@ targets:
         INFOPLIST_KEY_CFBundleShortVersionString: $(MARKETING_VERSION)
         INFOPLIST_KEY_CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         INFOPLIST_KEY_WerkzeugkastenKeychainAccessGroup: $(AppIdentifierPrefix)com.mauricefrank.werkzeugkasten.shared
+      configs:
+        Debug:
+          CODE_SIGN_STYLE: Automatic
+          CODE_SIGN_IDENTITY: Apple Development
+        Release:
+          CODE_SIGN_STYLE: Manual
+          CODE_SIGN_IDENTITY: Developer ID Application
+          PROVISIONING_PROFILE_SPECIFIER: ""
   WerkzeugkastenActionExtension:
     type: app-extension
     platform: macOS
@@ -74,6 +90,14 @@ targets:
         ENABLE_HARDENED_RUNTIME: YES
         PRODUCT_BUNDLE_IDENTIFIER: com.mauricefrank.werkzeugkasten.action
         INFOPLIST_KEY_WerkzeugkastenKeychainAccessGroup: $(AppIdentifierPrefix)com.mauricefrank.werkzeugkasten.shared
+      configs:
+        Debug:
+          CODE_SIGN_STYLE: Automatic
+          CODE_SIGN_IDENTITY: Apple Development
+        Release:
+          CODE_SIGN_STYLE: Manual
+          CODE_SIGN_IDENTITY: Developer ID Application
+          PROVISIONING_PROFILE_SPECIFIER: ""
   WerkzeugkastenCoreTests:
     type: bundle.unit-test
     platform: macOS
@@ -87,6 +111,13 @@ targets:
         INFOPLIST_KEY_CFBundleShortVersionString: $(MARKETING_VERSION)
         INFOPLIST_KEY_CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         PRODUCT_BUNDLE_IDENTIFIER: com.mauricefrank.werkzeugkasten.core.tests
+      configs:
+        Debug:
+          CODE_SIGN_STYLE: Automatic
+          CODE_SIGN_IDENTITY: Apple Development
+        Release:
+          CODE_SIGN_STYLE: Automatic
+          CODE_SIGN_IDENTITY: Apple Development
 schemes:
   Werkzeugkasten:
     build:
