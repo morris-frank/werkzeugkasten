@@ -51,7 +51,7 @@ Werkzeugkasten uses an external Python interpreter in v1. Install Python first, 
 4. If Finder does not show the extension immediately, enable it in:
    - System Settings > Privacy & Security > Extensions
 
-Saved settings are shared with the Finder action through the configured App Group and Keychain Sharing entitlements.
+Finder launches Werkzeugkasten for summaries. The app uses its own saved settings and keychain entry; the extension does not need shared secrets.
 
 ## Example table research
 
@@ -70,4 +70,3 @@ Saved settings are shared with the Finder action through the configured App Grou
 | where is my friend’s house? | 1987 | Iran | friendship | Its most general theme is friendship and moral responsibility. |
 | The Life and Death of Colonel Blimp | 1943 | UK | honor | Its most general theme is the endurance and evolution of honor and friendship across war and time. |
 | Possession | 1981 | France/West Germany | divorce | The movie’s most general theme is marital breakdown and separation. |
-

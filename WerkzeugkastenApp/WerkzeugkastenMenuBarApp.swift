@@ -5,6 +5,7 @@ import WerkzeugkastenCore
 struct WerkzeugkastenMenuBarApp: App {
     @StateObject private var settings = SettingsStore()
     @StateObject private var windowCoordinator = WindowCoordinator()
+    @StateObject private var summarizeSession = SummarizeSession()
 
     init() {
         Task {
@@ -48,12 +49,14 @@ struct WerkzeugkastenMenuBarApp: App {
                 SummarizeWindow()
             }
                 .environmentObject(settings)
+                .environmentObject(summarizeSession)
                 .environmentObject(windowCoordinator)
         }
         .defaultWindowPlacement(centeredWindowPlacement)
         .windowResizability(.contentMinSize)
         .windowIdealSize(.fitToContent)
         .restorationBehavior(.disabled)
+        .handlesExternalEvents(matching: Set([FinderActionHandoff.route]))
 
         WindowGroup(id: WindowSceneID.prettifyCodexLog.rawValue) {
             ManagedWindowRoot(sceneID: .prettifyCodexLog) {

@@ -14,6 +14,18 @@ final class WerkzeugkastenCoreTests: XCTestCase {
         XCTAssertEqual(InputNormalizer.uniqueFileURLs([first, first]).count, 1)
     }
 
+    func testFinderActionHandoffRoundTripsFileURLs() throws {
+        let urls = [
+            URL(fileURLWithPath: "/tmp/one.txt"),
+            URL(fileURLWithPath: "/tmp/two.txt"),
+        ]
+
+        let handoffURL = try FinderActionHandoff.makeSummarizeURL(fileURLs: urls)
+        let decodedURLs = try FinderActionHandoff.parseSummarizeURL(handoffURL)
+
+        XCTAssertEqual(decodedURLs, urls)
+    }
+
     func testPreparedCommandInjectsEnvironment() throws {
         let temp = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         try FileManager.default.createDirectory(at: temp, withIntermediateDirectories: true)

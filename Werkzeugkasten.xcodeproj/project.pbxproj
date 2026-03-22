@@ -12,6 +12,7 @@
 		2DF2B33E6A677756264D45C1 /* InputNormalizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 181ED0556CE78A69F5117AE4 /* InputNormalizer.swift */; };
 		34B590C5442398CB786BDDB9 /* ActionRequestHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = D074526C6194A7A31FE77BF4 /* ActionRequestHandler.swift */; };
 		42303336D32F8BEA7C132699 /* WerkzeugkastenCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 3060211CCE42A26E316070BC /* WerkzeugkastenCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		4BC3BEDEFCFD5A2480E17DEA /* FinderActionHandoff.swift in Sources */ = {isa = PBXBuildFile; fileRef = 297934768D2DB9C0B8236847 /* FinderActionHandoff.swift */; };
 		518A6C266B6AA329A5E82C8B /* research_table.py in Resources */ = {isa = PBXBuildFile; fileRef = 7560BDE31895559957D708AE /* research_table.py */; };
 		55D2260D9C21F1DB84F0365B /* WerkzeugkastenMenuBarApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EFF0536F5C13E31AB66473A /* WerkzeugkastenMenuBarApp.swift */; };
 		6108108A3D7D48EF2025689E /* WerkzeugkastenCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3060211CCE42A26E316070BC /* WerkzeugkastenCore.framework */; };
@@ -20,6 +21,7 @@
 		7D5FA8EF07FD2268BB016162 /* KeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 830304711401CF08505EC9CC /* KeychainStore.swift */; };
 		7E9C6A978616A9B9ED374082 /* SettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9EA15E79BA1DEF64E3260EC5 /* SettingsStore.swift */; };
 		8394E79A6F305A2E15E423A7 /* WerkzeugkastenCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3060211CCE42A26E316070BC /* WerkzeugkastenCore.framework */; };
+		83EC1C938BE86CC7425A338F /* SummarizeSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 869D49FFAD2414111E1AFB17 /* SummarizeSession.swift */; };
 		919EBDABC2850772F1A21BB7 /* EngineRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43C2DC0426AFB4EDAE58BDA4 /* EngineRunner.swift */; };
 		9A380FA55531D84B04C75011 /* EngineModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAB967D4725A9E07D6CC3605 /* EngineModels.swift */; };
 		A51273A49BE279C5869F11E8 /* cli.py in Resources */ = {isa = PBXBuildFile; fileRef = 677A8E7873E5DCC3B38A2B7D /* cli.py */; };
@@ -119,6 +121,7 @@
 		0C9AD89BF9426D42198C30DB /* NotificationHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationHelper.swift; sourceTree = "<group>"; };
 		181ED0556CE78A69F5117AE4 /* InputNormalizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputNormalizer.swift; sourceTree = "<group>"; };
 		1A54CC72921F51DAF9F09726 /* SharedConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedConstants.swift; sourceTree = "<group>"; };
+		297934768D2DB9C0B8236847 /* FinderActionHandoff.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FinderActionHandoff.swift; sourceTree = "<group>"; };
 		2A3EEE0A0F4244A4A905161A /* core.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = core.py; sourceTree = "<group>"; };
 		2C791A72EC62117F80E25D36 /* __main__.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = __main__.py; sourceTree = "<group>"; };
 		3045FA7836D178715D8E8F9D /* WerkzeugkastenCoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WerkzeugkastenCoreTests.swift; sourceTree = "<group>"; };
@@ -131,6 +134,7 @@
 		677A8E7873E5DCC3B38A2B7D /* cli.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = cli.py; sourceTree = "<group>"; };
 		7560BDE31895559957D708AE /* research_table.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = research_table.py; sourceTree = "<group>"; };
 		830304711401CF08505EC9CC /* KeychainStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainStore.swift; sourceTree = "<group>"; };
+		869D49FFAD2414111E1AFB17 /* SummarizeSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SummarizeSession.swift; sourceTree = "<group>"; };
 		9BA9C96D9A04A2F882B04ABD /* AppViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppViews.swift; sourceTree = "<group>"; };
 		9EA15E79BA1DEF64E3260EC5 /* SettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsStore.swift; sourceTree = "<group>"; };
 		A0E61C6A9597429654640C06 /* __init__.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = __init__.py; sourceTree = "<group>"; };
@@ -215,6 +219,7 @@
 			isa = PBXGroup;
 			children = (
 				9BA9C96D9A04A2F882B04ABD /* AppViews.swift */,
+				869D49FFAD2414111E1AFB17 /* SummarizeSession.swift */,
 				5EFF0536F5C13E31AB66473A /* WerkzeugkastenMenuBarApp.swift */,
 				5D5D8A5D78CE1CDCE82209AC /* WindowCoordinator.swift */,
 			);
@@ -226,6 +231,7 @@
 			children = (
 				FAB967D4725A9E07D6CC3605 /* EngineModels.swift */,
 				43C2DC0426AFB4EDAE58BDA4 /* EngineRunner.swift */,
+				297934768D2DB9C0B8236847 /* FinderActionHandoff.swift */,
 				181ED0556CE78A69F5117AE4 /* InputNormalizer.swift */,
 				830304711401CF08505EC9CC /* KeychainStore.swift */,
 				0C9AD89BF9426D42198C30DB /* NotificationHelper.swift */,
@@ -398,6 +404,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				D59FB34DE9E055453690F25D /* AppViews.swift in Sources */,
+				83EC1C938BE86CC7425A338F /* SummarizeSession.swift in Sources */,
 				55D2260D9C21F1DB84F0365B /* WerkzeugkastenMenuBarApp.swift in Sources */,
 				CF883C0C4FFCE13B233D3A01 /* WindowCoordinator.swift in Sources */,
 			);
@@ -409,6 +416,7 @@
 			files = (
 				9A380FA55531D84B04C75011 /* EngineModels.swift in Sources */,
 				919EBDABC2850772F1A21BB7 /* EngineRunner.swift in Sources */,
+				4BC3BEDEFCFD5A2480E17DEA /* FinderActionHandoff.swift in Sources */,
 				2DF2B33E6A677756264D45C1 /* InputNormalizer.swift in Sources */,
 				7D5FA8EF07FD2268BB016162 /* KeychainStore.swift in Sources */,
 				A9521C90331F4099767E8A87 /* NotificationHelper.swift in Sources */,
@@ -460,13 +468,8 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "Shortcut Shelf";
-				INFOPLIST_KEY_CFBundleShortVersionString = "$(MARKETING_VERSION)";
-				INFOPLIST_KEY_CFBundleVersion = "$(CURRENT_PROJECT_VERSION)";
-				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
-				INFOPLIST_KEY_LSUIElement = YES;
-				INFOPLIST_KEY_WerkzeugkastenKeychainAccessGroup = "$(AppIdentifierPrefix)com.mauricefrank.werkzeugkasten.shared";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = "Config/WerkzeugkastenApp-Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -559,7 +562,6 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = "Config/WerkzeugkastenActionExtension-Info.plist";
-				INFOPLIST_KEY_WerkzeugkastenKeychainAccessGroup = "$(AppIdentifierPrefix)com.mauricefrank.werkzeugkasten.shared";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -735,13 +737,8 @@
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "Shortcut Shelf";
-				INFOPLIST_KEY_CFBundleShortVersionString = "$(MARKETING_VERSION)";
-				INFOPLIST_KEY_CFBundleVersion = "$(CURRENT_PROJECT_VERSION)";
-				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
-				INFOPLIST_KEY_LSUIElement = YES;
-				INFOPLIST_KEY_WerkzeugkastenKeychainAccessGroup = "$(AppIdentifierPrefix)com.mauricefrank.werkzeugkasten.shared";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = "Config/WerkzeugkastenApp-Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -762,7 +759,6 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = "Config/WerkzeugkastenActionExtension-Info.plist";
-				INFOPLIST_KEY_WerkzeugkastenKeychainAccessGroup = "$(AppIdentifierPrefix)com.mauricefrank.werkzeugkasten.shared";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",

@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 import UniformTypeIdentifiers
 import WerkzeugkastenCore
@@ -20,33 +21,20 @@ final class ActionRequestHandler: NSObject, NSExtensionRequestHandling {
             do {
                 let urls = try await Self.extractFileURLs(from: extensionContext.inputItems)
                 let uniqueURLs = InputNormalizer.uniqueFileURLs(urls)
-                let runner = EngineRunner()
-                let settings = SettingsStore()
-
-                if let sharedSettingsIssue = settings.sharedSettingsIssue {
-                    throw EngineError.sharedSettingsUnavailable(sharedSettingsIssue)
+                let handoffURL = try FinderActionHandoff.makeSummarizeURL(fileURLs: uniqueURLs)
+                guard NSWorkspace.shared.open(handoffURL) else {
+                    throw EngineError.processFailure("Could not launch Werkzeugkasten from the Finder action.")
                 }
-                if settings.apiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty, let keychainIssue = settings.keychainIssue {
-                    throw EngineError.keychainAccessFailure(keychainIssue)
-                }
-
-                let response: SummarizeFilesResponse = try await runner.run(
-                    .summarizeFiles,
-                    payload: ["paths": uniqueURLs.map(\.path)],
-                    configuration: try settings.configuration()
-                )
 
                 await NotificationHelper.post(
-                    title: "Werkzeugkasten Summary Complete",
-                    body: response.failures.isEmpty
-                        ? "Processed \(response.files.count) file(s)."
-                        : "Processed \(response.files.count) file(s) with \(response.failures.count) failure(s)."
+                    title: "Werkzeugkasten Opened",
+                    body: "Handed \(uniqueURLs.count) file(s) to the app for summarization."
                 )
 
                 extensionContext.completeRequest(returningItems: nil)
             } catch {
                 await NotificationHelper.post(
-                    title: "Werkzeugkasten Summary Failed",
+                    title: "Werkzeugkasten Finder Action Failed",
                     body: error.localizedDescription
                 )
                 extensionContext.cancelRequest(withError: error)

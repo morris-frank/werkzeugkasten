@@ -386,42 +386,31 @@ struct ResearchTableWindow: View {
 
 struct SummarizeWindow: View {
     @EnvironmentObject private var settings: SettingsStore
-    private let runner = EngineRunner()
-
-    @State private var inputText = ""
-    @State private var fileURLs: [URL] = []
-    @State private var isRunning = false
-    @State private var status = "Paste text for an in-app summary or drop one or more files."
-    @State private var summaryMarkdown = ""
-    @State private var fileResult: SummarizeFilesResponse?
-    @State private var errorText: String?
+    @EnvironmentObject private var session: SummarizeSession
 
     var body: some View {
         WindowSurface(minWidth: 600) {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
                     SectionCard(title: "Input") {
-                        TextEditor(text: $inputText)
+                        TextEditor(text: $session.inputText)
                             .font(.body.monospaced())
                             .frame(minHeight: 180)
                         FileDropArea(label: "Drop one or more files here") { urls in
-                            fileURLs = InputNormalizer.uniqueFileURLs(fileURLs + urls)
-                            status = "Loaded \(fileURLs.count) file(s)"
-                            errorText = nil
+                            session.addFiles(urls)
                         }
                         HStack {
                             Button("Choose File(s)") {
-                                fileURLs = InputNormalizer.uniqueFileURLs(fileURLs + chooseFiles(allowsMultiple: true))
-                                status = "Loaded \(fileURLs.count) file(s)"
+                                session.addFiles(chooseFiles(allowsMultiple: true))
                             }
-                            if !fileURLs.isEmpty {
+                            if !session.fileURLs.isEmpty {
                                 Button("Clear Files") {
-                                    fileURLs.removeAll()
+                                    session.clearFiles()
                                 }
                             }
                         }
-                        if !fileURLs.isEmpty {
-                            ForEach(fileURLs, id: \.path) { url in
+                        if !session.fileURLs.isEmpty {
+                            ForEach(session.fileURLs, id: \.path) { url in
                                 Text(url.path)
                                     .font(.caption.monospaced())
                             }
@@ -429,32 +418,32 @@ struct SummarizeWindow: View {
                     }
 
                     SectionCard(title: "Run") {
-                        if isRunning {
+                        if session.isRunning {
                             ProgressView()
                         }
-                        if let errorText {
+                        if let errorText = session.errorText {
                             Text(errorText)
                                 .foregroundStyle(.red)
                         } else {
-                            Text(status)
+                            Text(session.status)
                                 .foregroundStyle(.secondary)
                         }
-                        Button("Summarize") { run() }
-                            .disabled(isRunning || (inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && fileURLs.isEmpty))
+                        Button("Summarize") { session.run(using: settings) }
+                            .disabled(session.isRunning || (session.inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && session.fileURLs.isEmpty))
                     }
 
-                    if !summaryMarkdown.isEmpty {
+                    if !session.summaryMarkdown.isEmpty {
                         SectionCard(title: "Summary") {
-                            TextEditor(text: .constant(summaryMarkdown))
+                            TextEditor(text: .constant(session.summaryMarkdown))
                                 .font(.body.monospaced())
                                 .frame(minHeight: 200)
                             Button("Copy Summary") {
-                                copyToPasteboard(summaryMarkdown)
+                                copyToPasteboard(session.summaryMarkdown)
                             }
                         }
                     }
 
-                    if let fileResult, !fileResult.files.isEmpty || !fileResult.failures.isEmpty {
+                    if let fileResult = session.fileResult, !fileResult.files.isEmpty || !fileResult.failures.isEmpty {
                         SectionCard(title: "File Results") {
                             ForEach(fileResult.files) { file in
                                 HStack {
@@ -473,42 +462,8 @@ struct SummarizeWindow: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
-    }
-
-    private func run() {
-        Task {
-            isRunning = true
-            errorText = nil
-            summaryMarkdown = ""
-            fileResult = nil
-            defer { isRunning = false }
-
-            do {
-                let configuration = try settings.configuration()
-                let trimmedText = inputText.trimmingCharacters(in: .whitespacesAndNewlines)
-                if !trimmedText.isEmpty {
-                    let response: SummarizeTextResponse = try await runner.run(
-                        .summarizeText,
-                        payload: ["title": "Pasted text", "text": trimmedText],
-                        configuration: configuration
-                    )
-                    summaryMarkdown = response.summaryMarkdown
-                    status = "Summary ready to copy."
-                } else {
-                    let response: SummarizeFilesResponse = try await runner.run(
-                        .summarizeFiles,
-                        payload: ["paths": fileURLs.map(\.path)],
-                        configuration: configuration
-                    )
-                    fileResult = response
-                    status = "Processed \(response.files.count) file(s)"
-                    if !response.failures.isEmpty {
-                        errorText = response.failures.map { "\($0.inputPath): \($0.error)" }.joined(separator: "\n")
-                    }
-                }
-            } catch {
-                errorText = error.localizedDescription
-            }
+        .onOpenURL { url in
+            session.handleFinderHandoff(url, settings: settings)
         }
     }
 }
@@ -609,7 +564,7 @@ struct PrettifyCodexLogWindow: View {
 
 struct SettingsWindow: View {
     @EnvironmentObject private var settings: SettingsStore
-    @State private var statusText = "Saved settings are shared with the Finder action."
+    @State private var statusText = "Saved settings are used by Werkzeugkasten when it runs tasks."
     @State private var errorText: String?
 
     var body: some View {
@@ -656,10 +611,6 @@ struct SettingsWindow: View {
                         StatusBanner(message: "Interpreter path is not executable yet.", tint: .red)
                     }
 
-                    if let sharedSettingsIssue = settings.sharedSettingsIssue {
-                        StatusBanner(message: sharedSettingsIssue, tint: .orange)
-                    }
-
                     if let keychainIssue = settings.keychainIssue {
                         StatusBanner(message: keychainIssue, tint: .orange)
                     }
@@ -673,7 +624,7 @@ struct SettingsWindow: View {
                 }
 
                 SectionCard(title: "Finder Extension") {
-                    Text("Enable “Summarize with Werkzeugkasten” in System Settings > Privacy & Security > Extensions if Finder does not show it immediately.")
+                    Text("Enable “Summarize with Werkzeugkasten” in System Settings > Privacy & Security > Extensions if Finder does not show it immediately. Finder launches the app, and the app performs the summary with your saved settings.")
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }

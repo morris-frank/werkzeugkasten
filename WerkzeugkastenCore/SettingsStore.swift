@@ -8,37 +8,28 @@ public final class SettingsStore: ObservableObject {
     @Published public var researchModel: String
     @Published public var summaryModel: String
     @Published public var pythonInterpreterPath: String
-    @Published public private(set) var sharedSettingsIssue: String?
     @Published public private(set) var keychainIssue: String?
 
     private let defaults: UserDefaults
     private let keychainService: String
     private let keychainAccount: String
     private let keychainAccessGroup: String?
-    private let requireSharedCapabilities: Bool
 
     public init(
-        defaults: UserDefaults? = UserDefaults(suiteName: WerkzeugkastenConstants.appGroup),
+        defaults: UserDefaults = .standard,
         keychainService: String = WerkzeugkastenConstants.keychainService,
         keychainAccount: String = WerkzeugkastenConstants.keychainAccount,
-        keychainAccessGroup: String? = Bundle.main.object(forInfoDictionaryKey: "WerkzeugkastenKeychainAccessGroup") as? String,
-        requireSharedCapabilities: Bool = true
+        keychainAccessGroup: String? = nil,
+        requireSharedCapabilities _: Bool = false
     ) {
-        let sharedDefaults = defaults ?? UserDefaults(suiteName: WerkzeugkastenConstants.appGroup)
-        self.defaults = sharedDefaults ?? .standard
+        self.defaults = defaults
         self.keychainService = keychainService
         self.keychainAccount = keychainAccount
         self.keychainAccessGroup = keychainAccessGroup
-        self.requireSharedCapabilities = requireSharedCapabilities
         self.researchModel = Self.loadDefault("researchModel", from: self.defaults) ?? WerkzeugkastenConstants.defaultResearchModel
         self.summaryModel = Self.loadDefault("summaryModel", from: self.defaults) ?? WerkzeugkastenConstants.defaultSummaryModel
         self.pythonInterpreterPath = Self.loadDefault("pythonInterpreterPath", from: self.defaults) ?? WerkzeugkastenConstants.defaultPythonInterpreterPath
-        self.sharedSettingsIssue = requireSharedCapabilities && sharedDefaults == nil
-            ? "Shared settings are unavailable. Enable the App Group `\(WerkzeugkastenConstants.appGroup)` for the app and Finder extension."
-            : nil
-        self.keychainIssue = requireSharedCapabilities && keychainAccessGroup == nil
-            ? "Shared keychain access is unavailable. Set `WerkzeugkastenKeychainAccessGroup` and enable Keychain Sharing for both targets."
-            : nil
+        self.keychainIssue = nil
 
         do {
             self.apiKey = try KeychainStore.load(
@@ -69,10 +60,6 @@ public final class SettingsStore: ObservableObject {
     }
 
     public func save() throws {
-        if let sharedSettingsIssue, requireSharedCapabilities {
-            throw EngineError.sharedSettingsUnavailable(sharedSettingsIssue)
-        }
-
         let normalizedResearchModel = researchModel.trimmingCharacters(in: .whitespacesAndNewlines)
         let normalizedSummaryModel = summaryModel.trimmingCharacters(in: .whitespacesAndNewlines)
         let normalizedInterpreter = pythonInterpreterPath.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -84,13 +71,8 @@ public final class SettingsStore: ObservableObject {
 
         do {
             if normalizedAPIKey.isEmpty {
-                if keychainAccessGroup != nil || !requireSharedCapabilities {
-                    try KeychainStore.delete(service: keychainService, account: keychainAccount, accessGroup: keychainAccessGroup)
-                }
+                try KeychainStore.delete(service: keychainService, account: keychainAccount, accessGroup: keychainAccessGroup)
             } else {
-                guard keychainIssue == nil || !requireSharedCapabilities else {
-                    throw EngineError.keychainAccessFailure(keychainIssue ?? "Shared keychain access is unavailable.")
-                }
                 try KeychainStore.save(value: normalizedAPIKey, service: keychainService, account: keychainAccount, accessGroup: keychainAccessGroup)
             }
         } catch let error as EngineError {
