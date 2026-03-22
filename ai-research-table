@@ -1,6 +1,0 @@
-#!/Users/mfr/mamba/envs/basic/bin/python
-from shortcuts_engine.legacy import run_ai_research_table_cli
-
-
-if __name__ == "__main__":
-    raise SystemExit(run_ai_research_table_cli())
