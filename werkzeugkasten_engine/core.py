@@ -9,7 +9,7 @@ from typing import Any
 
 from openai import OpenAI
 
-DEFAULT_OUTPUT_DIR = Path.home() / "Desktop" / "inbox" / "ai-research"
+DEFAULT_OUTPUT_DIR = Path.home() / "Desktop"
 DEFAULT_INTERPRETER_PATH = "/Users/mfr/mamba/envs/basic/bin/python"
 MAX_SLUG_LENGTH = 48
 RESEARCH_MODEL_ENV = "WERKZEUGKASTEN_RESEARCH_MODEL"
@@ -51,11 +51,7 @@ def summary_model() -> str:
 
 
 def jina_api_key() -> str:
-    return (
-        os.environ.get(JINA_API_KEY_ENV, "")
-        or os.environ.get("JINA_API_KEY", "")
-        or os.environ.get("JINA_API_TOKEN", "")
-    )
+    return os.environ.get(JINA_API_KEY_ENV, "") or os.environ.get("JINA_API_KEY", "") or os.environ.get("JINA_API_TOKEN", "")
 
 
 def reasoning_for_model(model: str) -> dict[str, Any] | None:
@@ -92,7 +88,7 @@ def slugify(text: str) -> str:
 def choose_output_path(started_at: datetime, label: str, output_dir: Path | None = None) -> Path:
     destination = (output_dir or DEFAULT_OUTPUT_DIR).expanduser()
     destination.mkdir(parents=True, exist_ok=True)
-    base_name = f"{started_at.strftime('%Y-%m-%d')}-{slugify(label)}"
+    base_name = f"{started_at.strftime('%Y-%m-%d_%H-%M')}-{slugify(label)}"
     candidate = destination / f"{base_name}.md"
     suffix = 2
     while candidate.exists():
