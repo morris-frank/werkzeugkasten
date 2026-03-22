@@ -7,6 +7,7 @@ public final class SettingsStore: ObservableObject {
     @Published public var apiKey: String
     @Published public var jinaAPIKey: String
     @Published public var notionToken: String
+    @Published public var openMeteoAPIKey: String
     @Published public var notionParentPage: String
     @Published public var researchModel: String
     @Published public var summaryModel: String
@@ -18,6 +19,7 @@ public final class SettingsStore: ObservableObject {
     private let openAIKeychainAccount: String
     private let jinaKeychainAccount: String
     private let notionKeychainAccount: String
+    private let openMeteoKeychainAccount: String
     private let keychainAccessGroup: String?
 
     public init(
@@ -26,6 +28,7 @@ public final class SettingsStore: ObservableObject {
         openAIKeychainAccount: String = WerkzeugkastenConstants.openAIKeychainAccount,
         jinaKeychainAccount: String = WerkzeugkastenConstants.jinaKeychainAccount,
         notionKeychainAccount: String = WerkzeugkastenConstants.notionKeychainAccount,
+        openMeteoKeychainAccount: String = WerkzeugkastenConstants.openMeteoKeychainAccount,
         keychainAccessGroup: String? = nil,
         requireSharedCapabilities _: Bool = false
     ) {
@@ -34,6 +37,7 @@ public final class SettingsStore: ObservableObject {
         self.openAIKeychainAccount = openAIKeychainAccount
         self.jinaKeychainAccount = jinaKeychainAccount
         self.notionKeychainAccount = notionKeychainAccount
+        self.openMeteoKeychainAccount = openMeteoKeychainAccount
         self.keychainAccessGroup = keychainAccessGroup
         self.notionParentPage = Self.loadDefault("notionParentPage", from: self.defaults) ?? ""
         self.researchModel = Self.loadDefault("researchModel", from: self.defaults) ?? WerkzeugkastenConstants.defaultResearchModel
@@ -86,6 +90,21 @@ public final class SettingsStore: ObservableObject {
                 fallback: resolvedKeychainIssue
             )
         }
+
+        do {
+            self.openMeteoAPIKey = try KeychainStore.load(
+                service: keychainService,
+                account: openMeteoKeychainAccount,
+                accessGroup: keychainAccessGroup
+            ) ?? ""
+        } catch {
+            self.openMeteoAPIKey = ""
+            resolvedKeychainIssue = Self.describeKeychainFailure(
+                error,
+                accessGroup: keychainAccessGroup,
+                fallback: resolvedKeychainIssue
+            )
+        }
         self.keychainIssue = resolvedKeychainIssue
     }
 
@@ -108,6 +127,7 @@ public final class SettingsStore: ObservableObject {
         let normalizedAPIKey = apiKey.trimmingCharacters(in: .whitespacesAndNewlines)
         let normalizedJinaAPIKey = jinaAPIKey.trimmingCharacters(in: .whitespacesAndNewlines)
         let normalizedNotionToken = notionToken.trimmingCharacters(in: .whitespacesAndNewlines)
+        let normalizedOpenMeteoAPIKey = openMeteoAPIKey.trimmingCharacters(in: .whitespacesAndNewlines)
         let normalizedNotionParentPage = notionParentPage.trimmingCharacters(in: .whitespacesAndNewlines)
 
         defaults.set(normalizedResearchModel.isEmpty ? WerkzeugkastenConstants.defaultResearchModel : normalizedResearchModel, forKey: "researchModel")
@@ -133,6 +153,12 @@ public final class SettingsStore: ObservableObject {
             } else {
                 try KeychainStore.save(value: normalizedNotionToken, service: keychainService, account: notionKeychainAccount, accessGroup: keychainAccessGroup)
             }
+
+            if normalizedOpenMeteoAPIKey.isEmpty {
+                try KeychainStore.delete(service: keychainService, account: openMeteoKeychainAccount, accessGroup: keychainAccessGroup)
+            } else {
+                try KeychainStore.save(value: normalizedOpenMeteoAPIKey, service: keychainService, account: openMeteoKeychainAccount, accessGroup: keychainAccessGroup)
+            }
         } catch let error as EngineError {
             throw error
         } catch {
@@ -144,6 +170,7 @@ public final class SettingsStore: ObservableObject {
         apiKey = normalizedAPIKey
         jinaAPIKey = normalizedJinaAPIKey
         notionToken = normalizedNotionToken
+        openMeteoAPIKey = normalizedOpenMeteoAPIKey
         notionParentPage = normalizedNotionParentPage
         researchModel = defaults.string(forKey: "researchModel") ?? WerkzeugkastenConstants.defaultResearchModel
         summaryModel = defaults.string(forKey: "summaryModel") ?? WerkzeugkastenConstants.defaultSummaryModel
@@ -161,6 +188,7 @@ public final class SettingsStore: ObservableObject {
             jinaAPIKey: jinaAPIKey.trimmingCharacters(in: .whitespacesAndNewlines),
             notionToken: notionToken.trimmingCharacters(in: .whitespacesAndNewlines),
             notionParentPage: notionParentPage.trimmingCharacters(in: .whitespacesAndNewlines),
+            openMeteoAPIKey: openMeteoAPIKey.trimmingCharacters(in: .whitespacesAndNewlines),
             researchModel: researchModel.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? WerkzeugkastenConstants.defaultResearchModel : researchModel.trimmingCharacters(in: .whitespacesAndNewlines),
             summaryModel: summaryModel.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? WerkzeugkastenConstants.defaultSummaryModel : summaryModel.trimmingCharacters(in: .whitespacesAndNewlines),
             pythonInterpreterPath: normalizedInterpreter

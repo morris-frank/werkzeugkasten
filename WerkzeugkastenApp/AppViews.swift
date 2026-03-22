@@ -1043,6 +1043,11 @@ struct SettingsWindow: View {
                                 .textFieldStyle(.roundedBorder)
                                 .controlSize(.large)
                         }
+                        SettingsFieldRow(title: "Open-Meteo API Key") {
+                            SecureField("openmeteo_...", text: $settings.openMeteoAPIKey)
+                                .textFieldStyle(.roundedBorder)
+                                .controlSize(.large)
+                        }
                         SettingsFieldRow(title: "Notion Parent Page") {
                             TextField("Page URL or UUID", text: $settings.notionParentPage)
                                 .textFieldStyle(.roundedBorder)

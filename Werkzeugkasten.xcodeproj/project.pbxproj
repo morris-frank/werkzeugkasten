@@ -32,6 +32,7 @@
 		BD6D2BDB6852CEFB60126BE9 /* WerkzeugkastenCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 3060211CCE42A26E316070BC /* WerkzeugkastenCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		C1050161AE39E362C01426C1 /* WerkzeugkastenActionExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A33AF22B9EE5EB03E5664A2A /* WerkzeugkastenActionExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		CF883C0C4FFCE13B233D3A01 /* WindowCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D5D8A5D78CE1CDCE82209AC /* WindowCoordinator.swift */; };
+		D57CD8EC4DC48E64480B2379 /* notion_export.py in Resources */ = {isa = PBXBuildFile; fileRef = 3D043D1D09F65419E47357AB /* notion_export.py */; };
 		D59FB34DE9E055453690F25D /* AppViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BA9C96D9A04A2F882B04ABD /* AppViews.swift */; };
 		D7D245429DA6EA3104141A14 /* WerkzeugkastenCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 3060211CCE42A26E316070BC /* WerkzeugkastenCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		F846416F731C89098F88510B /* SharedConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A54CC72921F51DAF9F09726 /* SharedConstants.swift */; };
@@ -127,6 +128,7 @@
 		3045FA7836D178715D8E8F9D /* WerkzeugkastenCoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WerkzeugkastenCoreTests.swift; sourceTree = "<group>"; };
 		3060211CCE42A26E316070BC /* WerkzeugkastenCore.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = WerkzeugkastenCore.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		3954B8F33B736FF2B45D4892 /* codex_log.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = codex_log.py; sourceTree = "<group>"; };
+		3D043D1D09F65419E47357AB /* notion_export.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = notion_export.py; sourceTree = "<group>"; };
 		43C2DC0426AFB4EDAE58BDA4 /* EngineRunner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EngineRunner.swift; sourceTree = "<group>"; };
 		5D5D8A5D78CE1CDCE82209AC /* WindowCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowCoordinator.swift; sourceTree = "<group>"; };
 		5E799B08F555168148FB0CDD /* WerkzeugkastenCoreTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WerkzeugkastenCoreTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -140,7 +142,7 @@
 		A0E61C6A9597429654640C06 /* __init__.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = __init__.py; sourceTree = "<group>"; };
 		A33AF22B9EE5EB03E5664A2A /* WerkzeugkastenActionExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = WerkzeugkastenActionExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		D074526C6194A7A31FE77BF4 /* ActionRequestHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActionRequestHandler.swift; sourceTree = "<group>"; };
-		DA5E2387B3B583F70D9B0547 /* WerkzeugkastenApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = WerkzeugkastenApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		DA5E2387B3B583F70D9B0547 /* Werkzeugkasten.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Werkzeugkasten.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		EDC23E0CFB110D28C76C5C34 /* summarize.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = summarize.py; sourceTree = "<group>"; };
 		FAB967D4725A9E07D6CC3605 /* EngineModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EngineModels.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -181,6 +183,7 @@
 				677A8E7873E5DCC3B38A2B7D /* cli.py */,
 				3954B8F33B736FF2B45D4892 /* codex_log.py */,
 				2A3EEE0A0F4244A4A905161A /* core.py */,
+				3D043D1D09F65419E47357AB /* notion_export.py */,
 				015A9D71820D249B30CD2823 /* research_list.py */,
 				7560BDE31895559957D708AE /* research_table.py */,
 				EDC23E0CFB110D28C76C5C34 /* summarize.py */,
@@ -192,7 +195,7 @@
 			isa = PBXGroup;
 			children = (
 				A33AF22B9EE5EB03E5664A2A /* WerkzeugkastenActionExtension.appex */,
-				DA5E2387B3B583F70D9B0547 /* WerkzeugkastenApp.app */,
+				DA5E2387B3B583F70D9B0547 /* Werkzeugkasten.app */,
 				3060211CCE42A26E316070BC /* WerkzeugkastenCore.framework */,
 				5E799B08F555168148FB0CDD /* WerkzeugkastenCoreTests.xctest */,
 			);
@@ -333,7 +336,7 @@
 			packageProductDependencies = (
 			);
 			productName = WerkzeugkastenApp;
-			productReference = DA5E2387B3B583F70D9B0547 /* WerkzeugkastenApp.app */;
+			productReference = DA5E2387B3B583F70D9B0547 /* Werkzeugkasten.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -344,11 +347,6 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1430;
-				TargetAttributes = {
-					2762252001ADB3BA7114330D = {
-						ProvisioningStyle = Automatic;
-					};
-				};
 			};
 			buildConfigurationList = 98C9B075B2D44CAD5B9CA83A /* Build configuration list for PBXProject "Werkzeugkasten" */;
 			developmentRegion = en;
@@ -382,6 +380,7 @@
 				A51273A49BE279C5869F11E8 /* cli.py in Resources */,
 				1A15626C013F1F131E97AFAA /* codex_log.py in Resources */,
 				749AA8368709E3D98D579697 /* core.py in Resources */,
+				D57CD8EC4DC48E64480B2379 /* notion_export.py in Resources */,
 				B47DCF1F55AE076A5422ADAA /* research_list.py in Resources */,
 				518A6C266B6AA329A5E82C8B /* research_table.py in Resources */,
 				1CEDD53BF75389E07914AD2B /* summarize.py in Resources */,
@@ -465,8 +464,11 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = Config/WerkzeugkastenApp.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
-				CODE_SIGN_STYLE = Automatic;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Developer ID Application";
+				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = "";
+				"DEVELOPMENT_TEAM[sdk=macosx*]" = 8GPF2CCDMW;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = "Config/WerkzeugkastenApp-Info.plist";
@@ -476,6 +478,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.mauricefrank.werkzeugkasten;
 				PRODUCT_NAME = Werkzeugkasten;
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 			};
 			name = Debug;
@@ -558,8 +561,10 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = Config/WerkzeugkastenActionExtension.entitlements;
 				CODE_SIGN_IDENTITY = "Developer ID Application";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Developer ID Application";
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
+				"DEVELOPMENT_TEAM[sdk=macosx*]" = 8GPF2CCDMW;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = "Config/WerkzeugkastenActionExtension-Info.plist";
@@ -577,11 +582,13 @@
 		2826BB7CA323FE6D0143636C /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGN_IDENTITY = "Developer ID Application";
+				CODE_SIGN_IDENTITY = "Apple Development";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Developer ID Application";
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEFINES_MODULE = YES;
+				"DEVELOPMENT_TEAM[sdk=macosx*]" = 8GPF2CCDMW;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
@@ -604,8 +611,11 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_IDENTITY = "Apple Development";
-				CODE_SIGN_STYLE = Automatic;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Developer ID Application";
+				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = "";
+				"DEVELOPMENT_TEAM[sdk=macosx*]" = 8GPF2CCDMW;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleShortVersionString = "$(MARKETING_VERSION)";
 				INFOPLIST_KEY_CFBundleVersion = "$(CURRENT_PROJECT_VERSION)";
@@ -615,6 +625,7 @@
 					"@loader_path/../Frameworks",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.mauricefrank.werkzeugkasten.core.tests;
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 			};
 			name = Debug;
@@ -623,10 +634,13 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_IDENTITY = "Apple Development";
-				CODE_SIGN_STYLE = Automatic;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Developer ID Application";
+				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEFINES_MODULE = YES;
+				DEVELOPMENT_TEAM = "";
+				"DEVELOPMENT_TEAM[sdk=macosx*]" = 8GPF2CCDMW;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
@@ -637,6 +651,7 @@
 					"@executable_path/../Frameworks",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.mauricefrank.werkzeugkasten.core;
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
 				VERSIONING_SYSTEM = "apple-generic";
@@ -714,8 +729,11 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_IDENTITY = "Apple Development";
-				CODE_SIGN_STYLE = Automatic;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Developer ID Application";
+				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = "";
+				"DEVELOPMENT_TEAM[sdk=macosx*]" = 8GPF2CCDMW;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleShortVersionString = "$(MARKETING_VERSION)";
 				INFOPLIST_KEY_CFBundleVersion = "$(CURRENT_PROJECT_VERSION)";
@@ -725,6 +743,7 @@
 					"@loader_path/../Frameworks",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.mauricefrank.werkzeugkasten.core.tests;
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 			};
 			name = Release;
@@ -735,8 +754,10 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = Config/WerkzeugkastenApp.entitlements;
 				CODE_SIGN_IDENTITY = "Developer ID Application";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Developer ID Application";
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
+				"DEVELOPMENT_TEAM[sdk=macosx*]" = 8GPF2CCDMW;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = "Config/WerkzeugkastenApp-Info.plist";
@@ -756,8 +777,11 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = Config/WerkzeugkastenActionExtension.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
-				CODE_SIGN_STYLE = Automatic;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Developer ID Application";
+				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = "";
+				"DEVELOPMENT_TEAM[sdk=macosx*]" = 8GPF2CCDMW;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = "Config/WerkzeugkastenActionExtension-Info.plist";
@@ -767,6 +791,7 @@
 					"@executable_path/../../../../Frameworks",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.mauricefrank.werkzeugkasten.action;
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 			};
 			name = Debug;

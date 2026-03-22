@@ -69,6 +69,7 @@ class ResearchTableTests(unittest.TestCase):
 
     def test_normalization_examples(self) -> None:
         self.assertEqual(research_table.split_and_clean_items("water/air/soil", url_mode=False), ["Water", "Air", "Soil"])
+        self.assertEqual(research_table.split_and_clean_items("water<br>air<br/>soil", url_mode=False), ["Water", "Air", "Soil"])
         self.assertEqual(research_table.split_and_clean_items("shotgun+16S/18S+LR", url_mode=False), ["Shotgun", "16S", "18S", "LR"])
         self.assertEqual(research_table.split_and_clean_items("B2B/NGO ([naturemetrics.com](http://naturemetrics.com/))", url_mode=False), ["B2B", "NGO"])
         self.assertEqual(research_table.normalize_url_value("https://www.useyardstick.com/?utm_source=openai"), "https://www.useyardstick.com")
@@ -168,7 +169,14 @@ class ResearchTableTests(unittest.TestCase):
     def test_notion_grouped_sources_and_place_inference(self) -> None:
         specs = notion_export.infer_column_specs(
             headers=["Company", "Location", "Sources", "Record ID"],
-            rows=[{"Company": "OpenAI", "Location": "Amsterdam, NL", "Sources": "https://a.example,https://b.example", "Record ID": "row-1"}],
+            rows=[
+                {
+                    "Company": "OpenAI",
+                    "Location": "Amsterdam HQ, Amsterdam, NL, 52.3676, 4.9041",
+                    "Sources": "https://a.example,https://b.example",
+                    "Record ID": "row-1",
+                }
+            ],
             key_header="Company",
             sources_column="Sources",
             tags_column=None,
@@ -177,13 +185,38 @@ class ResearchTableTests(unittest.TestCase):
             list_like_columns={"Sources"},
             url_like_columns={"Sources"},
             long_text_columns=set(),
+            open_meteo_key="openmeteo-test-key",
         )
         kinds = {spec.name: spec.kind for spec in specs}
         self.assertEqual(kinds["Location"], "place")
         self.assertNotIn("Record ID", kinds)
+        self.assertEqual(
+            notion_export.parse_place_value("Amsterdam HQ, Amsterdam, NL, 52.3676, 4.9041"),
+            {
+                "name": "Amsterdam HQ",
+                "address": "Amsterdam HQ, Amsterdam, NL",
+                "lat": 52.3676,
+                "lon": 4.9041,
+            },
+        )
+        self.assertIsNone(notion_export.parse_place_value("Amsterdam, NL"))
+        no_geocoder_specs = notion_export.infer_column_specs(
+            headers=["Company", "Location"],
+            rows=[{"Company": "OpenAI", "Location": "Amsterdam, NL"}],
+            key_header="Company",
+            sources_column=None,
+            tags_column=None,
+            nearest_column=None,
+            record_id_column=None,
+            list_like_columns=set(),
+            url_like_columns=set(),
+            long_text_columns=set(),
+            open_meteo_key="",
+        )
+        self.assertEqual({spec.name: spec.kind for spec in no_geocoder_specs}["Location"], "rich_text")
         blocks = notion_export.render_row_children(
             {
-                "Sources": "https://a.example/one,https://a.example/two,https://b.example/three",
+                "Sources": "https://a.example/one<br>https://a.example/two,https://b.example/three",
                 "Sources[RAW]": "URL: https://a.example/one\nBody one\n\nURL: https://b.example/three\nBody three",
             },
             {"Sources[RAW]"},

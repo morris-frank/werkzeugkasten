@@ -69,6 +69,11 @@ public final class EngineRunner {
         } else {
             environment["WERKZEUGKASTEN_NOTION_PARENT_PAGE"] = configuration.notionParentPage
         }
+        if configuration.openMeteoAPIKey.isEmpty {
+            environment.removeValue(forKey: "WERKZEUGKASTEN_OPEN_METEO_API_KEY")
+        } else {
+            environment["WERKZEUGKASTEN_OPEN_METEO_API_KEY"] = configuration.openMeteoAPIKey
+        }
         environment["WERKZEUGKASTEN_RESEARCH_MODEL"] = configuration.researchModel
         environment["WERKZEUGKASTEN_SUMMARY_MODEL"] = configuration.summaryModel
 

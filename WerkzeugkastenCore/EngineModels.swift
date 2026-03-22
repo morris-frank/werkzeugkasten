@@ -5,6 +5,7 @@ public struct EngineConfiguration: Equatable, Sendable {
     public var jinaAPIKey: String
     public var notionToken: String
     public var notionParentPage: String
+    public var openMeteoAPIKey: String
     public var researchModel: String
     public var summaryModel: String
     public var pythonInterpreterPath: String
@@ -14,6 +15,7 @@ public struct EngineConfiguration: Equatable, Sendable {
         jinaAPIKey: String,
         notionToken: String,
         notionParentPage: String,
+        openMeteoAPIKey: String,
         researchModel: String,
         summaryModel: String,
         pythonInterpreterPath: String
@@ -22,6 +24,7 @@ public struct EngineConfiguration: Equatable, Sendable {
         self.jinaAPIKey = jinaAPIKey
         self.notionToken = notionToken
         self.notionParentPage = notionParentPage
+        self.openMeteoAPIKey = openMeteoAPIKey
         self.researchModel = researchModel
         self.summaryModel = summaryModel
         self.pythonInterpreterPath = pythonInterpreterPath

@@ -3,7 +3,9 @@ from __future__ import annotations
 import csv
 import json
 import re
+import traceback
 import urllib.error
+import urllib.request
 import urllib.parse
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -59,6 +61,7 @@ URL_RE = re.compile(r"https?://[^\s<>)\]]+|www\.[^\s<>)\]]+", re.IGNORECASE)
 MARKDOWN_LINK_RE = re.compile(r"\[([^\]]+)\]\((https?://[^)]+)\)")
 REF_RE = re.compile(r"\s*\(Ref\s+\d+\)\s*$", re.IGNORECASE)
 NOTION_PAGE_SIZE_LIMIT = 1800
+HTML_BREAK_RE = re.compile(r"\s*<br\s*/?>\s*", re.IGNORECASE)
 
 
 @dataclass(frozen=True)
@@ -146,6 +149,29 @@ class NormalizationProfile:
     list_like_columns: set[str]
     url_like_columns: set[str]
     long_text_columns: set[str]
+
+
+class DebugLogger:
+    def __init__(self, path: Path) -> None:
+        self.path = path
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        self.path.write_text("", encoding="utf-8")
+
+    def log(self, event: str, **payload: object) -> None:
+        record = {
+            "timestamp": datetime.now().astimezone().isoformat(),
+            "event": event,
+            **payload,
+        }
+        with self.path.open("a", encoding="utf-8") as handle:
+            handle.write(json.dumps(record, ensure_ascii=False, default=str) + "\n")
+
+
+def debug_log_path_for_output(path: Path) -> Path:
+    suffix = "".join(path.suffixes)
+    if suffix:
+        return path.with_name(f"{path.name}.debug.jsonl")
+    return path.with_name(f"{path.name}.debug.jsonl")
 
 
 def normalize_policy(value: str) -> str:
@@ -361,16 +387,39 @@ def research_row(
     key_header: str,
     missing_columns: list[str],
     question_columns: set[str],
+    *,
+    debug_logger: DebugLogger | None = None,
+    row_number: int | None = None,
 ) -> tuple[dict[str, str] | None, str, list[str], str]:
     key = row.get(key_header, "").strip() or "[blank]"
+    prompt = build_prompt(key_header, key, row, missing_columns, question_columns)
+    if debug_logger is not None:
+        debug_logger.log(
+            "openai_request",
+            row_number=row_number,
+            key=key,
+            key_header=key_header,
+            missing_columns=missing_columns,
+            existing_values={column: value for column, value in row.items() if value.strip()},
+            prompt=prompt,
+        )
     client = openai_client()
     model = research_model()
     response = client.responses.create(
-        input=build_prompt(key_header, key, row, missing_columns, question_columns),
+        input=prompt,
         **response_create_kwargs(model, use_web_search=True, include_web_sources=True),
     )
     raw_text = (response.output_text or "").strip()
     sources = normalize_source_urls(extract_sources(response))
+    if debug_logger is not None:
+        debug_logger.log(
+            "openai_response",
+            row_number=row_number,
+            key=key,
+            model=model,
+            output_text=raw_text,
+            sources=sources,
+        )
     try:
         data = json.loads(extract_json_block(raw_text))
         if data.get("key") != key:
@@ -379,8 +428,23 @@ def research_row(
         if not isinstance(updates, dict):
             raise ValueError("Response updates is missing.")
         normalized = {str(column): str(value or "").strip() for column, value in updates.items()}
+        if debug_logger is not None:
+            debug_logger.log(
+                "openai_response_parsed",
+                row_number=row_number,
+                key=key,
+                parsed_updates=normalized,
+            )
         return normalized, raw_text, sources, ""
     except (json.JSONDecodeError, ValueError) as exc:
+        if debug_logger is not None:
+            debug_logger.log(
+                "openai_response_parse_failed",
+                row_number=row_number,
+                key=key,
+                error=str(exc),
+                output_text=raw_text or "[No text returned]",
+            )
         return None, raw_text or "[No text returned]", sources, f"Structured validation failed: {exc}"
 
 
@@ -446,11 +510,29 @@ def apply_dynamic_value(row: dict[str, str], column: DynamicColumn, value: str) 
     row[column.name] = value
 
 
-def fetch_source_raw_text(url: str, cache: dict[str, FetchResult]) -> FetchResult:
+def fetch_source_raw_text(
+    url: str,
+    cache: dict[str, FetchResult],
+    *,
+    debug_logger: DebugLogger | None = None,
+    row_number: int | None = None,
+    key: str = "",
+) -> FetchResult:
     if url in cache:
+        if debug_logger is not None:
+            debug_logger.log(
+                "jina_fetch_cache_hit",
+                row_number=row_number,
+                key=key,
+                source_url=url,
+                cached_status_code=cache[url].status_code,
+                cached_error_class=cache[url].error_class,
+                cached_text_preview=cache[url].text[:500],
+            )
         return cache[url]
+    request_url = f"https://r.jina.ai/{url}"
     request = urllib.request.Request(
-        f"https://r.jina.ai/{url}",
+        request_url,
         headers={
             "X-Engine": "direct",
             "X-Retain-Images": "none",
@@ -460,9 +542,37 @@ def fetch_source_raw_text(url: str, cache: dict[str, FetchResult]) -> FetchResul
     api_key = jina_api_key().strip()
     if api_key:
         request.add_header("Authorization", f"Bearer {api_key}")
+    if debug_logger is not None:
+        debug_logger.log(
+            "jina_request",
+            row_number=row_number,
+            key=key,
+            source_url=url,
+            request_url=request_url,
+            headers={
+                "X-Engine": "direct",
+                "X-Retain-Images": "none",
+                "X-Md-Link-Style": "referenced",
+                "Authorization": "Bearer [redacted]" if api_key else "",
+            },
+            has_authorization=bool(api_key),
+        )
     try:
         with urllib.request.urlopen(request, timeout=30) as response:
-            result = FetchResult(text=response.read().decode("utf-8", errors="replace").strip())
+            body = response.read().decode("utf-8", errors="replace").strip()
+            status_code = getattr(response, "status", None)
+            result = FetchResult(text=body, status_code=status_code)
+            if debug_logger is not None:
+                debug_logger.log(
+                    "jina_response",
+                    row_number=row_number,
+                    key=key,
+                    source_url=url,
+                    request_url=request_url,
+                    status_code=status_code,
+                    text_length=len(body),
+                    text_preview=body[:1000],
+                )
     except urllib.error.HTTPError as exc:
         result = FetchResult(
             text=f"[Source fetch failed] {url}\nHTTP {exc.code}: {exc.reason}",
@@ -470,18 +580,49 @@ def fetch_source_raw_text(url: str, cache: dict[str, FetchResult]) -> FetchResul
             error_class="HTTPError",
             message=str(exc.reason),
         )
+        if debug_logger is not None:
+            debug_logger.log(
+                "jina_response_error",
+                row_number=row_number,
+                key=key,
+                source_url=url,
+                request_url=request_url,
+                status_code=exc.code,
+                error_class="HTTPError",
+                message=str(exc.reason),
+            )
     except urllib.error.URLError as exc:
         result = FetchResult(
             text=f"[Source fetch failed] {url}\n{exc.reason}",
             error_class="URLError",
             message=str(exc.reason),
         )
+        if debug_logger is not None:
+            debug_logger.log(
+                "jina_response_error",
+                row_number=row_number,
+                key=key,
+                source_url=url,
+                request_url=request_url,
+                error_class="URLError",
+                message=str(exc.reason),
+            )
     except TimeoutError:
         result = FetchResult(
             text=f"[Source fetch failed] {url}\nTimed out.",
             error_class="TimeoutError",
             message="Timed out.",
         )
+        if debug_logger is not None:
+            debug_logger.log(
+                "jina_response_error",
+                row_number=row_number,
+                key=key,
+                source_url=url,
+                request_url=request_url,
+                error_class="TimeoutError",
+                message="Timed out.",
+            )
     cache[url] = result
     return result
 
@@ -493,10 +634,17 @@ def combine_source_raw_text(
     row_number: int,
     cache: dict[str, FetchResult],
     issues: list[SourceFetchIssue],
+    debug_logger: DebugLogger | None = None,
 ) -> str:
     parts: list[str] = []
     for url in urls:
-        raw_result = fetch_source_raw_text(url, cache)
+        raw_result = fetch_source_raw_text(
+            url,
+            cache,
+            debug_logger=debug_logger,
+            row_number=row_number,
+            key=key,
+        )
         if raw_result.is_error:
             issues.append(
                 SourceFetchIssue(
@@ -508,7 +656,25 @@ def combine_source_raw_text(
                     message=raw_result.message,
                 )
             )
+            if debug_logger is not None:
+                debug_logger.log(
+                    "source_fetch_issue",
+                    row_number=row_number,
+                    key=key,
+                    source_url=url,
+                    status_code=raw_result.status_code,
+                    error_class=raw_result.error_class,
+                    message=raw_result.message,
+                )
         parts.append(f"URL: {url}\n{raw_result.text}".strip())
+    if debug_logger is not None:
+        debug_logger.log(
+            "source_raw_combined",
+            row_number=row_number,
+            key=key,
+            source_count=len(urls),
+            combined_length=sum(len(part) for part in parts),
+        )
     return "\n\n".join(parts).strip()
 
 
@@ -533,20 +699,43 @@ def row_context_payload(
     return payload
 
 
-def run_json_prompt(prompt: str) -> dict[str, object]:
+def run_json_prompt(
+    prompt: str,
+    *,
+    debug_logger: DebugLogger | None = None,
+    prompt_kind: str = "json_prompt",
+) -> dict[str, object]:
     client = openai_client()
     model = research_model()
+    if debug_logger is not None:
+        debug_logger.log("openai_aux_request", prompt_kind=prompt_kind, prompt=prompt)
     response = client.responses.create(
         input=prompt,
         **response_create_kwargs(model),
     )
     raw_text = (response.output_text or "").strip()
+    if debug_logger is not None:
+        debug_logger.log(
+            "openai_aux_response",
+            prompt_kind=prompt_kind,
+            model=model,
+            output_text=raw_text,
+        )
     try:
         data = json.loads(extract_json_block(raw_text))
         if not isinstance(data, dict):
             raise ValueError("Expected a JSON object.")
+        if debug_logger is not None:
+            debug_logger.log("openai_aux_response_parsed", prompt_kind=prompt_kind, data=data)
         return data
     except (json.JSONDecodeError, ValueError) as exc:
+        if debug_logger is not None:
+            debug_logger.log(
+                "openai_aux_response_parse_failed",
+                prompt_kind=prompt_kind,
+                error=str(exc),
+                output_text=raw_text,
+            )
         raise ValueError(f"Structured validation failed: {exc}") from exc
 
 
@@ -558,6 +747,7 @@ def apply_auto_tags(
     object_type: str,
     tag_column: DynamicColumn,
     excluded_columns: set[str],
+    debug_logger: DebugLogger | None = None,
 ) -> None:
     minimum_tags, maximum_tags = recommended_tag_bounds(len(rows))
     row_payload = row_context_payload(rows, key_header=key_header, headers=headers, excluded_columns=excluded_columns)
@@ -580,7 +770,7 @@ Return JSON only in this shape:
 Rows:
 {json.dumps(row_payload, ensure_ascii=False, indent=2)}
 """
-    data = run_json_prompt(prompt)
+    data = run_json_prompt(prompt, debug_logger=debug_logger, prompt_kind="auto_tagging")
     tags = data.get("tags")
     assignments = data.get("assignments")
     if not isinstance(tags, list) or not all(isinstance(tag, str) and tag.strip() for tag in tags):
@@ -604,6 +794,7 @@ def apply_nearest_neighbours(
     object_type: str,
     nearest_column: DynamicColumn,
     excluded_columns: set[str],
+    debug_logger: DebugLogger | None = None,
 ) -> None:
     row_payload = row_context_payload(rows, key_header=key_header, headers=headers, excluded_columns=excluded_columns)
     prompt = f"""You are comparing {object_type} rows, which where prefilled with metadata.
@@ -623,7 +814,7 @@ Return JSON only in this shape:
 Rows:
 {json.dumps(row_payload, ensure_ascii=False, indent=2)}
 """
-    data = run_json_prompt(prompt)
+    data = run_json_prompt(prompt, debug_logger=debug_logger, prompt_kind="nearest_neighbour")
     neighbours = data.get("neighbors")
     if not isinstance(neighbours, dict):
         raise ValueError("Nearest-neighbour response is missing `neighbors`.")
@@ -915,7 +1106,8 @@ def split_and_clean_items(value: str, *, url_mode: bool) -> list[str]:
     if url_mode:
         urls = normalize_source_urls(extract_urls(value))
         return [url for url in dict.fromkeys(urls) if url]
-    working = replace_markdown_links_with_labels(value)
+    working = HTML_BREAK_RE.sub(",", value)
+    working = replace_markdown_links_with_labels(working)
     working = REF_RE.sub("", working)
     working = re.sub(r"\((?:https?://|www\.)[^)]+\)", "", working)
     working = re.sub(r"\([^)]*\.[^)]*\)", "", working)
@@ -1074,12 +1266,39 @@ def run_research_dataset(
         output_dir,
         explicit_path=options.output_path,
     )
+    debug_log_path = debug_log_path_for_output(output_path)
+    debug_logger = DebugLogger(debug_log_path)
     failures: list[Failure] = []
     skipped_rows: list[str] = []
     source_fetch_issues: list[SourceFetchIssue] = []
     notion_export_result: dict[str, object] | None = None
     processed_rows = 0
     source_raw_cache: dict[str, FetchResult] = {}
+
+    debug_logger.log(
+        "dataset_started",
+        source_name=dataset.source_name,
+        detected_format=dataset.detected_format,
+        output_path=str(output_path),
+        debug_log_path=str(debug_log_path),
+        headers=headers,
+        row_count=len(rows),
+        question_columns=question_columns,
+        attribute_columns=attribute_columns,
+        options={
+            "include_sources": options.include_sources,
+            "include_source_raw": options.include_source_raw,
+            "auto_tagging": options.auto_tagging,
+            "nearest_neighbour": options.nearest_neighbour,
+            "export_to_notion": options.export_to_notion,
+            "output_path": options.output_path,
+            "source_column_policy": options.source_column_policy,
+            "source_raw_column_policy": options.source_raw_column_policy,
+            "tag_column_policy": options.tag_column_policy,
+            "nearest_column_policy": options.nearest_column_policy,
+            "record_id_column_policy": options.record_id_column_policy,
+        },
+    )
 
     write_output(
         output_path,
@@ -1096,6 +1315,7 @@ def run_research_dataset(
         source_fetch_issues,
         notion_export_result,
     )
+    debug_logger.log("markdown_written", path=str(output_path), processed_rows=processed_rows)
 
     question_set = set(question_columns)
     excluded_research_columns = {column.name for column in [source_column, source_raw_column] if column is not None}
@@ -1106,19 +1326,55 @@ def run_research_dataset(
     if options.export_to_notion:
         excluded_research_columns.add(RECORD_ID_COLUMN)
     research_columns = [header for header in dataset.headers[1:] if header not in excluded_research_columns]
+    debug_logger.log(
+        "research_columns_resolved",
+        research_columns=research_columns,
+        excluded_research_columns=sorted(excluded_research_columns),
+        source_column=source_column.name if source_column else "",
+        source_raw_column=source_raw_column.name if source_raw_column else "",
+    )
     for index, row in enumerate(rows, start=1):
         key = row.get(key_header, "").strip() or f"Row {index}"
+        debug_logger.log(
+            "row_started",
+            row_number=index,
+            key=key,
+            row_snapshot=dict(row),
+        )
         if progress:
             progress(index - 1, len(rows), key)
         missing_columns = [header for header in research_columns if not row.get(header, "").strip()]
         sources: list[str] = []
         if not missing_columns:
             skipped_rows.append(key)
+            debug_logger.log(
+                "row_skipped",
+                row_number=index,
+                key=key,
+                reason="no_missing_research_columns",
+                research_columns=research_columns,
+            )
         else:
             try:
-                updates, raw_text, sources, error = research_row(row, key_header, missing_columns, question_set)
+                updates, raw_text, sources, error = research_row(
+                    row,
+                    key_header,
+                    missing_columns,
+                    question_set,
+                    debug_logger=debug_logger,
+                    row_number=index,
+                )
                 if updates is not None:
                     merge_updates(row, missing_columns, updates)
+                    debug_logger.log(
+                        "row_merged",
+                        row_number=index,
+                        key=key,
+                        missing_columns=missing_columns,
+                        updates=updates,
+                        row_snapshot=dict(row),
+                        sources=sources,
+                    )
                 else:
                     failures.append(
                         Failure(
@@ -1130,6 +1386,15 @@ def run_research_dataset(
                             error=error,
                         )
                     )
+                    debug_logger.log(
+                        "row_failed_structured_validation",
+                        row_number=index,
+                        key=key,
+                        missing_columns=missing_columns,
+                        raw_text=raw_text,
+                        error=error,
+                        sources=sources,
+                    )
             except Exception as exc:
                 failures.append(
                     Failure(
@@ -1140,9 +1405,25 @@ def run_research_dataset(
                         error=str(exc),
                     )
                 )
+                debug_logger.log(
+                    "row_request_failed",
+                    row_number=index,
+                    key=key,
+                    missing_columns=missing_columns,
+                    error=str(exc),
+                    traceback=traceback.format_exc(),
+                )
 
         if source_column is not None and sources:
             apply_dynamic_value(row, source_column, ", ".join(sources))
+            debug_logger.log(
+                "row_sources_applied",
+                row_number=index,
+                key=key,
+                target_column=source_column.name,
+                sources=sources,
+                value=row.get(source_column.name, ""),
+            )
         if (
             source_raw_column is not None
             and sources
@@ -1154,6 +1435,23 @@ def run_research_dataset(
                 row_number=index,
                 cache=source_raw_cache,
                 issues=source_fetch_issues,
+                debug_logger=debug_logger,
+            )
+            debug_logger.log(
+                "row_source_raw_applied",
+                row_number=index,
+                key=key,
+                target_column=source_raw_column.name,
+                value_length=len(row.get(source_raw_column.name, "")),
+            )
+        elif source_raw_column is not None and sources:
+            debug_logger.log(
+                "row_source_raw_skipped",
+                row_number=index,
+                key=key,
+                reason="merge_policy_preserved_existing_value",
+                target_column=source_raw_column.name,
+                existing_length=len(row.get(source_raw_column.name, "")),
             )
 
         processed_rows = index
@@ -1172,6 +1470,13 @@ def run_research_dataset(
             source_fetch_issues,
             notion_export_result,
         )
+        debug_logger.log(
+            "markdown_written",
+            path=str(output_path),
+            processed_rows=processed_rows,
+            latest_row=index,
+            latest_key=key,
+        )
         if progress:
             progress(index, len(rows), key)
 
@@ -1189,7 +1494,9 @@ def run_research_dataset(
                 object_type=object_type,
                 tag_column=tag_column,
                 excluded_columns=excluded_columns,
+                debug_logger=debug_logger,
             )
+            debug_logger.log("auto_tagging_completed", target_column=tag_column.name)
         except Exception as exc:
             failures.append(
                 Failure(
@@ -1200,6 +1507,7 @@ def run_research_dataset(
                     error=str(exc),
                 )
             )
+            debug_logger.log("auto_tagging_failed", error=str(exc), traceback=traceback.format_exc())
 
     if options.nearest_neighbour and tag_column is not None:
         nearest_column = resolve_dynamic_column(headers, rows, f"Closest {object_type.title()}", options.nearest_column_policy)
@@ -1213,7 +1521,9 @@ def run_research_dataset(
                 object_type=object_type,
                 nearest_column=nearest_column,
                 excluded_columns=excluded_columns,
+                debug_logger=debug_logger,
             )
+            debug_logger.log("nearest_neighbour_completed", target_column=nearest_column.name)
         except Exception as exc:
             failures.append(
                 Failure(
@@ -1224,6 +1534,7 @@ def run_research_dataset(
                     error=str(exc),
                 )
             )
+            debug_logger.log("nearest_neighbour_failed", error=str(exc), traceback=traceback.format_exc())
 
     if options.export_to_notion:
         record_id_column = resolve_dynamic_column(headers, rows, RECORD_ID_COLUMN, options.record_id_column_policy)
@@ -1244,6 +1555,13 @@ def run_research_dataset(
         tag_column=tag_column.name if tag_column else None,
         nearest_column=nearest_column.name if nearest_column else None,
     )
+    debug_logger.log(
+        "normalization_completed",
+        list_like_columns=sorted(normalization_profile.list_like_columns),
+        url_like_columns=sorted(normalization_profile.url_like_columns),
+        long_text_columns=sorted(normalization_profile.long_text_columns),
+        row_preview=rows[:3],
+    )
 
     if options.export_to_notion:
         try:
@@ -1261,6 +1579,7 @@ def run_research_dataset(
                 url_like_columns=normalization_profile.url_like_columns,
                 long_text_columns=normalization_profile.long_text_columns,
             )
+            debug_logger.log("notion_export_completed", result=notion_export_result)
         except Exception as exc:
             failures.append(
                 Failure(
@@ -1271,6 +1590,7 @@ def run_research_dataset(
                     error=str(exc),
                 )
             )
+            debug_logger.log("notion_export_failed", error=str(exc), traceback=traceback.format_exc())
 
     write_output(
         output_path,
@@ -1287,8 +1607,21 @@ def run_research_dataset(
         source_fetch_issues,
         notion_export_result,
     )
+    debug_logger.log(
+        "dataset_completed",
+        output_path=str(output_path),
+        debug_log_path=str(debug_log_path),
+        processed_rows=len(rows),
+        skipped_rows=skipped_rows,
+        failure_count=len(failures),
+        source_fetch_issue_count=len(source_fetch_issues),
+        notion_export_result=notion_export_result,
+        final_headers=headers,
+        final_rows=rows,
+    )
     return {
         "output_path": str(output_path),
+        "debug_log_path": str(debug_log_path),
         "detected_format": dataset.detected_format,
         "row_count": len(rows),
         "headers": headers,

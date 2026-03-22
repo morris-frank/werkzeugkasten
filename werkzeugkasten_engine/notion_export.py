@@ -8,10 +8,13 @@ import urllib.request
 from dataclasses import dataclass
 from typing import Any
 
-from .core import LATEST_NOTION_VERSION, notion_api_token, notion_parent_page
+from .core import LATEST_NOTION_VERSION, notion_api_token, notion_parent_page, open_meteo_api_key
 
 NOTION_API_BASE = "https://api.notion.com/v1"
+OPEN_METEO_GEOCODING_API = "https://geocoding-api.open-meteo.com/v1/search"
 UUID_RE = re.compile(r"([0-9a-fA-F]{32}|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})")
+HTML_BREAK_RE = re.compile(r"\s*<br\s*/?>\s*", re.IGNORECASE)
+LAT_LON_RE = re.compile(r"(?P<lat>[+-]?\d{1,2}(?:\.\d+)?)\s*[,;/]\s*(?P<lon>[+-]?\d{1,3}(?:\.\d+)?)")
 
 
 @dataclass(frozen=True)
@@ -101,8 +104,10 @@ def infer_column_specs(
     list_like_columns: set[str],
     url_like_columns: set[str],
     long_text_columns: set[str],
+    open_meteo_key: str,
 ) -> list[NotionColumnSpec]:
     specs: list[NotionColumnSpec] = []
+    geocode_cache: dict[str, dict[str, Any] | None] = {}
     for header in headers:
         if header == key_header:
             specs.append(NotionColumnSpec(name=header, kind="title", property_definition={"title": {}}))
@@ -122,7 +127,17 @@ def infer_column_specs(
             specs.append(NotionColumnSpec(name=header, kind="rich_text", property_definition={"rich_text": {}}))
             continue
         if is_location_column(header):
-            specs.append(NotionColumnSpec(name=header, kind="place", property_definition={"place": {}}))
+            if not open_meteo_key:
+                specs.append(NotionColumnSpec(name=header, kind="rich_text", property_definition={"rich_text": {}}))
+                continue
+            sample = values[:25]
+            parseable = sum(
+                1 for value in sample if parse_place_value(value, open_meteo_key=open_meteo_key, cache=geocode_cache) is not None
+            )
+            if parseable and parseable >= max(1, len(sample) // 2):
+                specs.append(NotionColumnSpec(name=header, kind="place", property_definition={"place": {}}))
+            else:
+                specs.append(NotionColumnSpec(name=header, kind="rich_text", property_definition={"rich_text": {}}))
             continue
         if header in url_like_columns and all(value.startswith(("http://", "https://")) for value in values[:25]):
             specs.append(NotionColumnSpec(name=header, kind="url", property_definition={"url": {}}))
@@ -149,7 +164,13 @@ def _looks_numeric(value: str) -> bool:
     return True
 
 
-def _property_value(spec: NotionColumnSpec, value: str) -> dict[str, Any] | None:
+def _property_value(
+    spec: NotionColumnSpec,
+    value: str,
+    *,
+    open_meteo_key: str,
+    geocode_cache: dict[str, dict[str, Any] | None],
+) -> dict[str, Any] | None:
     if not value:
         return None
     if spec.kind == "title":
@@ -164,8 +185,8 @@ def _property_value(spec: NotionColumnSpec, value: str) -> dict[str, Any] | None
     if spec.kind == "url":
         return {"url": value}
     if spec.kind == "place":
-        place = parse_place_value(value)
-        return {"place": place} if place else {"rich_text": rich_text_array(value)}
+        place = parse_place_value(value, open_meteo_key=open_meteo_key, cache=geocode_cache)
+        return {"place": place} if place else None
     if spec.kind == "select":
         return {"select": {"name": value[:100]}}
     if spec.kind == "multi_select":
@@ -177,7 +198,8 @@ def _property_value(spec: NotionColumnSpec, value: str) -> dict[str, Any] | None
 
 
 def split_multi_value(value: str) -> list[str]:
-    items = [item.strip() for item in value.split(",")]
+    normalized = HTML_BREAK_RE.sub(",", value)
+    items = [item.strip() for item in normalized.split(",")]
     result: list[str] = []
     for item in items:
         if item and item not in result:
@@ -269,14 +291,84 @@ def is_location_column(header: str) -> bool:
     return any(token in lowered for token in ["location", "address", "adress"])
 
 
-def parse_place_value(value: str) -> dict[str, Any] | None:
-    cleaned = value.strip()
+def geocode_place_value(
+    value: str,
+    *,
+    open_meteo_key: str,
+    cache: dict[str, dict[str, Any] | None],
+) -> dict[str, Any] | None:
+    cleaned = HTML_BREAK_RE.sub(", ", value).strip()
     if not cleaned:
         return None
-    parts = [part.strip() for part in cleaned.split(",") if part.strip()]
+    if cleaned in cache:
+        return cache[cleaned]
+    params = {
+        "name": cleaned,
+        "count": "1",
+        "language": "en",
+        "format": "json",
+        "apikey": open_meteo_key,
+    }
+    url = f"{OPEN_METEO_GEOCODING_API}?{urllib.parse.urlencode(params)}"
+    request = urllib.request.Request(url, headers={"Accept": "application/json"})
+    try:
+        with urllib.request.urlopen(request, timeout=30) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+    except (urllib.error.URLError, urllib.error.HTTPError, json.JSONDecodeError):
+        cache[cleaned] = None
+        return None
+    results = payload.get("results")
+    if not isinstance(results, list) or not results:
+        cache[cleaned] = None
+        return None
+    first = results[0]
+    try:
+        latitude = float(first["latitude"])
+        longitude = float(first["longitude"])
+    except (KeyError, TypeError, ValueError):
+        cache[cleaned] = None
+        return None
+    address_parts = [
+        first.get("name", ""),
+        first.get("admin1", ""),
+        first.get("country", ""),
+    ]
+    place = {
+        "name": str(first.get("name") or cleaned)[:200],
+        "address": ", ".join(part for part in address_parts if part)[:2000],
+        "lat": latitude,
+        "lon": longitude,
+    }
+    cache[cleaned] = place
+    return place
+
+
+def parse_place_value(
+    value: str,
+    *,
+    open_meteo_key: str = "",
+    cache: dict[str, dict[str, Any] | None] | None = None,
+) -> dict[str, Any] | None:
+    cleaned = HTML_BREAK_RE.sub(", ", value).strip()
+    if not cleaned:
+        return None
+    match = LAT_LON_RE.search(cleaned)
+    if not match:
+        if not open_meteo_key:
+            return None
+        return geocode_place_value(cleaned, open_meteo_key=open_meteo_key, cache=cache if cache is not None else {})
+    latitude = float(match.group("lat"))
+    longitude = float(match.group("lon"))
+    without_coords = LAT_LON_RE.sub("", cleaned)
+    without_coords = re.sub(r"\(\s*\)", "", without_coords)
+    without_coords = re.sub(r"\s*[,;/]\s*[,;/]\s*", ", ", without_coords)
+    parts = [part.strip(" ,;/") for part in re.split(r"[,;]", without_coords) if part.strip(" ,;/")]
+    name = parts[0] if parts else cleaned
     return {
-        "name": parts[0],
-        "address": ", ".join(parts),
+        "name": name[:200],
+        "address": ", ".join(parts)[:2000],
+        "lat": latitude,
+        "lon": longitude,
     }
 
 
@@ -312,6 +404,7 @@ def export_dataset_to_notion(
     long_text_columns: set[str],
 ) -> dict[str, Any]:
     parent_page_id = page_parent_id()
+    open_meteo_key = open_meteo_api_key().strip()
     specs = infer_column_specs(
         headers,
         rows,
@@ -323,6 +416,7 @@ def export_dataset_to_notion(
         list_like_columns=list_like_columns,
         url_like_columns=url_like_columns,
         long_text_columns=long_text_columns,
+        open_meteo_key=open_meteo_key,
     )
 
     properties = {spec.name: spec.property_definition for spec in specs if spec.property_definition is not None}
@@ -365,13 +459,19 @@ def export_dataset_to_notion(
     pages_by_record_id: dict[str, str] = {}
     page_ids_by_key: dict[str, str] = {}
     row_specs = {spec.name: spec for spec in specs}
+    geocode_cache: dict[str, dict[str, Any] | None] = {}
     for row in rows:
         properties_payload: dict[str, Any] = {}
         for header, spec in row_specs.items():
             if spec.kind == "relation":
                 continue
             value = row.get(header, "").strip()
-            property_value = _property_value(spec, value)
+            property_value = _property_value(
+                spec,
+                value,
+                open_meteo_key=open_meteo_key,
+                geocode_cache=geocode_cache,
+            )
             if property_value is not None:
                 properties_payload[header] = property_value
         create_page_body = {

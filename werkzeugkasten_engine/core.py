@@ -17,6 +17,7 @@ SUMMARY_MODEL_ENV = "WERKZEUGKASTEN_SUMMARY_MODEL"
 JINA_API_KEY_ENV = "WERKZEUGKASTEN_JINA_API_KEY"
 NOTION_API_TOKEN_ENV = "WERKZEUGKASTEN_NOTION_API_TOKEN"
 NOTION_PARENT_PAGE_ENV = "WERKZEUGKASTEN_NOTION_PARENT_PAGE"
+OPEN_METEO_API_KEY_ENV = "WERKZEUGKASTEN_OPEN_METEO_API_KEY"
 DEFAULT_RESEARCH_MODEL = "gpt-5.4"
 DEFAULT_SUMMARY_MODEL = "gpt-5.4"
 LATEST_NOTION_VERSION = "2026-03-11"
@@ -63,6 +64,10 @@ def notion_api_token() -> str:
 
 def notion_parent_page() -> str:
     return os.environ.get(NOTION_PARENT_PAGE_ENV, "") or os.environ.get("NOTION_PARENT_PAGE", "")
+
+
+def open_meteo_api_key() -> str:
+    return os.environ.get(OPEN_METEO_API_KEY_ENV, "") or os.environ.get("OPEN_METEO_API_KEY", "")
 
 
 def reasoning_for_model(model: str) -> dict[str, Any] | None:

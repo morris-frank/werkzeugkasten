@@ -53,6 +53,7 @@ def run_research_list(
     result = run_research_dataset(dataset, output_dir=output_dir, progress=progress, options=options)
     return {
         "output_path": result["output_path"],
+        "debug_log_path": result.get("debug_log_path", ""),
         "item_count": len(normalized_items),
         "completed_count": len(normalized_items),
         "headers": result["headers"],

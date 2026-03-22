@@ -39,6 +39,7 @@ final class WerkzeugkastenCoreTests: XCTestCase {
             jinaAPIKey: "jina-key",
             notionToken: "notion-token",
             notionParentPage: "parent-page",
+            openMeteoAPIKey: "openmeteo-key",
             researchModel: "research-model",
             summaryModel: "summary-model",
             pythonInterpreterPath: "/bin/echo"
@@ -55,6 +56,7 @@ final class WerkzeugkastenCoreTests: XCTestCase {
         XCTAssertEqual(prepared.environment["WERKZEUGKASTEN_JINA_API_KEY"], "jina-key")
         XCTAssertEqual(prepared.environment["WERKZEUGKASTEN_NOTION_API_TOKEN"], "notion-token")
         XCTAssertEqual(prepared.environment["WERKZEUGKASTEN_NOTION_PARENT_PAGE"], "parent-page")
+        XCTAssertEqual(prepared.environment["WERKZEUGKASTEN_OPEN_METEO_API_KEY"], "openmeteo-key")
         XCTAssertEqual(prepared.environment["WERKZEUGKASTEN_RESEARCH_MODEL"], "research-model")
         XCTAssertEqual(prepared.environment["WERKZEUGKASTEN_SUMMARY_MODEL"], "summary-model")
         XCTAssertEqual(prepared.workingDirectoryURL, temp)
@@ -73,6 +75,7 @@ final class WerkzeugkastenCoreTests: XCTestCase {
             jinaAPIKey: "",
             notionToken: "",
             notionParentPage: "",
+            openMeteoAPIKey: "",
             researchModel: "research-model",
             summaryModel: "summary-model",
             pythonInterpreterPath: "/bin/echo"
@@ -108,6 +111,7 @@ final class WerkzeugkastenCoreTests: XCTestCase {
             jinaAPIKey: "",
             notionToken: "",
             notionParentPage: "",
+            openMeteoAPIKey: "",
             researchModel: "research-model",
             summaryModel: "summary-model",
             pythonInterpreterPath: "/bin/echo"
@@ -137,10 +141,12 @@ final class WerkzeugkastenCoreTests: XCTestCase {
         let openAIAccount = "OPENAI_API_KEY"
         let jinaAccount = "JINA_API_KEY"
         let notionAccount = "NOTION_API_TOKEN"
+        let openMeteoAccount = "OPEN_METEO_API_KEY"
 
         try? KeychainStore.delete(service: service, account: openAIAccount)
         try? KeychainStore.delete(service: service, account: jinaAccount)
         try? KeychainStore.delete(service: service, account: notionAccount)
+        try? KeychainStore.delete(service: service, account: openMeteoAccount)
 
         let store = SettingsStore(
             defaults: defaults,
@@ -148,12 +154,14 @@ final class WerkzeugkastenCoreTests: XCTestCase {
             openAIKeychainAccount: openAIAccount,
             jinaKeychainAccount: jinaAccount,
             notionKeychainAccount: notionAccount,
+            openMeteoKeychainAccount: openMeteoAccount,
             keychainAccessGroup: nil,
             requireSharedCapabilities: false
         )
         store.apiKey = "secret"
         store.jinaAPIKey = "jina-secret"
         store.notionToken = "notion-secret"
+        store.openMeteoAPIKey = "openmeteo-secret"
         store.notionParentPage = "parent-id"
         store.researchModel = "research"
         store.summaryModel = "summary"
@@ -166,6 +174,7 @@ final class WerkzeugkastenCoreTests: XCTestCase {
             openAIKeychainAccount: openAIAccount,
             jinaKeychainAccount: jinaAccount,
             notionKeychainAccount: notionAccount,
+            openMeteoKeychainAccount: openMeteoAccount,
             keychainAccessGroup: nil,
             requireSharedCapabilities: false
         )
@@ -173,6 +182,7 @@ final class WerkzeugkastenCoreTests: XCTestCase {
         XCTAssertEqual(reloaded.apiKey, "secret")
         XCTAssertEqual(reloaded.jinaAPIKey, "jina-secret")
         XCTAssertEqual(reloaded.notionToken, "notion-secret")
+        XCTAssertEqual(reloaded.openMeteoAPIKey, "openmeteo-secret")
         XCTAssertEqual(reloaded.notionParentPage, "parent-id")
         XCTAssertEqual(reloaded.researchModel, "research")
         XCTAssertEqual(reloaded.summaryModel, "summary")
@@ -181,6 +191,7 @@ final class WerkzeugkastenCoreTests: XCTestCase {
         try? KeychainStore.delete(service: service, account: openAIAccount)
         try? KeychainStore.delete(service: service, account: jinaAccount)
         try? KeychainStore.delete(service: service, account: notionAccount)
+        try? KeychainStore.delete(service: service, account: openMeteoAccount)
         defaults.removePersistentDomain(forName: suiteName)
     }
 
