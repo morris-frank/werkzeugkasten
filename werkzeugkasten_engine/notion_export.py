@@ -9,18 +9,16 @@ from typing import Any
 
 import requests
 
+from . import io_ops
 from .core import LATEST_NOTION_VERSION, notion_api_token, notion_parent_page, open_meteo_api_key
+from .field_types import is_location_header
+from .geocoding import geocode_place, parse_place
 
 NOTION_API_BASE = "https://api.notion.com/v1"
 # Notion rejects bodies around ~500KB; stay well under once JSON-escaped UTF-8 is applied.
 NOTION_REQUEST_BODY_SAFE_MAX_BYTES = 420_000
 NOTION_ABBREVIATION_NOTE = "\n\n_(Abbreviated for Notion export size limit.)_"
-OPEN_METEO_GEOCODING_API = "https://geocoding-api.open-meteo.com/v1/search"
 UUID_RE = re.compile(r"([0-9a-fA-F]{32}|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})")
-HTML_BREAK_RE = re.compile(r"\s*<br\s*/?>\s*", re.IGNORECASE)
-LAT_LON_RE = re.compile(r"(?P<lat>[+-]?\d{1,2}(?:\.\d+)?)\s*[,;/]\s*(?P<lon>[+-]?\d{1,3}(?:\.\d+)?)")
-URL_RE = re.compile(r"https?://[^\s<>,)\]]+|www\.[^\s<>,)\]]+", re.IGNORECASE)
-MARKDOWN_LINK_RE = re.compile(r"\[([^\]]+)\]\((https?://[^)]+)\)")
 
 
 @dataclass(frozen=True)
@@ -399,7 +397,7 @@ def _property_value(
 
 
 def split_multi_value(value: str) -> list[str]:
-    normalized = HTML_BREAK_RE.sub(",", value)
+    normalized = re.sub(r"\s*<br\s*/?>\s*", ",", value, flags=re.IGNORECASE)
     items = [item.strip() for item in normalized.split(",")]
     result: list[str] = []
     for item in items:
@@ -409,37 +407,11 @@ def split_multi_value(value: str) -> list[str]:
 
 
 def normalize_url_value(value: str) -> str:
-    text = value.strip().strip("[]()")
-    if not text:
-        return ""
-    if text.startswith("www."):
-        text = f"https://{text}"
-    elif not re.match(r"^[a-z]+://", text, re.IGNORECASE):
-        text = f"https://{text}"
-    parsed = urllib.parse.urlparse(text)
-    host = parsed.netloc.lower()
-    path = parsed.path or ""
-    query_pairs = urllib.parse.parse_qsl(parsed.query, keep_blank_values=False)
-    filtered_query = [
-        (key, val)
-        for key, val in query_pairs
-        if not key.lower().startswith("utm_") and "openai" not in key.lower() and "openai" not in val.lower()
-    ]
-    query = urllib.parse.urlencode(filtered_query)
-    rebuilt = urllib.parse.urlunparse(("https", host, path.rstrip("/"), "", query, ""))
-    return rebuilt.rstrip("/") if rebuilt.endswith("/") and path in {"", "/"} else rebuilt
+    return io_ops.normalize_url_value(value)
 
 
 def extract_source_urls(value: str) -> list[str]:
-    normalized_text = HTML_BREAK_RE.sub(" ", value or "")
-    urls = [match.group(0) for match in URL_RE.finditer(normalized_text)]
-    urls.extend(match.group(2) for match in MARKDOWN_LINK_RE.finditer(normalized_text))
-    result: list[str] = []
-    for url in urls:
-        normalized = normalize_url_value(url)
-        if normalized and normalized not in result:
-            result.append(normalized)
-    return result
+    return io_ops.normalize_source_urls(io_ops.extract_urls(value))
 
 
 def heading_block(text: str, level: int = 2) -> dict[str, Any]:
@@ -501,11 +473,7 @@ def render_row_children(
 
 
 def group_urls_by_domain(urls: list[str]) -> dict[str, list[str]]:
-    grouped: dict[str, list[str]] = {}
-    for url in urls:
-        domain = urllib.parse.urlparse(url).netloc or "unknown"
-        grouped.setdefault(domain, []).append(url)
-    return {domain: sorted(values) for domain, values in sorted(grouped.items())}
+    return io_ops.group_urls_by_domain(urls)
 
 
 def parse_source_raw_map(value: str) -> dict[str, str]:
@@ -522,8 +490,7 @@ def parse_source_raw_map(value: str) -> dict[str, str]:
 
 
 def is_location_column(header: str) -> bool:
-    lowered = header.strip().lower()
-    return any(token in lowered for token in ["location", "address", "adress"])
+    return is_location_header(header)
 
 
 def geocode_place_value(
@@ -532,54 +499,7 @@ def geocode_place_value(
     open_meteo_key: str,
     cache: dict[str, dict[str, Any] | None],
 ) -> dict[str, Any] | None:
-    cleaned = HTML_BREAK_RE.sub(", ", value).strip()
-    if not cleaned:
-        return None
-    if cleaned in cache:
-        return cache[cleaned]
-    params = {
-        "name": cleaned,
-        "count": "1",
-        "language": "en",
-        "format": "json",
-        "apikey": open_meteo_key,
-    }
-    url = f"{OPEN_METEO_GEOCODING_API}?{urllib.parse.urlencode(params)}"
-    try:
-        response = requests.get(
-            url,
-            headers={"Accept": "application/json"},
-            timeout=30,
-        )
-        response.raise_for_status()
-        payload = response.json()
-    except (requests.exceptions.RequestException, json.JSONDecodeError):
-        cache[cleaned] = None
-        return None
-    results = payload.get("results")
-    if not isinstance(results, list) or not results:
-        cache[cleaned] = None
-        return None
-    first = results[0]
-    try:
-        latitude = float(first["latitude"])
-        longitude = float(first["longitude"])
-    except (KeyError, TypeError, ValueError):
-        cache[cleaned] = None
-        return None
-    address_parts = [
-        first.get("name", ""),
-        first.get("admin1", ""),
-        first.get("country", ""),
-    ]
-    place = {
-        "name": str(first.get("name") or cleaned)[:200],
-        "address": ", ".join(part for part in address_parts if part)[:2000],
-        "lat": latitude,
-        "lon": longitude,
-    }
-    cache[cleaned] = place
-    return place
+    return geocode_place(value, api_key=open_meteo_key, cache=cache)
 
 
 def parse_place_value(
@@ -588,27 +508,7 @@ def parse_place_value(
     open_meteo_key: str = "",
     cache: dict[str, dict[str, Any] | None] | None = None,
 ) -> dict[str, Any] | None:
-    cleaned = HTML_BREAK_RE.sub(", ", value).strip()
-    if not cleaned:
-        return None
-    match = LAT_LON_RE.search(cleaned)
-    if not match:
-        if not open_meteo_key:
-            return None
-        return geocode_place_value(cleaned, open_meteo_key=open_meteo_key, cache=cache if cache is not None else {})
-    latitude = float(match.group("lat"))
-    longitude = float(match.group("lon"))
-    without_coords = LAT_LON_RE.sub("", cleaned)
-    without_coords = re.sub(r"\(\s*\)", "", without_coords)
-    without_coords = re.sub(r"\s*[,;/]\s*[,;/]\s*", ", ", without_coords)
-    parts = [part.strip(" ,;/") for part in re.split(r"[,;]", without_coords) if part.strip(" ,;/")]
-    name = parts[0] if parts else cleaned
-    return {
-        "name": name[:200],
-        "address": ", ".join(parts)[:2000],
-        "lat": latitude,
-        "lon": longitude,
-    }
+    return parse_place(value, api_key=open_meteo_key, cache=cache)
 
 
 def _chunk_text(text: str, limit: int = 1800) -> list[str]:

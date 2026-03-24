@@ -1,56 +1,30 @@
 from __future__ import annotations
 
-import csv
 import json
-import mimetypes
 import re
 import traceback
-import urllib.parse
 from dataclasses import dataclass, field
 from datetime import datetime
-from io import StringIO
 from pathlib import Path
 from typing import Callable
 
-import requests
 from rapidfuzz import fuzz
 
+from . import io_ops
 from .core import (
     choose_output_path,
     esc,
     extract_json_block,
-    extract_sources,
-    jina_api_key,
     notion_api_token,
     notion_parent_page,
-    openai_client,
-    research_model,
-    response_create_kwargs,
 )
+from .field_types import is_location_header, is_question_header, object_type_from_header
 from .notion_export import export_dataset_to_notion
-from .summarize import stable_download_path, summarize_local_file
+from .openai_ops import extract_web_search_sources, openai_client, research_model, response_create_kwargs
+from .summary_service import stable_download_path, summary
 
 ProgressCallback = Callable[[int, int, str], None]
 
-QUESTION_WORDS = {
-    "who",
-    "what",
-    "when",
-    "where",
-    "why",
-    "how",
-    "which",
-    "is",
-    "are",
-    "do",
-    "does",
-    "did",
-    "can",
-    "could",
-    "should",
-    "would",
-    "will",
-}
 MERGE_POLICY = "merge"
 OVERWRITE_POLICY = "overwrite"
 SOURCE_COLUMN = "Sources"
@@ -192,89 +166,6 @@ def normalize_policy(value: str) -> str:
     return OVERWRITE_POLICY if str(value).strip().lower() == OVERWRITE_POLICY else MERGE_POLICY
 
 
-def guess_table_format(raw: str) -> str:
-    lines = [line.strip() for line in raw.splitlines() if line.strip()]
-    if len(lines) >= 2 and "|" in lines[0]:
-        second = lines[1].replace("|", " ").strip()
-        if re.fullmatch(r"[:\-\s]+", second):
-            return "markdown"
-    if any("|" in line for line in lines[:3]):
-        return "markdown"
-    return "csv"
-
-
-def normalize_headers(headers: list[str]) -> list[str]:
-    normalized: list[str] = []
-    used: dict[str, int] = {}
-    for index, header in enumerate(headers, start=1):
-        name = header.strip() or f"column_{index}"
-        if name not in used:
-            used[name] = 1
-            normalized.append(name)
-            continue
-        used[name] += 1
-        normalized.append(f"{name} {used[name]}")
-    return normalized
-
-
-def normalize_rows(headers: list[str], rows: list[list[str]]) -> list[list[str]]:
-    width = len(headers)
-    return [row[:width] + [""] * max(0, width - len(row)) for row in rows]
-
-
-def is_markdown_separator(cells: list[str]) -> bool:
-    return bool(cells) and all(re.fullmatch(r":?-{3,}:?", cell.strip()) for cell in cells)
-
-
-def parse_markdown_table(raw: str) -> tuple[list[str], list[list[str]]]:
-    lines = [line.strip() for line in raw.splitlines() if line.strip()]
-    rows = [[cell.strip() for cell in line.strip("|").split("|")] for line in lines if "|" in line]
-    if len(rows) < 2:
-        raise ValueError("Could not parse a markdown table.")
-    headers = normalize_headers(rows[0])
-    data_rows = rows[1:]
-    if data_rows and is_markdown_separator(data_rows[0]):
-        data_rows = data_rows[1:]
-    return headers, normalize_rows(headers, data_rows)
-
-
-def parse_csv_table(raw: str) -> tuple[list[str], list[list[str]]]:
-    sample = raw[:4096]
-    try:
-        dialect = csv.Sniffer().sniff(sample, delimiters=",;\t")
-    except csv.Error:
-        dialect = csv.excel
-    reader = csv.reader(StringIO(raw), dialect)
-    rows = [[cell.strip() for cell in row] for row in reader if any(cell.strip() for cell in row)]
-    if len(rows) < 2:
-        raise ValueError("Could not parse a CSV table.")
-    headers = normalize_headers(rows[0])
-    return headers, normalize_rows(headers, rows[1:])
-
-
-def rows_as_dicts(headers: list[str], rows: list[list[str]]) -> list[dict[str, str]]:
-    return [dict(zip(headers, row)) for row in rows]
-
-
-def is_question_header(header: str) -> bool:
-    text = header.strip().lower()
-    if not text:
-        return False
-    if "?" in text:
-        return True
-    return text.split()[0] in QUESTION_WORDS
-
-
-def object_type_from_header(header: str) -> str:
-    text = re.sub(r"[_-]+", " ", header.strip().lower())
-    text = re.sub(r"\s+", " ", text).strip()
-    if text.endswith(" name") and len(text.split()) > 1:
-        text = text[:-5].strip()
-    if text in {"name", "title"}:
-        return "object"
-    return text or "object"
-
-
 def make_explicit_question(column: str, key: str, object_type: str) -> str:
     text = column.strip()
     if not text:
@@ -286,25 +177,12 @@ def make_explicit_question(column: str, key: str, object_type: str) -> str:
     return f"What is the {text} of the {object_type} {key}?"
 
 
-def parse_table(raw: str) -> tuple[str, list[str], list[dict[str, str]]]:
-    detected_format = guess_table_format(raw)
-    if detected_format == "markdown":
-        headers, raw_rows = parse_markdown_table(raw)
-    else:
-        headers, raw_rows = parse_csv_table(raw)
-    if len(headers) < 2:
-        raise ValueError("Need at least two columns.")
-    if not raw_rows:
-        raise ValueError("No data rows found.")
-    return detected_format, headers, rows_as_dicts(headers, raw_rows)
-
-
 def question_columns_from_headers(headers: list[str]) -> list[str]:
     return [header for header in headers[1:] if is_question_header(header)]
 
 
 def inspect_table(raw: str, source_name: str = "pasted-table") -> dict[str, object]:
-    detected_format, headers, rows = parse_table(raw)
+    detected_format, headers, rows = io_ops.parse_table(raw)
     question_columns = question_columns_from_headers(headers)
     attribute_columns = [header for header in headers[1:] if header not in question_columns]
     return {
@@ -328,7 +206,7 @@ def make_dataset_shape(
     rows: list[dict[str, str]],
     question_columns: list[str] | None = None,
 ) -> DatasetShape:
-    normalized_headers = normalize_headers(headers)
+    normalized_headers = io_ops.normalize_headers(headers)
     normalized_rows: list[dict[str, str]] = []
     for row in rows:
         normalized_row = {header: (row.get(header, "") or "").strip() for header in normalized_headers}
@@ -424,7 +302,7 @@ def research_row(
         **response_create_kwargs(model, use_web_search=True, include_web_sources=True),
     )
     raw_text = (response.output_text or "").strip()
-    sources = normalize_source_urls(extract_sources(response))
+    sources = io_ops.normalize_source_urls(extract_web_search_sources(response))
     if debug_logger is not None:
         debug_logger.log(
             "openai_response",
@@ -533,27 +411,15 @@ def apply_dynamic_value(row: dict[str, str], column: DynamicColumn, value: str) 
 
 
 def inferred_download_suffix(url: str, content_type: str = "") -> str:
-    parsed = urllib.parse.urlparse(url)
-    suffix = Path(parsed.path).suffix.lower()
-    if suffix in DOCUMENT_SUFFIXES:
-        return suffix
-    guessed = mimetypes.guess_extension(content_type.split(";", 1)[0].strip()) if content_type else None
-    return (guessed or "").lower()
+    return io_ops.inferred_download_suffix(url, content_type)
 
 
 def is_probably_document_url(url: str) -> bool:
-    parsed = urllib.parse.urlparse(url)
-    suffix = Path(parsed.path).suffix.lower()
-    return suffix in DOCUMENT_SUFFIXES
+    return io_ops.is_probably_document_url(url)
 
 
 def download_source_document(url: str) -> Path:
-    response = requests.get(url, timeout=60)
-    response.raise_for_status()
-    suffix = inferred_download_suffix(url, response.headers.get("Content-Type", ""))
-    destination = stable_download_path(url, suffix)
-    destination.write_bytes(response.content)
-    return destination
+    return io_ops.download_source_document(url, destination_factory=stable_download_path)
 
 
 def fetch_source_raw_text(
@@ -564,179 +430,16 @@ def fetch_source_raw_text(
     row_number: int | None = None,
     key: str = "",
 ) -> FetchResult:
-    if url in cache:
-        if debug_logger is not None:
-            debug_logger.log(
-                "jina_fetch_cache_hit",
-                row_number=row_number,
-                key=key,
-                source_url=url,
-                cached_status_code=cache[url].status_code,
-                cached_error_class=cache[url].error_class,
-                cached_text_preview=cache[url].text[:500],
-            )
-        return cache[url]
-    if is_probably_document_url(url):
-        if debug_logger is not None:
-            debug_logger.log(
-                "document_source_detected",
-                row_number=row_number,
-                key=key,
-                source_url=url,
-            )
-        try:
-            downloaded_path = download_source_document(url)
-            summary_result = summarize_local_file(downloaded_path, artifacts_directory=downloaded_path.parent)
-            text = "\n".join(
-                [
-                    f"[Document summary from downloaded file] {downloaded_path}",
-                    "",
-                    summary_result["summary_markdown"],
-                ]
-            ).strip()
-            result = FetchResult(text=text)
-            if debug_logger is not None:
-                debug_logger.log(
-                    "document_source_summarized",
-                    row_number=row_number,
-                    key=key,
-                    source_url=url,
-                    downloaded_path=str(downloaded_path),
-                    summary_path=summary_result["summary_path"],
-                    contents_path=summary_result["contents_path"],
-                    text_preview=text[:1000],
-                )
-            cache[url] = result
-            return result
-        except requests.exceptions.RequestException as exc:
-            result = FetchResult(
-                text=f"[Source fetch failed] {url}\n{exc}",
-                error_class="DownloadError",
-                message=str(exc),
-            )
-            if debug_logger is not None:
-                debug_logger.log(
-                    "document_source_download_failed",
-                    row_number=row_number,
-                    key=key,
-                    source_url=url,
-                    error_class="DownloadError",
-                    message=str(exc),
-                )
-            cache[url] = result
-            return result
-        except Exception as exc:
-            result = FetchResult(
-                text=f"[Source fetch failed] {url}\n{exc}",
-                error_class="DocumentSummaryError",
-                message=str(exc),
-            )
-            if debug_logger is not None:
-                debug_logger.log(
-                    "document_source_summary_failed",
-                    row_number=row_number,
-                    key=key,
-                    source_url=url,
-                    error_class="DocumentSummaryError",
-                    message=str(exc),
-                    traceback=traceback.format_exc(),
-                )
-            cache[url] = result
-            return result
-    request_url = f"https://r.jina.ai/{url}"
-    headers = {
-        "X-Engine": "direct",
-        "X-Retain-Images": "none",
-        "X-Md-Link-Style": "referenced",
-    }
-    api_key = jina_api_key().strip()
-    if api_key:
-        headers["Authorization"] = f"Bearer {api_key}"
-    if debug_logger is not None:
-        debug_logger.log(
-            "jina_request",
+    return FetchResult(
+        **io_ops.fetch_source_raw_text(
+            url,
+            cache,
+            document_downloader=download_source_document,
+            debug_logger=debug_logger,
             row_number=row_number,
             key=key,
-            source_url=url,
-            request_url=request_url,
-            headers=headers,
-            has_authorization=bool(api_key),
-        )
-    try:
-        response = requests.get(request_url, headers=headers, timeout=30)
-    except requests.exceptions.Timeout:
-        result = FetchResult(
-            text=f"[Source fetch failed] {url}\nTimed out.",
-            error_class="TimeoutError",
-            message="Timed out.",
-        )
-        if debug_logger is not None:
-            debug_logger.log(
-                "jina_response_error",
-                row_number=row_number,
-                key=key,
-                source_url=url,
-                request_url=request_url,
-                headers=headers,
-                error_class="TimeoutError",
-                message="Timed out.",
-            )
-    except requests.exceptions.RequestException as exc:
-        result = FetchResult(
-            text=f"[Source fetch failed] {url}\n{exc}",
-            error_class="URLError",
-            message=str(exc),
-        )
-        if debug_logger is not None:
-            debug_logger.log(
-                "jina_response_error",
-                row_number=row_number,
-                key=key,
-                source_url=url,
-                request_url=request_url,
-                headers=headers,
-                error_class="URLError",
-                message=str(exc),
-            )
-    else:
-        if response.status_code >= 400:
-            reason = response.reason or ""
-            result = FetchResult(
-                text=f"[Source fetch failed] {url}\nHTTP {response.status_code}: {reason}",
-                status_code=response.status_code,
-                error_class="HTTPError",
-                message=reason,
-            )
-            if debug_logger is not None:
-                debug_logger.log(
-                    "jina_response_error",
-                    row_number=row_number,
-                    key=key,
-                    source_url=url,
-                    request_url=request_url,
-                    headers=headers,
-                    status_code=response.status_code,
-                    error_class="HTTPError",
-                    message=reason,
-                )
-        else:
-            body = response.text.strip()
-            status_code = response.status_code
-            result = FetchResult(text=body, status_code=status_code)
-            if debug_logger is not None:
-                debug_logger.log(
-                    "jina_response",
-                    row_number=row_number,
-                    key=key,
-                    source_url=url,
-                    request_url=request_url,
-                    headers=headers,
-                    status_code=status_code,
-                    text_length=len(body),
-                    text_preview=body[:1000],
-                )
-    cache[url] = result
-    return result
+        ).__dict__
+    )
 
 
 def combine_source_raw_text(
@@ -748,67 +451,29 @@ def combine_source_raw_text(
     issues: list[SourceFetchIssue],
     debug_logger: DebugLogger | None = None,
 ) -> str:
-    parts: list[str] = []
-    for url in urls:
-        raw_result = fetch_source_raw_text(
-            url,
-            cache,
-            debug_logger=debug_logger,
-            row_number=row_number,
-            key=key,
-        )
-        if raw_result.is_error:
-            issues.append(
-                SourceFetchIssue(
-                    row_number=row_number,
-                    key=key,
-                    url=url,
-                    status_code=raw_result.status_code,
-                    error_class=raw_result.error_class,
-                    message=raw_result.message,
-                )
+    issue_records: list[dict[str, object]] = []
+    combined = io_ops.combine_source_raw_text(
+        urls,
+        key=key,
+        row_number=row_number,
+        cache=cache,
+        issues=issue_records,
+        fetcher=fetch_source_raw_text,
+        summarizer=summary,
+        debug_logger=debug_logger,
+    )
+    for issue in issue_records:
+        issues.append(
+            SourceFetchIssue(
+                row_number=int(issue["row_number"]),
+                key=str(issue["key"]),
+                url=str(issue["url"]),
+                status_code=issue["status_code"] if isinstance(issue["status_code"], int) else None,
+                error_class=str(issue["error_class"]),
+                message=str(issue["message"]),
             )
-            if debug_logger is not None:
-                debug_logger.log(
-                    "source_fetch_issue",
-                    row_number=row_number,
-                    key=key,
-                    source_url=url,
-                    status_code=raw_result.status_code,
-                    error_class=raw_result.error_class,
-                    message=raw_result.message,
-                )
-        parts.append(f"URL: {url}\n{raw_result.text}".strip())
-    if debug_logger is not None:
-        debug_logger.log(
-            "source_raw_combined",
-            row_number=row_number,
-            key=key,
-            source_count=len(urls),
-            combined_length=sum(len(part) for part in parts),
         )
-    return "\n\n".join(parts).strip()
-
-
-def row_context_payload(
-    rows: list[dict[str, str]],
-    *,
-    key_header: str,
-    headers: list[str],
-    excluded_columns: set[str],
-) -> list[dict[str, object]]:
-    payload: list[dict[str, object]] = []
-    visible_headers = [header for header in headers if header not in excluded_columns]
-    for index, row in enumerate(rows, start=1):
-        values = {header: row.get(header, "").strip() for header in visible_headers if row.get(header, "").strip()}
-        payload.append(
-            {
-                "row_id": f"row-{index}",
-                "key": row.get(key_header, "").strip() or f"Row {index}",
-                "values": values,
-            }
-        )
-    return payload
+    return combined
 
 
 def run_json_prompt(
@@ -862,7 +527,7 @@ def apply_auto_tags(
     debug_logger: DebugLogger | None = None,
 ) -> None:
     minimum_tags, maximum_tags = recommended_tag_bounds(len(rows))
-    row_payload = row_context_payload(rows, key_header=key_header, headers=headers, excluded_columns=excluded_columns)
+    row_payload = io_ops.row_context_payload(rows, key_header=key_header, headers=headers, excluded_columns=excluded_columns)
     prompt = f"""You are categorizing {object_type} rows, which where prefilled with metadata.
 
 Choose a compact but discriminative set of categorical tags for the sample as a whole.
@@ -908,7 +573,7 @@ def apply_nearest_neighbours(
     excluded_columns: set[str],
     debug_logger: DebugLogger | None = None,
 ) -> None:
-    row_payload = row_context_payload(rows, key_header=key_header, headers=headers, excluded_columns=excluded_columns)
+    row_payload = io_ops.row_context_payload(rows, key_header=key_header, headers=headers, excluded_columns=excluded_columns)
     prompt = f"""You are comparing {object_type} rows, which where prefilled with metadata.
 
 For each {object_type}, identify the 1 to 3 most similar other {object_type}s based on the row summary.
@@ -1093,7 +758,7 @@ def normalize_dataset(
             value = row.get(header, "").strip()
             if not value:
                 continue
-            items = split_and_clean_items(value, url_mode=header in url_like_columns)
+            items = io_ops.split_and_clean_items(value, url_mode=header in url_like_columns)
             observed_items.extend(items if header in list_like_columns or header in url_like_columns else items[:1])
         canonical_maps[header] = build_canonical_map(observed_items, url_mode=header in url_like_columns)
 
@@ -1108,18 +773,18 @@ def normalize_dataset(
                 row[header] = value.strip()
                 continue
             if is_locationish_header(header):
-                row[header] = normalize_location_value(value)
+                row[header] = io_ops.normalize_location_value(value)
                 continue
             if header in url_like_columns:
-                items = split_and_clean_items(value, url_mode=True)
+                items = io_ops.split_and_clean_items(value, url_mode=True)
                 row[header] = ", ".join(canonical_maps.get(header, {}).get(item, item) for item in items)
                 continue
             if header in list_like_columns:
-                items = split_and_clean_items(value, url_mode=False)
+                items = io_ops.split_and_clean_items(value, url_mode=False)
                 mapped = [canonical_maps.get(header, {}).get(item, item) for item in items]
                 row[header] = ", ".join(dict.fromkeys(mapped))
                 continue
-            normalized_scalar = normalize_scalar_value(value)
+            normalized_scalar = io_ops.normalize_scalar_value(value)
             row[header] = canonical_maps.get(header, {}).get(normalized_scalar, normalized_scalar)
 
     return NormalizationProfile(
@@ -1140,7 +805,7 @@ def detect_url_like_columns(headers: list[str], rows: list[dict[str, str]], *, s
         if not values:
             continue
         sample = values[:25]
-        score = sum(1 for value in sample if is_url_only(value))
+        score = sum(1 for value in sample if io_ops.is_url_only(value))
         if score and score == len(sample):
             result.add(header)
     return result
@@ -1185,7 +850,7 @@ def build_canonical_map(values: list[str], *, url_mode: bool) -> dict[str, str]:
     canonical_map: dict[str, str] = {}
     canonicals: list[str] = []
     for value in values:
-        candidate = normalize_url_value(value) if url_mode else normalize_scalar_value(value)
+        candidate = io_ops.normalize_url_value(value) if url_mode else io_ops.normalize_scalar_value(value)
         if not candidate:
             continue
         match = best_canonical(candidate, canonicals)
@@ -1214,121 +879,8 @@ def best_canonical(candidate: str, canonicals: list[str]) -> str | None:
     return None
 
 
-def split_and_clean_items(value: str, *, url_mode: bool) -> list[str]:
-    if url_mode:
-        urls = normalize_source_urls(extract_urls(value))
-        return [url for url in dict.fromkeys(urls) if url]
-    working = HTML_BREAK_RE.sub(",", value)
-    working = replace_markdown_links_with_labels(working)
-    working = REF_RE.sub("", working)
-    working = re.sub(r"\((?:https?://|www\.)[^)]+\)", "", working)
-    working = re.sub(r"\([^)]*\.[^)]*\)", "", working)
-    working = re.sub(r"\s*(?:/|\+|;)\s*", ",", working)
-    working = re.sub(r"\s*,\s*", ",", working.strip())
-    parts = [normalize_scalar_value(part) for part in working.split(",")]
-    return [part for part in dict.fromkeys(parts) if part]
-
-
-def normalize_scalar_value(value: str) -> str:
-    text = value.strip()
-    if not text:
-        return ""
-    if is_url_only(text):
-        urls = extract_urls(text)
-        if urls:
-            return normalize_url_value(urls[0])
-    text = replace_markdown_links_with_labels(text)
-    text = REF_RE.sub("", text)
-    text = re.sub(r"\((?:https?://|www\.)[^)]+\)", "", text).strip()
-    text = re.sub(r"\([^)]*\.[^)]*\)", "", text).strip()
-    text = re.sub(r"\s+", " ", text)
-
-    cookbook = {
-        "operational": "Operational",
-        "recs": "Recommendation",
-        "species lists": "Species lists",
-        "metrics": "Metrics",
-        "shotgun": "Shotgun",
-        "env assets": "env assets",
-    }
-    lowered = text.lower()
-    if lowered in cookbook:
-        return cookbook[lowered]
-    if lowered == "recs+env assets":
-        return "Recommendation,env assets"
-    if re.fullmatch(r"[A-Z0-9]{2,}", text):
-        return text
-    if text.islower() and len(text.split()) <= 4:
-        return " ".join(word if word.isupper() else word.capitalize() for word in text.split())
-    return text
-
-
-def normalize_location_value(value: str) -> str:
-    text = value.strip()
-    text = replace_markdown_links_with_labels(text)
-    text = re.sub(r"\((?:https?://|www\.)[^)]+\)", "", text).strip()
-    text = re.sub(r"\s+", " ", text)
-    return text
-
-
-def replace_markdown_links_with_labels(text: str) -> str:
-    return MARKDOWN_LINK_RE.sub(lambda match: match.group(1), text)
-
-
-def extract_urls(text: str) -> list[str]:
-    normalized_text = HTML_BREAK_RE.sub(" ", text or "")
-    urls = [match.group(0) for match in URL_RE.finditer(normalized_text)]
-    urls.extend(match.group(2) for match in MARKDOWN_LINK_RE.finditer(normalized_text))
-    normalized = [normalize_url_value(url) for url in urls]
-    return [url for url in dict.fromkeys(normalized) if url]
-
-
-def normalize_source_urls(urls: list[str]) -> list[str]:
-    normalized = [normalize_url_value(url) for url in urls if url.strip()]
-    return sorted({url for url in normalized if url})
-
-
-def normalize_source_cell_value(value: str) -> str:
-    return ", ".join(normalize_source_urls(extract_urls(value)))
-
-
-def is_url_only(text: str) -> bool:
-    stripped = text.strip()
-    urls = extract_urls(stripped)
-    if not urls:
-        return False
-    candidate = stripped
-    candidate = MARKDOWN_LINK_RE.sub(lambda match: match.group(2), candidate)
-    candidate = re.sub(r"\((?:https?://|www\.)[^)]+\)", "", candidate).strip()
-    candidate = re.sub(r"\s+", "", candidate)
-    return candidate in {url.replace("https://", "").replace("http://", "") for url in urls} or candidate in urls
-
-
 def is_locationish_header(header: str) -> bool:
-    lowered = header.strip().lower()
-    return any(token in lowered for token in ["location", "address", "adress", "city", "country", "region", "state"])
-
-
-def normalize_url_value(value: str) -> str:
-    text = value.strip().strip("[]()")
-    if not text:
-        return ""
-    if text.startswith("www."):
-        text = f"https://{text}"
-    elif not re.match(r"^[a-z]+://", text, re.IGNORECASE):
-        text = f"https://{text}"
-    parsed = urllib.parse.urlparse(text)
-    host = parsed.netloc.lower()
-    path = parsed.path or ""
-    query_pairs = urllib.parse.parse_qsl(parsed.query, keep_blank_values=False)
-    filtered_query = [
-        (key, val)
-        for key, val in query_pairs
-        if not key.lower().startswith("utm_") and "openai" not in key.lower() and "openai" not in val.lower()
-    ]
-    query = urllib.parse.urlencode(filtered_query)
-    rebuilt = urllib.parse.urlunparse(("https", host, path.rstrip("/"), "", query, ""))
-    return rebuilt.rstrip("/") if rebuilt.endswith("/") and path in {"", "/"} else rebuilt
+    return is_location_header(header)
 
 
 def generate_record_id(key: str, row_index: int) -> str:
@@ -1341,7 +893,7 @@ def generate_record_id(key: str, row_index: int) -> str:
 def source_urls_from_row(row: dict[str, str], source_column_name: str | None) -> list[str]:
     if not source_column_name:
         return []
-    return normalize_source_urls(extract_urls(row.get(source_column_name, "")))
+    return io_ops.normalize_source_urls(io_ops.extract_urls(row.get(source_column_name, "")))
 
 
 def merge_source_lists(*groups: list[str]) -> list[str]:
@@ -1400,7 +952,7 @@ def run_research_dataset(
         for row in rows:
             existing_value = row.get(source_column.name, "").strip()
             if existing_value:
-                row[source_column.name] = normalize_source_cell_value(existing_value)
+                row[source_column.name] = io_ops.normalize_source_cell_value(existing_value)
 
     started_at = datetime.now().astimezone()
     output_path = choose_output_path(
@@ -1570,9 +1122,9 @@ def run_research_dataset(
             effective_sources = existing_sources
         if source_column is not None and effective_sources:
             if preserve_existing_sources:
-                row[source_column.name] = normalize_source_cell_value(row.get(source_column.name, ""))
+                row[source_column.name] = io_ops.normalize_source_cell_value(row.get(source_column.name, ""))
             else:
-                row[source_column.name] = normalize_source_cell_value(", ".join(effective_sources))
+                row[source_column.name] = io_ops.normalize_source_cell_value(", ".join(effective_sources))
             debug_logger.log(
                 "row_sources_applied",
                 row_number=index,
@@ -1796,7 +1348,7 @@ def run_research_table(
     progress: ProgressCallback | None = None,
     options: ResearchOptions | None = None,
 ) -> dict[str, object]:
-    detected_format, headers, rows = parse_table(raw)
+    detected_format, headers, rows = io_ops.parse_table(raw)
     dataset = make_dataset_shape(
         source_name=source_name,
         detected_format=detected_format,
@@ -1807,12 +1359,12 @@ def run_research_table(
 
 
 def run_self_tests() -> None:
-    assert guess_table_format("| a | b |\n| --- | --- |\n| x | y |") == "markdown"
-    assert guess_table_format("a,b\nx,y") == "csv"
-    headers, rows = parse_markdown_table("| name | country |\n| --- | --- |\n| Company A | DE |")
+    assert io_ops.guess_table_format("| a | b |\n| --- | --- |\n| x | y |") == "markdown"
+    assert io_ops.guess_table_format("a,b\nx,y") == "csv"
+    headers, rows = io_ops.parse_markdown_table("| name | country |\n| --- | --- |\n| Company A | DE |")
     assert headers == ["name", "country"]
     assert rows == [["Company A", "DE"]]
-    headers, rows = parse_csv_table("name,country\nCompany A,DE\n")
+    headers, rows = io_ops.parse_csv_table("name,country\nCompany A,DE\n")
     assert headers == ["name", "country"]
     assert rows == [["Company A", "DE"]]
     assert is_question_header("What do they do?")
@@ -1822,6 +1374,6 @@ def run_self_tests() -> None:
     assert object_type_from_header("research_concept") == "research concept"
     assert make_explicit_question("legal form", "OpenAI", "company") == "What is the legal form of the company OpenAI?"
     assert unique_header_name(["Name", "Sources"], "Sources") == "Sources 2"
-    assert split_and_clean_items("water/air/soil", url_mode=False) == ["Water", "Air", "Soil"]
-    assert split_and_clean_items("shotgun+16S/18S+LR", url_mode=False) == ["Shotgun", "16S", "18S", "LR"]
-    assert normalize_url_value("[mywebsite.com](http://mywebsite.com)".replace("[", "").replace("]", "")) == "https://mywebsite.com"
+    assert io_ops.split_and_clean_items("water/air/soil", url_mode=False) == ["Water", "Air", "Soil"]
+    assert io_ops.split_and_clean_items("shotgun+16S/18S+LR", url_mode=False) == ["Shotgun", "16S", "18S", "LR"]
+    assert io_ops.normalize_url_value("[mywebsite.com](http://mywebsite.com)".replace("[", "").replace("]", "")) == "https://mywebsite.com"

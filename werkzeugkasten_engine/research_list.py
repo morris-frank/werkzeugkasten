@@ -4,6 +4,7 @@ import re
 from pathlib import Path
 from typing import Callable
 
+from .field_types import question_header
 from .research_table import DatasetShape, ResearchOptions, run_research_dataset
 
 ProgressCallback = Callable[[int, int, str], None]
@@ -20,17 +21,6 @@ def parse_items(raw: str) -> list[str]:
             continue
         items.append(cleaned)
     return items
-
-
-def question_header(question: str) -> str:
-    normalized = question.strip()
-    if not normalized:
-        raise ValueError("Question cannot be empty.")
-    if normalized.endswith("?"):
-        return normalized
-    return f"{normalized}?"
-
-
 def run_research_list(
     items: list[str],
     question: str,

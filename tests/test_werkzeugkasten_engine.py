@@ -10,7 +10,10 @@ from datetime import datetime
 from pathlib import Path
 from unittest.mock import patch
 
-from werkzeugkasten_engine import codex_log, notion_export, research_list, research_table, summarize
+from werkzeugkasten_engine import codex_log, io_ops, notion_export, research_list, research_table, summarize
+from werkzeugkasten_engine.field_types import is_question_header, object_type_from_header, question_header
+from werkzeugkasten_engine.geocoding import parse_place
+from werkzeugkasten_engine.services import research_options_from_payload
 from werkzeugkasten_engine.cli import main as cli_main
 from werkzeugkasten_engine.core import choose_output_path, extract_json_block, summary_mirror_languages
 
@@ -41,10 +44,10 @@ class ResearchListTests(unittest.TestCase):
             self.assertTrue(explicit.parent.exists())
 
 
-class ResearchTableTests(unittest.TestCase):
+class SharedIOTests(unittest.TestCase):
     def test_guess_table_format(self) -> None:
-        self.assertEqual(research_table.guess_table_format("| a | b |\n| --- | --- |\n| x | y |"), "markdown")
-        self.assertEqual(research_table.guess_table_format("a,b\nx,y"), "csv")
+        self.assertEqual(io_ops.guess_table_format("| a | b |\n| --- | --- |\n| x | y |"), "markdown")
+        self.assertEqual(io_ops.guess_table_format("a,b\nx,y"), "csv")
 
     def test_inspect_table(self) -> None:
         preview = research_table.inspect_table("company,What do they do?,country\nOpenAI,,US\n")
@@ -68,13 +71,13 @@ class ResearchTableTests(unittest.TestCase):
         self.assertTrue(options.nearest_neighbour)
 
     def test_normalization_examples(self) -> None:
-        self.assertEqual(research_table.split_and_clean_items("water/air/soil", url_mode=False), ["Water", "Air", "Soil"])
-        self.assertEqual(research_table.split_and_clean_items("water<br>air<br/>soil", url_mode=False), ["Water", "Air", "Soil"])
-        self.assertEqual(research_table.split_and_clean_items("shotgun+16S/18S+LR", url_mode=False), ["Shotgun", "16S", "18S", "LR"])
-        self.assertEqual(research_table.split_and_clean_items("B2B/NGO ([naturemetrics.com](http://naturemetrics.com/))", url_mode=False), ["B2B", "NGO"])
-        self.assertEqual(research_table.normalize_url_value("https://www.useyardstick.com/?utm_source=openai"), "https://www.useyardstick.com")
-        self.assertEqual(research_table.normalize_scalar_value("soil microbiome ([rhizebio.com](https://rhizebio.com/approach/))"), "Soil Microbiome")
-        self.assertEqual(research_table.normalize_scalar_value("startup (rhizebio.com)"), "Startup")
+        self.assertEqual(io_ops.split_and_clean_items("water/air/soil", url_mode=False), ["Water", "Air", "Soil"])
+        self.assertEqual(io_ops.split_and_clean_items("water<br>air<br/>soil", url_mode=False), ["Water", "Air", "Soil"])
+        self.assertEqual(io_ops.split_and_clean_items("shotgun+16S/18S+LR", url_mode=False), ["Shotgun", "16S", "18S", "LR"])
+        self.assertEqual(io_ops.split_and_clean_items("B2B/NGO ([naturemetrics.com](http://naturemetrics.com/))", url_mode=False), ["B2B", "NGO"])
+        self.assertEqual(io_ops.normalize_url_value("https://www.useyardstick.com/?utm_source=openai"), "https://www.useyardstick.com")
+        self.assertEqual(io_ops.normalize_scalar_value("soil microbiome ([rhizebio.com](https://rhizebio.com/approach/))"), "Soil Microbiome")
+        self.assertEqual(io_ops.normalize_scalar_value("startup (rhizebio.com)"), "Startup")
 
     def test_run_research_dataset_respects_explicit_output_and_skip_logic(self) -> None:
         dataset = research_table.make_dataset_shape(
@@ -187,7 +190,7 @@ class ResearchTableTests(unittest.TestCase):
             self.assertIn("https://a.example/one, https://b.example/two", rendered)
             self.assertEqual(seen_urls, ["https://a.example/one", "https://b.example/two"])
 
-    def test_document_sources_are_downloaded_and_summarized(self) -> None:
+    def test_document_sources_are_downloaded_and_converted(self) -> None:
         downloaded = Path(tempfile.gettempdir()) / "werkzeugkasten-test.pdf"
         downloaded.write_text("placeholder", encoding="utf-8")
 
@@ -195,22 +198,13 @@ class ResearchTableTests(unittest.TestCase):
             self.assertEqual(url, "https://example.com/report.pdf")
             return downloaded
 
-        def fake_summarize(path: Path, *, artifacts_directory: Path | None = None):
+        def fake_convert(path: Path) -> str:
             self.assertEqual(path, downloaded)
-            self.assertEqual(artifacts_directory, downloaded.parent)
-            return {
-                "input_path": str(downloaded),
-                "contents_path": str(downloaded.parent / ".werkzeugkasten-test.pdf.contents.md"),
-                "summary_path": str(downloaded.parent / "werkzeugkasten-test.pdf.summary.md"),
-                "contents_markdown": "converted",
-                "summary_markdown": "# Summary\nPDF summary",
-            }
+            return "# Converted\nPDF content"
 
-        with patch.object(research_table, "download_source_document", fake_download), patch.object(
-            research_table, "summarize_local_file", fake_summarize
-        ):
+        with patch.object(research_table, "download_source_document", fake_download), patch.object(io_ops, "convert_to_markdown", fake_convert):
             result = research_table.fetch_source_raw_text("https://example.com/report.pdf", {})
-            self.assertIn("PDF summary", result.text)
+            self.assertIn("PDF content", result.text)
             self.assertIn("werkzeugkasten-test.pdf", result.text)
 
     def test_notion_export_requires_configuration(self) -> None:
@@ -251,16 +245,6 @@ class ResearchTableTests(unittest.TestCase):
         kinds = {spec.name: spec.kind for spec in specs}
         self.assertEqual(kinds["Location"], "place")
         self.assertNotIn("Record ID", kinds)
-        self.assertEqual(
-            notion_export.parse_place_value("Amsterdam HQ, Amsterdam, NL, 52.3676, 4.9041"),
-            {
-                "name": "Amsterdam HQ",
-                "address": "Amsterdam HQ, Amsterdam, NL",
-                "lat": 52.3676,
-                "lon": 4.9041,
-            },
-        )
-        self.assertIsNone(notion_export.parse_place_value("Amsterdam, NL"))
         no_geocoder_specs = notion_export.infer_column_specs(
             headers=["Company", "Location"],
             rows=[{"Company": "OpenAI", "Location": "Amsterdam, NL"}],
@@ -354,6 +338,30 @@ class SummarizeTests(unittest.TestCase):
         body = summarize.summary_prompt("doc.txt", "ts", "hello", languages=["Dutch", "Polish"])
         self.assertIn("Dutch or Polish", body)
         self.assertIn("For all other languages, produce the summary in English.", body)
+
+
+class FieldTypeTests(unittest.TestCase):
+    def test_question_and_object_type_helpers(self) -> None:
+        self.assertTrue(is_question_header("What do they do?"))
+        self.assertFalse(is_question_header("legal form"))
+        self.assertEqual(object_type_from_header("company"), "company")
+        self.assertEqual(object_type_from_header("company name"), "company")
+        self.assertEqual(object_type_from_header("research_concept"), "research concept")
+        self.assertEqual(question_header("What does it do"), "What does it do?")
+
+
+class GeocodingTests(unittest.TestCase):
+    def test_parse_place(self) -> None:
+        self.assertEqual(
+            parse_place("Amsterdam HQ, Amsterdam, NL, 52.3676, 4.9041"),
+            {
+                "name": "Amsterdam HQ",
+                "address": "Amsterdam HQ, Amsterdam, NL",
+                "lat": 52.3676,
+                "lon": 4.9041,
+            },
+        )
+        self.assertIsNone(parse_place("Amsterdam, NL"))
 
 
 class CodexLogTests(unittest.TestCase):
@@ -573,7 +581,7 @@ class CliTests(unittest.TestCase):
 
     def test_research_list_json_contract(self) -> None:
         with patch(
-            "werkzeugkasten_engine.cli.run_research_list",
+            "werkzeugkasten_engine.cli.research_list_service",
             return_value={
                 "output_path": "/tmp/out.md",
                 "item_count": 2,
@@ -601,19 +609,6 @@ class CliTests(unittest.TestCase):
         )
 
     def test_research_options_parse_collision_policies(self) -> None:
-        captured: dict[str, object] = {}
-
-        def fake_research_list(items, question, progress=None, options=None):
-            captured["options"] = options
-            return {
-                "output_path": "/tmp/out.md",
-                "item_count": 1,
-                "completed_count": 1,
-                "headers": ["Item", "Question"],
-                "question_columns": ["Question"],
-                "attribute_columns": [],
-            }
-
         payload = {
             "items": ["A"],
             "question": "Q",
@@ -627,13 +622,7 @@ class CliTests(unittest.TestCase):
             "output_path": "/tmp/custom.md",
             "export_to_notion": True,
         }
-        with patch("werkzeugkasten_engine.cli.run_research_list", side_effect=fake_research_list):
-            with patch("sys.stdin", io.StringIO(json.dumps(payload))):
-                stdout = io.StringIO()
-                with redirect_stdout(stdout):
-                    rc = cli_main(["research-list"])
-        self.assertEqual(rc, 0)
-        options = captured["options"]
+        options = research_options_from_payload(payload)
         self.assertTrue(options.include_sources)
         self.assertTrue(options.include_source_raw)
         self.assertTrue(options.auto_tagging)
@@ -644,7 +633,7 @@ class CliTests(unittest.TestCase):
         self.assertEqual(options.tag_column_policy, "overwrite")
 
     def test_summarize_text_json_contract(self) -> None:
-        with patch("werkzeugkasten_engine.cli.summarize_text_input", return_value="# Summary\nOk"):
+        with patch("werkzeugkasten_engine.cli.summary_service", return_value={"summary_markdown": "# Summary\nOk"}):
             with patch("sys.stdin", io.StringIO(json.dumps({"title": "Note", "text": "hello"}))):
                 stdout = io.StringIO()
                 with redirect_stdout(stdout):
@@ -660,7 +649,7 @@ class CliTests(unittest.TestCase):
             "tool_call_count": 3,
             "total_token_count": 4200,
         }
-        with patch("werkzeugkasten_engine.cli.prettify_codex_log", return_value=expected):
+        with patch("werkzeugkasten_engine.cli.prettify_codex_log_service", return_value=expected):
             with patch("sys.stdin", io.StringIO(json.dumps({"path": "/tmp/session.jsonl"}))):
                 stdout = io.StringIO()
                 with redirect_stdout(stdout):

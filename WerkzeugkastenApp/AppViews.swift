@@ -31,13 +31,13 @@ private struct SectionCard<Content: View>: View {
     @ViewBuilder let content: Content
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 8) {
             Text(title)
-                .font(.system(size: 15, weight: .semibold))
+                .font(.system(size: 14, weight: .semibold))
             content
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.vertical, 10)
+        .padding(.vertical, 6)
     }
 }
 
@@ -48,169 +48,66 @@ private struct WindowSurface<Content: View>: View {
 
     var body: some View {
         ZStack {
-            Color.clear
+            Color(nsColor: .windowBackgroundColor)
+                .ignoresSafeArea()
 
             RoundedRectangle(cornerRadius: 34, style: .continuous)
-                .fill(Color.black.opacity(0.14))
-                .blur(radius: 26)
-                .padding(.horizontal, 16)
-                .padding(.top, 22)
-                .padding(.bottom, 8)
+                .fill(Color.black.opacity(0.08))
+                .blur(radius: 18)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 8)
 
-            ZStack(alignment: .top) {
-                RoundedRectangle(cornerRadius: 28, style: .continuous)
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                Color(red: 0.97, green: 0.97, blue: 0.95),
-                                Color(red: 0.90, green: 0.90, blue: 0.86),
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            Color(red: 0.97, green: 0.97, blue: 0.95),
+                            Color(red: 0.92, green: 0.92, blue: 0.88),
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
                     )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 28, style: .continuous)
-                            .stroke(Color.white.opacity(0.82), lineWidth: 1.3)
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 24, style: .continuous)
-                            .stroke(Color.black.opacity(0.08), lineWidth: 1)
-                            .padding(8)
-                    )
-                    .shadow(color: .black.opacity(0.18), radius: 20, x: 0, y: 10)
-
-                VStack(spacing: 0) {
-                    PanelTitleBar(title: title)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 24, style: .continuous)
+                        .stroke(Color.white.opacity(0.82), lineWidth: 1)
+                )
+                .overlay(alignment: .topLeading) {
                     content
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-                        .padding(.horizontal, 28)
-                        .padding(.top, 18)
-                        .padding(.bottom, 24)
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 16)
                 }
-                .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
-            }
-            .padding(10)
+                .padding(8)
         }
         .frame(minWidth: minWidth, alignment: .topLeading)
         .preferredColorScheme(.light)
     }
 }
 
-private struct PanelTitleBar: View {
-    let title: String
-
-    var body: some View {
-        ZStack {
-            LinearGradient(
-                colors: [
-                    Color(red: 0.82, green: 0.84, blue: 0.80),
-                    Color(red: 0.71, green: 0.73, blue: 0.70),
-                ],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-            .overlay(alignment: .bottom) {
-                Rectangle()
-                    .fill(Color.black.opacity(0.14))
-                    .frame(height: 1)
-            }
-            .overlay(alignment: .top) {
-                Rectangle()
-                    .fill(Color.white.opacity(0.65))
-                    .frame(height: 1)
-            }
-
-            DraggableTitleBar()
-
-            HStack(spacing: 10) {
-                PanelChromeButton(fill: Color(red: 0.88, green: 0.38, blue: 0.35)) {
-                    NSApp.keyWindow?.performClose(nil)
-                }
-                PanelChromeButton(fill: Color(red: 0.92, green: 0.73, blue: 0.24)) {
-                    NSApp.keyWindow?.miniaturize(nil)
-                }
-                PanelChromeButton(fill: Color(red: 0.34, green: 0.73, blue: 0.42)) {
-                    NSApp.keyWindow?.zoom(nil)
-                }
-                Spacer()
-            }
-            .padding(.leading, 16)
-            .padding(.trailing, 18)
-
-            Text(title)
-                .font(.system(size: 14, weight: .black, design: .rounded))
-                .foregroundStyle(Color.black.opacity(0.72))
-                .tracking(0.8)
-                .textCase(.uppercase)
-        }
-        .frame(height: 54)
-    }
-}
-
-private struct PanelChromeButton: View {
-    let fill: Color
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            Circle()
-                .fill(
-                    RadialGradient(
-                        colors: [fill.opacity(0.98), fill.opacity(0.74)],
-                        center: .topLeading,
-                        startRadius: 2,
-                        endRadius: 11
-                    )
-                )
-                .frame(width: 14, height: 14)
-                .overlay(
-                    Circle()
-                        .stroke(Color.white.opacity(0.55), lineWidth: 0.7)
-                )
-                .overlay(alignment: .topLeading) {
-                    Circle()
-                        .fill(Color.white.opacity(0.42))
-                        .frame(width: 4, height: 4)
-                        .offset(x: 2, y: 2)
-                }
-        }
-        .buttonStyle(.plain)
-    }
-}
-
-private struct DraggableTitleBar: NSViewRepresentable {
-    func makeNSView(context: Context) -> DragHandleView {
-        DragHandleView()
-    }
-
-    func updateNSView(_ nsView: DragHandleView, context: Context) {}
-}
-
-private final class DragHandleView: NSView {
-    override func mouseDown(with event: NSEvent) {
-        window?.performDrag(with: event)
-    }
-}
-
 private struct PrimaryEditor: ViewModifier {
     let minHeight: CGFloat
+    let maxHeight: CGFloat
 
     func body(content: Content) -> some View {
         content
             .font(.body.monospaced())
-            .frame(minHeight: minHeight, maxHeight: .infinity, alignment: .topLeading)
+            .frame(minHeight: minHeight, maxHeight: maxHeight, alignment: .topLeading)
             .scrollContentBackground(.hidden)
             .background(
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
                     .fill(.white.opacity(0.8))
             )
+            .overlay(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .stroke(.black.opacity(0.06), lineWidth: 1)
+            )
     }
 }
 
 private extension View {
-    func primaryEditor(minHeight: CGFloat) -> some View {
-        modifier(PrimaryEditor(minHeight: minHeight))
+    func primaryEditor(minHeight: CGFloat, maxHeight: CGFloat = 260) -> some View {
+        modifier(PrimaryEditor(minHeight: minHeight, maxHeight: maxHeight))
     }
 }
 
@@ -392,7 +289,7 @@ private struct OutputPathCard: View {
         SectionCard(title: "Output") {
             TextField("Output Path", text: $outputPath)
                 .textFieldStyle(.roundedBorder)
-                .controlSize(.large)
+                .controlSize(.regular)
                 .font(.body.monospaced())
             HStack {
                 Button("Choose…") {
@@ -405,6 +302,7 @@ private struct OutputPathCard: View {
                 }
                 Spacer()
                 Text("Edit this path to override the generated markdown file name.")
+                    .font(.caption)
                     .foregroundStyle(.secondary)
             }
         }
@@ -619,10 +517,10 @@ struct ResearchListWindow: View {
     var body: some View {
         WindowSurface(minWidth: 560, title: "Research List") {
             ScrollView {
-                VStack(alignment: .leading, spacing: 16) {
+                VStack(alignment: .leading, spacing: 12) {
                     SectionCard(title: "Input") {
                         TextEditor(text: $inputText)
-                            .primaryEditor(minHeight: 220)
+                            .primaryEditor(minHeight: 180, maxHeight: 220)
                         FileDropArea(label: "Drop a text file here") { urls in
                             loadTextFile(urls.first)
                         }
@@ -750,10 +648,10 @@ struct ResearchTableWindow: View {
     var body: some View {
         WindowSurface(minWidth: 600, title: "Research Table") {
             ScrollView {
-                VStack(alignment: .leading, spacing: 16) {
+                VStack(alignment: .leading, spacing: 12) {
                     SectionCard(title: "Input") {
                         TextEditor(text: $inputText)
-                            .primaryEditor(minHeight: 240)
+                            .primaryEditor(minHeight: 180, maxHeight: 240)
                         FileDropArea(label: "Drop a CSV or Markdown file here") { urls in
                             loadTextFile(urls.first)
                         }
@@ -898,10 +796,10 @@ struct SummarizeWindow: View {
     var body: some View {
         WindowSurface(minWidth: 600, title: "Summarize") {
             ScrollView {
-                VStack(alignment: .leading, spacing: 16) {
+                VStack(alignment: .leading, spacing: 12) {
                     SectionCard(title: "Input") {
                         TextEditor(text: $session.inputText)
-                            .primaryEditor(minHeight: 220)
+                            .primaryEditor(minHeight: 180, maxHeight: 220)
                         FileDropArea(label: "Drop one or more files here") { urls in
                             session.addFiles(urls)
                         }

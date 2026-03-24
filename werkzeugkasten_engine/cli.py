@@ -5,11 +5,16 @@ import json
 import sys
 from typing import Any
 
-from .codex_log import prettify_codex_log
 from .core import read_json_stdin
-from .research_list import run_research_list
-from .research_table import ResearchOptions, inspect_table, run_research_table
-from .summarize import summarize_files, summarize_text_input
+from .rest_server import main as rest_main
+from .services import (
+    inspect_table_service,
+    prettify_codex_log_service,
+    research_list_service,
+    research_table_service,
+    summary_service,
+)
+from .summarize import summarize_files
 
 
 def _progress(enabled: bool):
@@ -26,22 +31,6 @@ def _progress(enabled: bool):
 def _print_json(data: dict[str, Any]) -> int:
     print(json.dumps(data))
     return 0
-
-
-def _research_options(payload: dict[str, Any]) -> ResearchOptions:
-    return ResearchOptions(
-        include_sources=bool(payload.get("include_sources", False)),
-        include_source_raw=bool(payload.get("include_source_raw", False)),
-        auto_tagging=bool(payload.get("auto_tagging", False)),
-        nearest_neighbour=bool(payload.get("nearest_neighbour", False)),
-        export_to_notion=bool(payload.get("export_to_notion", False)),
-        output_path=str(payload.get("output_path", "") or ""),
-        source_column_policy=str(payload.get("source_column_policy", "merge") or "merge"),
-        source_raw_column_policy=str(payload.get("source_raw_column_policy", "merge") or "merge"),
-        tag_column_policy=str(payload.get("tag_column_policy", "merge") or "merge"),
-        nearest_column_policy=str(payload.get("nearest_column_policy", "merge") or "merge"),
-        record_id_column_policy=str(payload.get("record_id_column_policy", "merge") or "merge"),
-    ).normalized()
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -63,6 +52,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     subparsers.add_parser("summarize-text")
     subparsers.add_parser("prettify-codex-log")
+    serve = subparsers.add_parser("serve")
+    serve.add_argument("--host", default="127.0.0.1")
+    serve.add_argument("--port", type=int, default=8787)
     return parser
 
 
@@ -70,6 +62,8 @@ def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
     try:
+        if args.command == "serve":
+            return rest_main(["--host", args.host, "--port", str(args.port)])
         payload = read_json_stdin()
         if args.command == "research-list":
             items = payload.get("items")
@@ -77,11 +71,11 @@ def main(argv: list[str] | None = None) -> int:
             if not isinstance(items, list) or not all(isinstance(item, str) for item in items):
                 raise ValueError("`items` must be an array of strings.")
             return _print_json(
-                run_research_list(
+                research_list_service(
                     items,
                     question,
                     progress=_progress(args.progress),
-                    options=_research_options(payload),
+                    payload=payload,
                 )
             )
 
@@ -89,18 +83,18 @@ def main(argv: list[str] | None = None) -> int:
             raw_table_text = payload.get("raw_table_text", "")
             if not isinstance(raw_table_text, str):
                 raise ValueError("`raw_table_text` must be a string.")
-            return _print_json(inspect_table(raw_table_text, payload.get("source_name", args.source_name)))
+            return _print_json(inspect_table_service(raw_table_text, payload.get("source_name", args.source_name)))
 
         if args.command == "research-table":
             raw_table_text = payload.get("raw_table_text", "")
             if not isinstance(raw_table_text, str):
                 raise ValueError("`raw_table_text` must be a string.")
             return _print_json(
-                run_research_table(
+                research_table_service(
                     raw_table_text,
                     source_name=payload.get("source_name", args.source_name),
                     progress=_progress(args.progress),
-                    options=_research_options(payload),
+                    payload=payload,
                 )
             )
 
@@ -115,13 +109,13 @@ def main(argv: list[str] | None = None) -> int:
             text = payload.get("text", "")
             if not isinstance(title, str) or not isinstance(text, str):
                 raise ValueError("`title` and `text` must be strings.")
-            return _print_json({"summary_markdown": summarize_text_input(title, text)})
+            return _print_json(summary_service({"title": title, "text": text}))
 
         if args.command == "prettify-codex-log":
             path = payload.get("path")
             if not isinstance(path, str):
                 raise ValueError("`path` must be a string.")
-            return _print_json(prettify_codex_log(path))
+            return _print_json(prettify_codex_log_service(path))
     except Exception as exc:
         print(str(exc), file=sys.stderr)
         return 1
