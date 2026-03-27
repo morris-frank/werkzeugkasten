@@ -46,12 +46,12 @@ def _maybe_web_content(s: Source) -> str | None:
     if content_type in _DOCUMENT_CONTENT_TYPES:
         return None
 
-    if url_timeout <= 0:
+    if url_timeout() <= 0:
         return url
 
     # 2. Check by content type
     try:
-        r = requests.head(url, allow_redirects=True, timeout=_url_timeout())
+        r = requests.head(url, allow_redirects=True, timeout=url_timeout())
         ct = r.headers.get("Content-Type")
         if ct:
             if ct.split(";", 1)[0].strip() not in _DOCUMENT_CONTENT_TYPES:
@@ -69,7 +69,7 @@ def _jina_fetch(url: str) -> str:
         "X-Retain-Images": "none",
         "X-Md-Link-Style": "referenced",
     }
-    if api_key := jina_api_key:
+    if api_key := jina_api_key():
         headers["Authorization"] = f"Bearer {api_key}"
     response = requests.get(request_url, headers=headers, timeout=30)
     body = response.text.strip()
@@ -101,7 +101,7 @@ def get_content(sources: list[Source], /, *, as_markdown: bool = True) -> str:
     if not sources:
         return ""
     converter = _reference_converter(as_markdown)
-    with ThreadPoolExecutor(max_workers=min(n_threads, len(sources))) as executor:
+    with ThreadPoolExecutor(max_workers=min(n_threads(), len(sources))) as executor:
         contents = list(executor.map(converter, sources))
 
     return _CONTENT_SEPARATOR.join(contents)

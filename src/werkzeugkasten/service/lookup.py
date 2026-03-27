@@ -77,7 +77,7 @@ def lookup_row(
 ) -> LookupAnswer:
     key = row.get(key_header, "").strip() or "[blank]"
 
-    answer = query(_prompt_lookup(key_header, key, row, missing_columns, question_columns), model=lookup_model)
+    answer = query(_prompt_lookup(key_header, key, row, missing_columns, question_columns), model=lookup_model())
 
     try:
         data = answer.json

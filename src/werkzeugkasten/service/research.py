@@ -87,7 +87,7 @@ Return JSON only in this shape:
 Rows:
 {table.to_json(without={SOURCE_COLUMN, SOURCE_SUMMARY_COLUMN})}
 """
-    answer = query(prompt, model=research_model)
+    answer = query(prompt, model=research_model())
     tags = answer.json.get("tags")
     assignments = answer.json.get("assignments")
     if not isinstance(tags, list) or not isinstance(assignments, dict):
@@ -125,7 +125,7 @@ Return JSON only in this shape:
 Rows:
 {table.to_json(without={SOURCE_COLUMN, SOURCE_SUMMARY_COLUMN})}
 """
-    answer = query(prompt, model=research_model)
+    answer = query(prompt, model=research_model())
     neighbours = answer.json.get("neighbors")
     if not isinstance(neighbours, dict):
         return

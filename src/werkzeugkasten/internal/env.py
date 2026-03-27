@@ -23,15 +23,20 @@ def uuid(value: str) -> str | None:
     raise ValueError(f"Invalid UUID: {value}")
 
 
-cache_location = Path(_environ("CACHE_LOCATION", default="~/.cache/werkzeugkasten/content_cache.sqlite3")).resolve()
-jina_api_key = _environ("JINA_API_KEY", "JINA_API_TOKEN")
-lookup_model = _environ("LOOKUP_MODEL", default="gpt-5.4")
-n_threads = int(_environ("N_THREADS", default="8"))
-notion_api_token = _environ("NOTION_API_TOKEN", "NOTION_TOKEN")
-notion_parent_page = uuid(_environ("NOTION_PARENT_PAGE"))
-open_meteo_api_key = _environ("OPEN_METEO_API_KEY")
-openai_api_key = _environ("OPENAI_API_KEY", raise_on_missing=True)
-primary_language = _environ("PRIMARY_LANGUAGE", default="German")
-research_model = _environ("RESEARCH_MODEL", default="gpt-5.4")
-summary_model = _environ("SUMMARY_MODEL", default="gpt-5.4")
-url_timeout = int(_environ("URL_TIMEOUT", default="10"))
+def boolean(value: str) -> bool:
+    return value.lower() in {"1", "true", "yes", "on"}
+
+
+cache_location = lambda: Path(_environ("cache_location", default="~/.cache/werkzeugkasten/content_cache.sqlite3")).resolve()
+jina_api_key = lambda: _environ("jina_api_key", "JINA_API_TOKEN")
+lookup_model = lambda: _environ("lookup_model", default="gpt-5.4")
+mock_enabled = lambda: boolean(_environ("mock", default=""))
+n_threads = lambda: int(_environ("n_threads", default="8"))
+notion_api_token = lambda: _environ("notion_api_token", "NOTION_TOKEN")
+notion_parent_page = lambda: uuid(_environ("notion_parent_page"))
+open_meteo_api_key = lambda: _environ("open_meteo_api_key")
+openai_api_key = lambda: _environ("openai_api_key", raise_on_missing=True) or ""
+primary_language = lambda: _environ("primary_language", default="German")
+research_model = lambda: _environ("research_model", default="gpt-5.4")
+summary_model = lambda: _environ("summary_model", default="gpt-5.4")
+url_timeout = lambda: int(_environ("url_timeout", default="10"))

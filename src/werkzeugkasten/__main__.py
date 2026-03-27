@@ -39,7 +39,6 @@ class EngineRequest(BaseModel):
     service: Service
     payload: dict[str, Any] = Field(default_factory=dict)
     config: EngineConfig = Field(default_factory=EngineConfig)
-    mock: bool = False
 
 
 class EngineResponse(BaseModel):
@@ -71,15 +70,15 @@ def _read_request() -> EngineRequest:
 
 def _apply_config(config: EngineConfig) -> None:
     values = {
-        "WERKZEUGKASTEN_OPENAI_API_KEY": config.api_key,
-        "WERKZEUGKASTEN_JINA_API_KEY": config.jina_api_key,
-        "WERKZEUGKASTEN_NOTION_API_TOKEN": config.notion_token,
-        "WERKZEUGKASTEN_NOTION_PARENT_PAGE": config.notion_parent_page,
-        "WERKZEUGKASTEN_OPEN_METEO_API_KEY": config.open_meteo_api_key,
-        "WERKZEUGKASTEN_RESEARCH_MODEL": config.research_model,
-        "WERKZEUGKASTEN_SUMMARY_MODEL": config.summary_model,
-        "WERKZEUGKASTEN_LOOKUP_MODEL": config.lookup_model,
-        "WERKZEUGKASTEN_PRIMARY_LANGUAGE": config.primary_language,
+        "WERKZEUGKASTEN_openai_api_key": config.api_key,
+        "WERKZEUGKASTEN_jina_api_key": config.jina_api_key(),
+        "WERKZEUGKASTEN_notion_api_token": config.notion_token,
+        "WERKZEUGKASTEN_notion_parent_page": config.notion_parent_page(),
+        "WERKZEUGKASTEN_open_meteo_api_key": config.open_meteo_api_key(),
+        "WERKZEUGKASTEN_research_model": config.research_model(),
+        "WERKZEUGKASTEN_summary_model": config.summary_model(),
+        "WERKZEUGKASTEN_lookup_model": config.lookup_model(),
+        "WERKZEUGKASTEN_primary_language": config.primary_language(),
     }
     for key, value in values.items():
         if value:

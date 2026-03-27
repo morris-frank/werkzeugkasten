@@ -58,8 +58,7 @@ final class WerkzeugkastenCoreTests: XCTestCase {
         let request = try XCTUnwrap(
             try JSONSerialization.jsonObject(with: prepared.stdinData) as? [String: Any]
         )
-        XCTAssertEqual(request["action"] as? String, "summarize-text")
-        XCTAssertEqual(request["mock"] as? Bool, false)
+        XCTAssertEqual(request["service"] as? String, "summarize-text")
         let config = try XCTUnwrap(request["config"] as? [String: String])
         XCTAssertEqual(config["api_key"], "key")
         XCTAssertEqual(config["jina_api_key"], "jina-key")
@@ -105,7 +104,7 @@ final class WerkzeugkastenCoreTests: XCTestCase {
         let request = try XCTUnwrap(
             try JSONSerialization.jsonObject(with: prepared.stdinData) as? [String: Any]
         )
-        XCTAssertEqual(request["action"] as? String, "prettify-codex-log")
+        XCTAssertEqual(request["service"] as? String, "prettify-codex-log")
         let config = try XCTUnwrap(request["config"] as? [String: String])
         XCTAssertEqual(config["api_key"], "")
     }
@@ -167,10 +166,10 @@ final class WerkzeugkastenCoreTests: XCTestCase {
         let defaults = UserDefaults(suiteName: suiteName)!
         defaults.removePersistentDomain(forName: suiteName)
         let service = "tests.werkzeugkasten.service.\(UUID().uuidString)"
-        let openAIAccount = "OPENAI_API_KEY"
-        let jinaAccount = "JINA_API_KEY"
-        let notionAccount = "NOTION_API_TOKEN"
-        let openMeteoAccount = "OPEN_METEO_API_KEY"
+        let openAIAccount = "openai_api_key"
+        let jinaAccount = "jina_api_key"
+        let notionAccount = "notion_api_token"
+        let openMeteoAccount = "open_meteo_api_key"
 
         try? KeychainStore.delete(service: service, account: openAIAccount)
         try? KeychainStore.delete(service: service, account: jinaAccount)
@@ -267,6 +266,7 @@ final class WerkzeugkastenCoreTests: XCTestCase {
         let request = try XCTUnwrap(
             try JSONSerialization.jsonObject(with: prepared.stdinData) as? [String: Any]
         )
-        XCTAssertEqual(request["mock"] as? Bool, true)
+        XCTAssertEqual(request["service"] as? String, "summarize-text")
+        XCTAssertEqual(prepared.environment["WERKZEUGKASTEN_MOCK"], "1")
     }
 }

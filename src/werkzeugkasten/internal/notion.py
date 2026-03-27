@@ -46,7 +46,7 @@ def _chunk_text(text: str, limit: int = 1800) -> list[str]:
 
 
 def _request_api(method: str, path: str, body: dict[str, Any] | None = None) -> dict[str, Any]:
-    if not notion_api_token:
+    if not notion_api_token():
         raise ValueError("Set a Notion API Token in Settings to export to Notion.")
     url = f"{NOTION_API_BASE}{path}"
     try:
@@ -54,7 +54,7 @@ def _request_api(method: str, path: str, body: dict[str, Any] | None = None) -> 
             method,
             url,
             headers={
-                "Authorization": f"Bearer {notion_api_token}",
+                "Authorization": f"Bearer {notion_api_token()}",
                 "Notion-Version": LATEST_NOTION_VERSION,
                 "Content-Type": "application/json",
             },
@@ -459,7 +459,7 @@ def export_dataset_to_notion(
     url_like_columns: set[str],
     long_text_columns: set[str],
 ) -> dict[str, Any]:
-    if not notion_parent_page:
+    if not notion_parent_page():
         raise ValueError("Set a Notion Parent Page ID or URL in Settings to export to Notion.")
 
     specs = _infer_column_specs(
@@ -478,7 +478,7 @@ def export_dataset_to_notion(
     properties = {spec.name: spec.property_definition for spec in specs if spec.property_definition is not None}
 
     create_body = {
-        "parent": {"type": "page_id", "page_id": notion_parent_page},
+        "parent": {"type": "page_id", "page_id": notion_parent_page()},
         "title": _rich_text_array(title[:180]),
         "initial_data_source": {
             "title": _rich_text_array(title[:180]),

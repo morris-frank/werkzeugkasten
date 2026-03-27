@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+import re
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
@@ -7,16 +9,17 @@ from typing import Any
 from openai import OpenAI
 from openai.types.responses import Response
 
-from ..internal.env import openai_api_key
+from ..internal.env import mock_enabled, openai_api_key
 from .value import as_json
 
 
-@dataclass(True)
+@dataclass(frozen=True)
 class QueryAnswer:
     text: str
-    response: Response
+    response: Response | Any
 
-    def from_response(self, response: Response) -> QueryAnswer:
+    @staticmethod
+    def from_response(response: Response) -> QueryAnswer:
         return QueryAnswer(text=(response.output_text or "").strip(), response=response)
 
     @property
@@ -47,6 +50,20 @@ class QueryAnswer:
         return urls
 
 
+@dataclass(frozen=True)
+class MockUsage:
+    total_tokens: int
+    input_tokens: int
+    output_tokens: int
+
+
+@dataclass(frozen=True)
+class MockResponse:
+    usage: MockUsage
+    output: list[Any]
+    tool_choice: Any = None
+
+
 def _current_timezone() -> str:
     tzinfo = datetime.now().astimezone().tzinfo
     return tzinfo.key if hasattr(tzinfo, "key") else str(tzinfo)
@@ -70,6 +87,50 @@ def _reasoning_for_model(model: str, *, decreased_effort: bool = False) -> dict[
     return None
 
 
+def _mock_text(prompt_text: str) -> str:
+    if "Return exactly these sections:" in prompt_text:
+        body = prompt_text.split("Document content:", 1)[-1].strip()
+        preview = body[:280] + ("..." if len(body) > 280 else "")
+        return "\n".join(
+            [
+                "# Summary",
+                "",
+                "- Mock summary.",
+                "",
+                "# Key details",
+                "",
+                f"- {preview or 'No content.'}",
+                "",
+                "# Open questions",
+                "",
+                "- None.",
+            ]
+        )
+
+    if '"updates": {' in prompt_text:
+        key_match = re.search(r"Object type: .*?\n[^\n:]+:\s*(.+)\n", prompt_text, re.DOTALL)
+        key = key_match.group(1).strip() if key_match else ""
+        missing_match = re.search(r"Missing fields to fill:\n(.*?)\n\nReturn JSON only", prompt_text, re.DOTALL)
+        updates: dict[str, str] = {}
+        if missing_match:
+            for line in missing_match.group(1).splitlines():
+                line = line.strip()
+                if not line.startswith("- "):
+                    continue
+                column = line[2:].split(" [", 1)[0].strip()
+                if column:
+                    updates[column] = ""
+        return json.dumps({"key": key, "updates": updates}, ensure_ascii=False)
+
+    if '"tags": [' in prompt_text and '"assignments": {' in prompt_text:
+        return json.dumps({"tags": [], "assignments": {}}, ensure_ascii=False)
+
+    if '"neighbors": {' in prompt_text:
+        return json.dumps({"neighbors": {}}, ensure_ascii=False)
+
+    return ""
+
+
 def query(
     prompt_text: str,
     /,
@@ -79,7 +140,16 @@ def query(
     include_web_sources: bool = False,
     decreased_effort: bool = False,
 ) -> QueryAnswer:
-    response = OpenAI(api_key=openai_api_key).responses.create(
+    if mock_enabled():
+        text = _mock_text(prompt_text)
+        usage = MockUsage(
+            total_tokens=len(prompt_text.split()) + len(text.split()),
+            input_tokens=len(prompt_text.split()),
+            output_tokens=len(text.split()),
+        )
+        return QueryAnswer(text=text, response=MockResponse(usage=usage, output=[]))
+
+    response = OpenAI(api_key=openai_api_key()).responses.create(
         input=prompt_text,
         model=model,
         reasoning=_reasoning_for_model(model, decreased_effort=decreased_effort),

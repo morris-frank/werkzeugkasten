@@ -4,10 +4,10 @@ public enum WerkzeugkastenConstants {
     public static let appBundleIdentifier = "com.mauricefrank.werkzeugkasten"
     public static let actionExtensionBundleIdentifier = "com.mauricefrank.werkzeugkasten.action"
     public static let keychainService = appBundleIdentifier
-    public static let openAIKeychainAccount = "OPENAI_API_KEY"
-    public static let jinaKeychainAccount = "JINA_API_KEY"
-    public static let notionKeychainAccount = "NOTION_API_TOKEN"
-    public static let openMeteoKeychainAccount = "OPEN_METEO_API_KEY"
+    public static let openAIKeychainAccount = "openai_api_key"
+    public static let jinaKeychainAccount = "jina_api_key"
+    public static let notionKeychainAccount = "notion_api_token"
+    public static let openMeteoKeychainAccount = "open_meteo_api_key"
     public static let handoffURLScheme = "werkzeugkasten"
     public static var defaultPythonInterpreterPath: String {
         resolvedPythonInterpreterPath() ?? ""

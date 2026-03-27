@@ -1045,8 +1045,8 @@ struct SettingsWindow: View {
                         }
                         SettingsFieldRow(title: "Mock mode") {
                             VStack(alignment: .leading, spacing: 6) {
-                                Toggle("Return stubbed Python results", isOn: $settings.mock)
-                                Text("Skips live model calls and writes minimal mock outputs when a task normally produces files.")
+                                Toggle("Skip OpenAI network calls", isOn: $settings.mock)
+                                Text("Debug/admin mode. OpenAI responses are mocked; Jina, MarkItDown, and other local processing still run normally.")
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
                                     .fixedSize(horizontal: false, vertical: true)

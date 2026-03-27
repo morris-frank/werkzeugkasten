@@ -37,7 +37,6 @@ public final class EngineRunner {
         let requestObject: [String: Any] = [
             "service": command.rawValue,
             "payload": payload,
-            "mock": configuration.mock,
             "config": [
                 "api_key": configuration.apiKey,
                 "jina_api_key": configuration.jinaAPIKey,
@@ -54,6 +53,11 @@ public final class EngineRunner {
         var environment = ProcessInfo.processInfo.environment
         let existingPythonPath = environment["PYTHONPATH"].map { "\($0):" } ?? ""
         environment["PYTHONPATH"] = existingPythonPath + moduleRoot.path
+        if configuration.mock {
+            environment["WERKZEUGKASTEN_MOCK"] = "1"
+        } else {
+            environment.removeValue(forKey: "WERKZEUGKASTEN_MOCK")
+        }
 
         return PreparedCommand(
             executableURL: interpreterURL,

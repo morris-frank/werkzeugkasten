@@ -13,7 +13,7 @@ _LAT_LON_RE = re.compile(r"(?P<lat>[+-]?\d{1,2}(?:\.\d+)?)\s*[,;/]\s*(?P<lon>[+-
 
 
 def _geocode_with_open_meteo(value: str, /) -> dict[str, Any] | None:
-    if not open_meteo_api_key:
+    if not open_meteo_api_key():
         return None
     response = requests.get(
         _OPEN_METEO_GEOCODING_API,
@@ -22,7 +22,7 @@ def _geocode_with_open_meteo(value: str, /) -> dict[str, Any] | None:
             "count": "1",
             "language": "en",
             "format": "json",
-            "apikey": open_meteo_api_key,
+            "apikey": open_meteo_api_key(),
         },
         headers={"Accept": "application/json"},
         timeout=30,
