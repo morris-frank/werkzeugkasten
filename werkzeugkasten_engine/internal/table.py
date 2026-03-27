@@ -1,15 +1,16 @@
 from __future__ import annotations
 
+import json
 import re
 from collections import defaultdict
 from enum import Enum
 from io import StringIO
-from typing import Any
+from typing import Any, Iterator
 
 import markdown
 import pandas as pd
 
-from werkzeugkasten_engine.internal.value import as_canonical, as_url, as_urls, is_empty, normalize_list, str_contains
+from werkzeugkasten_engine.internal.value import as_canonical, as_object_type, as_url, as_urls, is_empty, normalize_list, str_contains
 
 
 class Policy(Enum):
@@ -59,6 +60,19 @@ class Table:
         column = column.strip().lower()
         return any(c.strip().lower() == column for c in self._df.columns)
 
+    def add_column(self, column: str, *, value: Any, policy: Policy = Policy.MERGE) -> None:
+        if column in self or policy == Policy.OVERWRITE:
+            self._df[column] = value
+        self._policies[column] = policy
+
+    def __iter__(self) -> Iterator[tuple[str, pd.Series]]:
+        index = 1
+        for index, row in self._df.iterrows():
+            key = str(index) or f"Row {index}"
+            index += 1
+            row[self.key_header] = key
+            yield index, row
+
     def __setitem__(self, key: tuple[str, str], value: Any) -> None:
         row, column = key
         match self._policies[column]:
@@ -83,7 +97,7 @@ class Table:
 
     @property
     def key_header(self) -> str:
-        return str(self._df.index.name or "Key")
+        return as_object_type(self._df.index.name or "Key")
 
     def rows(self) -> list[dict[str, str]]:
         records: list[dict[str, str]] = []
@@ -152,3 +166,6 @@ class Table:
                 self._df[column] = canonicals
             case _:
                 pass
+
+    def to_json(self, without: set[str] = set()) -> str:
+        return json.dumps([row for row in self.rows() if not any(column in without for column in row.keys())], ensure_ascii=False, indent=2)
