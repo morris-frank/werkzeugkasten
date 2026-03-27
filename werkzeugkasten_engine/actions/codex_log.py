@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -35,7 +35,7 @@ class TurnState:
     tool_call_count: int = 0
 
 
-def parse_codex_log(path: str | Path) -> list[CompletedTurn]:
+def _parse_codex_log(path: str | Path) -> list[CompletedTurn]:
     log_path = Path(path).expanduser()
     if log_path.suffix.lower() != ".jsonl":
         raise ValueError("Expected a `.jsonl` Codex log file.")
@@ -62,8 +62,8 @@ def parse_codex_log(path: str | Path) -> list[CompletedTurn]:
             if not isinstance(payload, dict):
                 continue
 
-            timestamp = parse_timestamp(record.get("timestamp"))
-            total_tokens = extract_total_tokens(payload)
+            timestamp = _parse_timestamp(record.get("timestamp"))
+            total_tokens = _extract_total_tokens(payload)
 
             if record_type == "event_msg":
                 event_type = payload.get("type")
@@ -97,7 +97,7 @@ def parse_codex_log(path: str | Path) -> list[CompletedTurn]:
                         continue
                     active_turn.last_agent_message = payload.get("last_agent_message") or active_turn.last_agent_message
                     active_turn.token_total_end = previous_total_tokens
-                    turns.append(finalize_turn(active_turn, timestamp))
+                    turns.append(_finalize_turn(active_turn, timestamp))
                     current_turn_id = None
                     active_turn = None
                     continue
@@ -115,12 +115,12 @@ def parse_codex_log(path: str | Path) -> list[CompletedTurn]:
             if item_type != "message" or payload.get("role") != "assistant":
                 continue
 
-            text = extract_message_text(payload)
+            text = _extract_message_text(payload)
             if not text:
                 continue
 
             if active_turn.plan is None:
-                active_turn.plan = extract_plan(text)
+                active_turn.plan = _extract_plan(text)
             if payload.get("phase") == "final_answer":
                 active_turn.final_answer = text
 
@@ -130,24 +130,33 @@ def parse_codex_log(path: str | Path) -> list[CompletedTurn]:
     return turns
 
 
-def prettify_codex_log(path: str | Path) -> dict[str, Any]:
+@dataclass(frozen=True)
+class CodexLogResult:
+    output_path: Path
+    completed_turn_count: int
+    image_count: int
+    tool_call_count: int
+    total_token_count: int | None
+
+
+def prettify_codex_log(path: str | Path) -> CodexLogResult:
     log_path = Path(path).expanduser()
-    turns = parse_codex_log(log_path)
+    turns = _parse_codex_log(log_path)
     output_path = log_path.with_name(log_path.name + ".transcript.md")
-    output_path.write_text(render_transcript(turns), encoding="utf-8")
-    return {
-        "output_path": str(output_path),
-        "completed_turn_count": len(turns),
-        "image_count": sum(turn.image_count for turn in turns),
-        "tool_call_count": sum(turn.tool_call_count for turn in turns),
-        "total_token_count": sum(turn.total_tokens or 0 for turn in turns) or None,
-    }
+    output_path.write_text(_render_transcript(turns), encoding="utf-8")
+    return CodexLogResult(
+        output_path=output_path,
+        completed_turn_count=len(turns),
+        image_count=sum(turn.image_count for turn in turns),
+        tool_call_count=sum(turn.tool_call_count for turn in turns),
+        total_token_count=sum(turn.total_tokens or 0 for turn in turns) or None,
+    )
 
 
-def finalize_turn(turn: TurnState, completed_at: datetime | None) -> CompletedTurn:
+def _finalize_turn(turn: TurnState, completed_at: datetime | None) -> CompletedTurn:
     prompt = turn.prompt.strip() or "_No user prompt captured._"
     answer = turn.final_answer or turn.last_agent_message or "_No final answer captured._"
-    answer = strip_plan_block(answer).strip() or turn.last_agent_message or "_No final answer captured._"
+    answer = _strip_plan_block(answer).strip() or turn.last_agent_message or "_No final answer captured._"
     duration_seconds = None
     if turn.started_at and completed_at:
         duration_seconds = max(int((completed_at - turn.started_at).total_seconds()), 0)
@@ -168,7 +177,7 @@ def finalize_turn(turn: TurnState, completed_at: datetime | None) -> CompletedTu
     )
 
 
-def render_transcript(turns: list[CompletedTurn]) -> str:
+def _render_transcript(turns: list[CompletedTurn]) -> str:
     if not turns:
         return "# Codex Transcript\n\n_No completed turns were found in this session._\n"
 
@@ -180,28 +189,28 @@ def render_transcript(turns: list[CompletedTurn]) -> str:
             prompt_header += f" — `🖼️ w/ {turn.image_count} {image_label}`"
         blocks.append(prompt_header)
         blocks.append("")
-        blocks.append(to_blockquote(turn.prompt))
+        blocks.append(_to_blockquote(turn.prompt))
         blocks.append("")
 
         if turn.plan:
             blocks.append("### 📝 Plan")
             blocks.append("")
-            blocks.append(to_blockquote(turn.plan))
+            blocks.append(_to_blockquote(turn.plan))
             blocks.append("")
 
         answer_header = "### 🤖 Answer"
         metadata: list[str] = []
         if turn.total_tokens is not None:
-            metadata.append(f"`🏷️ {format_token_count(turn.total_tokens)} tokens`")
+            metadata.append(f"`🏷️ {_format_token_count(turn.total_tokens)} tokens`")
         if turn.duration_seconds is not None:
-            metadata.append(f"`⌛ {format_duration(turn.duration_seconds)}`")
+            metadata.append(f"`⌛ {_format_duration(turn.duration_seconds)}`")
         if turn.tool_call_count:
             metadata.append(f"`🧰 {turn.tool_call_count} tool call{'s' if turn.tool_call_count != 1 else ''}`")
         if metadata:
             answer_header += " — " + " — ".join(metadata)
         blocks.append(answer_header)
         blocks.append("")
-        blocks.append(format_answer_body(turn.answer))
+        blocks.append(_format_answer_body(turn.answer))
         if index != len(turns):
             blocks.append("")
             blocks.append("---")
@@ -210,38 +219,38 @@ def render_transcript(turns: list[CompletedTurn]) -> str:
     return "\n".join(blocks).rstrip() + "\n"
 
 
-def format_answer_body(text: str) -> str:
+def _format_answer_body(text: str) -> str:
     stripped = text.strip()
     if not stripped:
         return "> _No final answer captured._"
-    if should_preserve_markdown(stripped):
+    if _should_preserve_markdown(stripped):
         return stripped
-    return to_blockquote(stripped)
+    return _to_blockquote(stripped)
 
 
-def should_preserve_markdown(text: str) -> bool:
+def _should_preserve_markdown(text: str) -> bool:
     stripped = text.lstrip()
     markdown_prefixes = ("#", "-", "*", "1.", "```", ">", "|", "::", "<details", "![", "[")
     return "\n\n" in stripped or stripped.startswith(markdown_prefixes)
 
 
-def to_blockquote(text: str) -> str:
+def _to_blockquote(text: str) -> str:
     lines = text.strip().splitlines() or [""]
     return "\n".join("> " + line if line else ">" for line in lines)
 
 
-def extract_plan(text: str) -> str | None:
+def _extract_plan(text: str) -> str | None:
     match = PLAN_BLOCK_RE.search(text)
     if not match:
         return None
     return match.group(1).strip() or None
 
 
-def strip_plan_block(text: str) -> str:
+def _strip_plan_block(text: str) -> str:
     return PLAN_BLOCK_RE.sub("", text).strip()
 
 
-def extract_message_text(payload: dict[str, Any]) -> str:
+def _extract_message_text(payload: dict[str, Any]) -> str:
     parts: list[str] = []
     for content in payload.get("content", []):
         if not isinstance(content, dict):
@@ -260,7 +269,7 @@ def extract_message_text(payload: dict[str, Any]) -> str:
     return "\n\n".join(parts).strip()
 
 
-def extract_total_tokens(payload: dict[str, Any]) -> int | None:
+def _extract_total_tokens(payload: dict[str, Any]) -> int | None:
     if payload.get("type") != "token_count":
         return None
     info = payload.get("info")
@@ -273,7 +282,7 @@ def extract_total_tokens(payload: dict[str, Any]) -> int | None:
     return total_tokens if isinstance(total_tokens, int) else None
 
 
-def parse_timestamp(value: Any) -> datetime | None:
+def _parse_timestamp(value: Any) -> datetime | None:
     if not isinstance(value, str) or not value:
         return None
     try:
@@ -282,7 +291,7 @@ def parse_timestamp(value: Any) -> datetime | None:
         return None
 
 
-def format_token_count(count: int) -> str:
+def _format_token_count(count: int) -> str:
     if count >= 1000:
         whole = count / 1000
         if whole.is_integer():
@@ -291,7 +300,7 @@ def format_token_count(count: int) -> str:
     return str(count)
 
 
-def format_duration(seconds: int) -> str:
+def _format_duration(seconds: int) -> str:
     minutes, remainder = divmod(seconds, 60)
     hours, minutes = divmod(minutes, 60)
     parts: list[str] = []

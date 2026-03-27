@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 
@@ -114,36 +115,6 @@ Rows:
         table[int(row_id.split("-")[1]) - 1, column_name] = ", ".join(matches)
 
 
-def _render_report(
-    *,
-    table: Table,
-    questions: list[str],
-    attributes: list[str],
-    failures: list[str],
-    started_at: datetime,
-) -> str:
-    lines = [
-        "# Research",
-        "",
-        f"- Generated: {started_at.strftime('%Y-%m-%d %H:%M:%S %Z')}",
-        f"- Source: {table.origin}",
-        f"- Detected format: {table.detected_format}",
-        f"- Rows: {len(table)}",
-        "",
-        "## Detected Columns",
-        "",
-        "Questions:",
-    ]
-    lines.extend([f"- {column}" for column in questions] or ["- none"])
-    lines.extend(["", "Attributes:"])
-    lines.extend([f"- {column}" for column in attributes] or ["- none"])
-    lines.extend(["", "## Merged Table", ""])
-    lines.extend(str(table))
-    lines.extend(["", "## Failures", ""])
-    lines.extend([f"- {failure}" for failure in failures] or ["- none"])
-    return "\n".join(lines).rstrip() + "\n"
-
-
 def research_table(
     table: Table | str,
     /,
@@ -219,18 +190,47 @@ def research_table(
             column_name=nearest_column,
         )
 
+    result = ResearchResult(
+        table=table,
+        questions=questions,
+        attributes=attributes,
+        failures=failures,
+        started_at=started_at,
+    )
+
     destination.write_text(
-        _render_report(
-            table=table,
-            questions=questions,
-            attributes=attributes,
-            started_at=started_at,
-            failures=failures,
-        ),
+        result.to_markdown(),
         encoding="utf-8",
     )
-    return {
-        "output_path": str(destination),
-        "questions": questions,
-        "attributes": attributes,
-    }
+    return result
+
+
+@dataclass(frozen=True)
+class ResearchResult:
+    table: Table
+    questions: list[str]
+    attributes: list[str]
+    failures: list[str]
+    started_at: datetime
+
+    def to_markdown(self) -> str:
+        lines = [
+            "# Research",
+            "",
+            f"- Generated: {self.started_at.strftime('%Y-%m-%d %H:%M:%S %Z')}",
+            f"- Source: {self.table.origin}",
+            f"- Detected format: {self.table.detected_format}",
+            f"- Rows: {len(self.table)}",
+            "",
+            "## Detected Columns",
+            "",
+            "Questions:",
+        ]
+        lines.extend([f"- {column}" for column in self.questions] or ["- none"])
+        lines.extend(["", "Attributes:"])
+        lines.extend([f"- {column}" for column in self.attributes] or ["- none"])
+        lines.extend(["", "## Merged Table", ""])
+        lines.extend(str(self.table))
+        lines.extend(["", "## Failures", ""])
+        lines.extend([f"- {failure}" for failure in self.failures] or ["- none"])
+        return "\n".join(lines).rstrip() + "\n"
