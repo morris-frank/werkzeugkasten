@@ -36,7 +36,7 @@ targets:
       configs:
         Debug:
           CODE_SIGN_STYLE: Manual
-          CODE_SIGN_IDENTITY: Apple Development
+          CODE_SIGN_IDENTITY: Developer ID Application
         Release:
           CODE_SIGN_STYLE: Manual
           CODE_SIGN_IDENTITY: Developer ID Application
@@ -63,7 +63,7 @@ targets:
       configs:
         Debug:
           CODE_SIGN_STYLE: Manual
-          CODE_SIGN_IDENTITY: Apple Development
+          CODE_SIGN_IDENTITY: Developer ID Application
         Release:
           CODE_SIGN_STYLE: Manual
           CODE_SIGN_IDENTITY: Developer ID Application
@@ -87,7 +87,7 @@ targets:
       configs:
         Debug:
           CODE_SIGN_STYLE: Manual
-          CODE_SIGN_IDENTITY: Apple Development
+          CODE_SIGN_IDENTITY: Developer ID Application
         Release:
           CODE_SIGN_STYLE: Manual
           CODE_SIGN_IDENTITY: Developer ID Application
@@ -108,10 +108,10 @@ targets:
       configs:
         Debug:
           CODE_SIGN_STYLE: Manual
-          CODE_SIGN_IDENTITY: Apple Development
+          CODE_SIGN_IDENTITY: Developer ID Application
         Release:
           CODE_SIGN_STYLE: Manual
-          CODE_SIGN_IDENTITY: Apple Development
+          CODE_SIGN_IDENTITY: Developer ID Application
 schemes:
   Werkzeugkasten:
     build:
