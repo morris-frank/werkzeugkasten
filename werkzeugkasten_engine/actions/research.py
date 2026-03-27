@@ -51,6 +51,19 @@ class ResearchResult:
         return "\n".join(lines).rstrip() + "\n"
 
 
+@dataclass(frozen=True)
+class InspectTableResult:
+    sourceName: str
+    detectedFormat: str
+    headers: list[str]
+    keyHeader: str
+    rowCount: int
+    questionColumns: list[str]
+    attributeColumns: list[str]
+    exampleKey: str
+    objectType: str
+
+
 def _research_model() -> str:
     return os.environ.get("WERKZEUGKASTEN_RESEARCH_MODEL", "gpt-5.4")
 
@@ -191,6 +204,25 @@ def _split_by(items: Iterable[T], pred: Callable[[T], bool]) -> tuple[list[T], l
     return yes, no
 
 
+def inspect_table(
+    table: Table | str,
+) -> dict[str, object]:
+    table = Table(table)
+    questions, attributes = _split_by(table.columns, lambda header: maybe_question(header) is not None)
+
+    return InspectTableResult(
+        sourceName=table.origin,
+        detectedFormat=table.detected_format,
+        headers=list(table.columns),
+        keyHeader=table.key_header,
+        rowCount=len(table),
+        questionColumns=list(questions),
+        attributeColumns=list(attributes),
+        exampleKey=table.rows()[0].get(table.key_header, ""),
+        objectType=table.object_type,
+    )
+
+
 def research_table(
     table: Table | str,
     /,
@@ -203,8 +235,8 @@ def research_table(
     output_path: str | Path | None = None,
 ) -> dict[str, object]:
     table = Table(table)
-
     questions, attributes = _split_by(table.columns, lambda header: maybe_question(header) is not None)
+
     research_columns = questions + attributes
 
     started_at = datetime.now().astimezone()
