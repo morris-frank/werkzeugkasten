@@ -60,6 +60,18 @@ def _truncate_for_upload(prompt: str, limit: int = MAX_SUMMARY_INPUT) -> str:
     return prompt[:limit] + "\n\n[Truncated before upload]"
 
 
+def _group_sources_by_domain(sources: list[Source], /) -> tuple[dict[str, list[Source]], list[Source]]:
+    grouped: dict[str, list[Source]] = {}
+    ungrouped: list[Source] = []
+    for source in sources:
+        domain = urllib.parse.urlparse(source).netloc
+        if domain:
+            grouped.setdefault(domain, []).append(source)
+        else:
+            ungrouped.append(source)
+    return grouped, ungrouped
+
+
 def summarize(sources: list[Source], /) -> str:
     content = get_content(sources)
     safe_content = _truncate_for_upload(content)

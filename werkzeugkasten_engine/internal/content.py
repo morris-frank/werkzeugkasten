@@ -11,8 +11,8 @@ from urllib.request import url2pathname
 import requests
 from markitdown import MarkItDown
 
-from werkzeugkasten_engine.internal import Source, n_threads, url_timeout
-from werkzeugkasten_engine.internal.cache import Cache, LocalCache
+from . import Source, n_threads, url_timeout
+from .cache import LocalCache
 
 
 def _jina_api_key() -> str:
@@ -97,7 +97,7 @@ def _reference_converter(as_markdown: bool) -> Callable[[Source], str]:
             cache[source] = content
         return content
 
-    cache = LocalCache(Cache.CONTENT)
+    cache = LocalCache()
     md = MarkItDown()
 
     return converter

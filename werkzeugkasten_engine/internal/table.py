@@ -73,6 +73,9 @@ class Table:
             row[self.key_header] = key
             yield index, row
 
+    def update_row(self, row: dict[str, str]) -> None:
+        self._df.loc[row[self.key_header]] = {column: row[column] for column in self._df.columns}
+
     def __setitem__(self, key: tuple[str, str], value: Any) -> None:
         row, column = key
         match self._policies[column]:
@@ -81,15 +84,6 @@ class Table:
                     self._df.loc[row, column] = value
             case Policy.OVERWRITE:
                 self._df.loc[row, column] = value
-
-    def safe_column(self, preferred: str, /) -> str:
-        candidate = preferred.strip() or "Column"
-        if candidate not in self:
-            return candidate
-        suffix = 2
-        while f"{candidate} {suffix}" in self:
-            suffix += 1
-        return f"{candidate} {suffix}"
 
     @property
     def columns(self) -> list[str]:

@@ -4,18 +4,51 @@ import os
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
+from typing import Callable, Iterable, TypeVar
 
+from werkzeugkasten_engine.actions import summarize
 from werkzeugkasten_engine.actions.lookup import lookup_row
 from werkzeugkasten_engine.internal import choose_output_path, split_by
-from werkzeugkasten_engine.internal.content import get_content
-from werkzeugkasten_engine.internal.logging import ProgressCallback
 from werkzeugkasten_engine.internal.openai import query
 from werkzeugkasten_engine.internal.table import Table
-from werkzeugkasten_engine.internal.value import as_urls, maybe_question
+from werkzeugkasten_engine.internal.value import maybe_question
 
 SOURCE_COLUMN = "Sources"
-SOURCE_RAW_COLUMN = "Sources[RAW]"
+SOURCE_SUMMARY_COLUMN = "Sources[RAW]"
 TAG_COLUMN = "Tags"
+
+T = TypeVar("T")
+
+
+@dataclass(frozen=True)
+class ResearchResult:
+    table: Table
+    questions: list[str]
+    attributes: list[str]
+    failures: list[str]
+    started_at: datetime
+
+    def to_markdown(self) -> str:
+        lines = [
+            "# Research",
+            "",
+            f"- Generated: {self.started_at.strftime('%Y-%m-%d %H:%M:%S %Z')}",
+            f"- Source: {self.table.origin}",
+            f"- Detected format: {self.table.detected_format}",
+            f"- Rows: {len(self.table)}",
+            "",
+            "## Detected Columns",
+            "",
+            "Questions:",
+        ]
+        lines.extend([f"- {column}" for column in self.questions] or ["- none"])
+        lines.extend(["", "Attributes:"])
+        lines.extend([f"- {column}" for column in self.attributes] or ["- none"])
+        lines.extend(["", "## Merged Table", ""])
+        lines.extend(str(self.table))
+        lines.extend(["", "## Failures", ""])
+        lines.extend([f"- {failure}" for failure in self.failures] or ["- none"])
+        return "\n".join(lines).rstrip() + "\n"
 
 
 def _research_model() -> str:
@@ -53,7 +86,7 @@ Return JSON only in this shape:
 }}
 
 Rows:
-{table.to_json(without={SOURCE_COLUMN, SOURCE_RAW_COLUMN})}
+{table.to_json(without={SOURCE_COLUMN, SOURCE_SUMMARY_COLUMN})}
 """
     answer = query(prompt, model=_research_model())
     tags = answer.json.get("tags")
@@ -91,7 +124,7 @@ Return JSON only in this shape:
 }}
 
 Rows:
-{table.to_json(without={SOURCE_COLUMN, SOURCE_RAW_COLUMN})}
+{table.to_json(without={SOURCE_COLUMN, SOURCE_SUMMARY_COLUMN})}
 """
     answer = query(prompt, model=_research_model())
     neighbours = answer.json.get("neighbors")
@@ -115,21 +148,63 @@ Rows:
         table[int(row_id.split("-")[1]) - 1, column_name] = ", ".join(matches)
 
 
+@dataclass(frozen=True)
+class ResearchRowResult:
+    row: dict[str, str] | None
+    failure: str | None = None
+
+
+def _research_row(
+    row: dict[str, str],
+    research_columns: list[str],
+    questions: list[str],
+    include_sources: bool,
+    summarize_sources: bool,
+    key_header: str,
+):
+    missing_columns = [column for column in research_columns if not row.get(column, "").strip()]
+    if not missing_columns:
+        return ResearchRowResult(row=row)
+    answer = lookup_row(
+        row,
+        key_header,
+        missing_columns,
+        questions,
+    )
+    if answer.error:
+        return ResearchRowResult(failure=f"{row[key_header]}: {answer.error or 'No response.'}")
+    for column in missing_columns:
+        row[column] = answer.data.get(column, row.get(column, ""))
+
+    if include_sources:
+        row[SOURCE_COLUMN] = ", ".join(answer.sources)
+    if summarize_sources:
+        row[SOURCE_SUMMARY_COLUMN] = summarize(answer.sources)
+    return ResearchRowResult(row=row)
+
+
+def _split_by(items: Iterable[T], pred: Callable[[T], bool]) -> tuple[list[T], list[T]]:
+    yes: list[T] = []
+    no: list[T] = []
+    for x in items:
+        (yes if pred(x) else no).append(x)
+    return yes, no
+
+
 def research_table(
     table: Table | str,
     /,
     *,
     include_sources: bool = False,
-    include_source_raw: bool = False,
+    summarize_sources: bool = False,
     auto_tagging: bool = False,
     nearest_neighbour: bool = False,
     output_dir: Path | None = None,
     output_path: str | Path | None = None,
-    progress: ProgressCallback | None = None,
 ) -> dict[str, object]:
     table = Table(table)
 
-    questions, attributes = split_by(table.columns, lambda header: maybe_question(header) is not None)
+    questions, attributes = _split_by(table.columns, lambda header: maybe_question(header) is not None)
     research_columns = questions + attributes
 
     started_at = datetime.now().astimezone()
@@ -144,37 +219,15 @@ def research_table(
 
     if include_sources:
         table.add_column(SOURCE_COLUMN)
-    if include_source_raw:
-        table.add_column(SOURCE_RAW_COLUMN)
+    if summarize_sources:
+        table.add_column(SOURCE_SUMMARY_COLUMN)
 
-    for i, (index, row) in enumerate(table, start=1):
-        key = row[table.key_header]
-        if progress is not None:
-            progress(i - 1, len(table), key)
-        missing_columns = [column for column in research_columns if not row.get(column, "").strip()]
-        if not missing_columns:
-            continue
-        answer = lookup_row(
-            row,
-            table.key_header,
-            missing_columns,
-            questions,
-        )
-        if answer.error:
-            failures.append(f"{key}: {answer.error or 'No response.'}")
-            continue
-        for column in missing_columns:
-            table[index, column] = answer.data.get(column, row.get(column, ""))
-        if include_sources:
-            merged_sources = answer.sources or as_urls(row.get(SOURCE_COLUMN, ""))
-            table[index, SOURCE_COLUMN] = ", ".join(merged_sources)
-        if include_source_raw:
-            effective_sources = answer.sources or as_urls(row.get(SOURCE_COLUMN, ""))
-            if effective_sources:
-                raw_body = get_content(effective_sources, as_markdown=False)
-                table[index, SOURCE_RAW_COLUMN] = raw_body
-        if progress is not None:
-            progress(i, len(table), key)
+    for row in table.rows():
+        result = _research_row(row, research_columns, questions, include_sources, summarize_sources, table.key_header)
+        if result.failure:
+            failures.append(result.failure)
+        if result.row:
+            table.update_row(result.row)
 
     if auto_tagging:
         table.add_column(TAG_COLUMN)
@@ -203,34 +256,3 @@ def research_table(
         encoding="utf-8",
     )
     return result
-
-
-@dataclass(frozen=True)
-class ResearchResult:
-    table: Table
-    questions: list[str]
-    attributes: list[str]
-    failures: list[str]
-    started_at: datetime
-
-    def to_markdown(self) -> str:
-        lines = [
-            "# Research",
-            "",
-            f"- Generated: {self.started_at.strftime('%Y-%m-%d %H:%M:%S %Z')}",
-            f"- Source: {self.table.origin}",
-            f"- Detected format: {self.table.detected_format}",
-            f"- Rows: {len(self.table)}",
-            "",
-            "## Detected Columns",
-            "",
-            "Questions:",
-        ]
-        lines.extend([f"- {column}" for column in self.questions] or ["- none"])
-        lines.extend(["", "Attributes:"])
-        lines.extend([f"- {column}" for column in self.attributes] or ["- none"])
-        lines.extend(["", "## Merged Table", ""])
-        lines.extend(str(self.table))
-        lines.extend(["", "## Failures", ""])
-        lines.extend([f"- {failure}" for failure in self.failures] or ["- none"])
-        return "\n".join(lines).rstrip() + "\n"

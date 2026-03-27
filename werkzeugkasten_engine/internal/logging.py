@@ -22,10 +22,3 @@ class DebugLogger:
         }
         with self.path.open("a", encoding="utf-8") as handle:
             handle.write(json.dumps(record, ensure_ascii=False, default=str) + "\n")
-
-
-def debug_log_path_for_output(path: Path) -> Path:
-    suffix = "".join(path.suffixes)
-    if suffix:
-        return path.with_name(f"{path.name}.debug.jsonl")
-    return path.with_name(f"{path.name}.debug.jsonl")

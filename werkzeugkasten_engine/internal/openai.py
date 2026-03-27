@@ -7,7 +7,7 @@ from typing import Any
 
 from openai import OpenAI, Response
 
-from werkzeugkasten_engine.internal.value import as_json
+from .value import as_json
 
 
 @dataclass(True)

@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import re
 import urllib.parse
-from enum import Enum, IntEnum
+from enum import IntEnum
 from typing import Any
 
 from rapidfuzz import fuzz
