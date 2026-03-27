@@ -35,7 +35,7 @@ public final class EngineRunner {
         }
 
         let requestObject: [String: Any] = [
-            "action": command.rawValue,
+            "service": command.rawValue,
             "payload": payload,
             "mock": configuration.mock,
             "config": [
