@@ -8,7 +8,7 @@ from typing import Any, BinaryIO, Union
 
 import requests
 
-_DEFAULT_OUTPUT_DIR = Path.home() / "Desktop"
+_DEFAULT_OUTPUT_DIR = Path.home() / "Desktop" / "werkzeugkasten"
 _MAX_SLUG_LENGTH = 48
 
 Source = Union[str, requests.Response, Path, BinaryIO]
