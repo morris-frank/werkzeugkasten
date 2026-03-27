@@ -7,41 +7,25 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		1398B9BA19054AAA1185A8D7 /* geocoding.py in Resources */ = {isa = PBXBuildFile; fileRef = 351584F5ACFD9FC20A6C7D4C /* geocoding.py */; };
-		1A15626C013F1F131E97AFAA /* codex_log.py in Resources */ = {isa = PBXBuildFile; fileRef = 3954B8F33B736FF2B45D4892 /* codex_log.py */; };
-		1CEDD53BF75389E07914AD2B /* summarize.py in Resources */ = {isa = PBXBuildFile; fileRef = EDC23E0CFB110D28C76C5C34 /* summarize.py */; };
 		2DF2B33E6A677756264D45C1 /* InputNormalizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 181ED0556CE78A69F5117AE4 /* InputNormalizer.swift */; };
 		34B590C5442398CB786BDDB9 /* ActionRequestHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = D074526C6194A7A31FE77BF4 /* ActionRequestHandler.swift */; };
 		42303336D32F8BEA7C132699 /* WerkzeugkastenCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 3060211CCE42A26E316070BC /* WerkzeugkastenCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
-		4B27384BDB26F98C43269059 /* openai_ops.py in Resources */ = {isa = PBXBuildFile; fileRef = 8C99945C7A72496A6A9A58A7 /* openai_ops.py */; };
 		4BC3BEDEFCFD5A2480E17DEA /* FinderActionHandoff.swift in Sources */ = {isa = PBXBuildFile; fileRef = 297934768D2DB9C0B8236847 /* FinderActionHandoff.swift */; };
-		518A6C266B6AA329A5E82C8B /* research_table.py in Resources */ = {isa = PBXBuildFile; fileRef = 7560BDE31895559957D708AE /* research_table.py */; };
 		55D2260D9C21F1DB84F0365B /* WerkzeugkastenMenuBarApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EFF0536F5C13E31AB66473A /* WerkzeugkastenMenuBarApp.swift */; };
 		6108108A3D7D48EF2025689E /* WerkzeugkastenCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3060211CCE42A26E316070BC /* WerkzeugkastenCore.framework */; };
-		6AA2A29CADF8E2BFC920D73A /* services.py in Resources */ = {isa = PBXBuildFile; fileRef = F33F18132FFF2DB60ED87765 /* services.py */; };
-		749AA8368709E3D98D579697 /* core.py in Resources */ = {isa = PBXBuildFile; fileRef = 2A3EEE0A0F4244A4A905161A /* core.py */; };
-		75F85F789B45D1E50CF19FF4 /* __init__.py in Resources */ = {isa = PBXBuildFile; fileRef = A0E61C6A9597429654640C06 /* __init__.py */; };
 		7D5FA8EF07FD2268BB016162 /* KeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 830304711401CF08505EC9CC /* KeychainStore.swift */; };
 		7E9C6A978616A9B9ED374082 /* SettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9EA15E79BA1DEF64E3260EC5 /* SettingsStore.swift */; };
 		8394E79A6F305A2E15E423A7 /* WerkzeugkastenCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3060211CCE42A26E316070BC /* WerkzeugkastenCore.framework */; };
 		83EC1C938BE86CC7425A338F /* SummarizeSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 869D49FFAD2414111E1AFB17 /* SummarizeSession.swift */; };
-		8E1E9577CF71BEC2782F96E4 /* field_types.py in Resources */ = {isa = PBXBuildFile; fileRef = F1DA298A853E0553E0CA64CA /* field_types.py */; };
 		919EBDABC2850772F1A21BB7 /* EngineRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43C2DC0426AFB4EDAE58BDA4 /* EngineRunner.swift */; };
 		9A380FA55531D84B04C75011 /* EngineModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAB967D4725A9E07D6CC3605 /* EngineModels.swift */; };
-		A2716FDF998E5F11D01AF758 /* io_ops.py in Resources */ = {isa = PBXBuildFile; fileRef = 44F93F510E308337609511D0 /* io_ops.py */; };
-		A51273A49BE279C5869F11E8 /* cli.py in Resources */ = {isa = PBXBuildFile; fileRef = 677A8E7873E5DCC3B38A2B7D /* cli.py */; };
 		A9521C90331F4099767E8A87 /* NotificationHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C9AD89BF9426D42198C30DB /* NotificationHelper.swift */; };
 		AF236DDC8A0D3AD1D3FCB6EE /* WerkzeugkastenCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3060211CCE42A26E316070BC /* WerkzeugkastenCore.framework */; };
-		B39D4F4F49B219D3D646C00E /* __main__.py in Resources */ = {isa = PBXBuildFile; fileRef = 2C791A72EC62117F80E25D36 /* __main__.py */; };
-		B47DCF1F55AE076A5422ADAA /* research_list.py in Resources */ = {isa = PBXBuildFile; fileRef = 015A9D71820D249B30CD2823 /* research_list.py */; };
 		BD6D2BDB6852CEFB60126BE9 /* WerkzeugkastenCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 3060211CCE42A26E316070BC /* WerkzeugkastenCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		C1050161AE39E362C01426C1 /* WerkzeugkastenActionExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A33AF22B9EE5EB03E5664A2A /* WerkzeugkastenActionExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		CF883C0C4FFCE13B233D3A01 /* WindowCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D5D8A5D78CE1CDCE82209AC /* WindowCoordinator.swift */; };
-		D57CD8EC4DC48E64480B2379 /* notion_export.py in Resources */ = {isa = PBXBuildFile; fileRef = 3D043D1D09F65419E47357AB /* notion_export.py */; };
 		D59FB34DE9E055453690F25D /* AppViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BA9C96D9A04A2F882B04ABD /* AppViews.swift */; };
 		D7D245429DA6EA3104141A14 /* WerkzeugkastenCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 3060211CCE42A26E316070BC /* WerkzeugkastenCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
-		EB41C067DAEC4661DE2AF9A6 /* rest_server.py in Resources */ = {isa = PBXBuildFile; fileRef = 58D4BE0EDA21B4A31083F8C5 /* rest_server.py */; };
-		F0BA80C9D60B28BCB69F3EFF /* summary_service.py in Resources */ = {isa = PBXBuildFile; fileRef = 11328E26CF59C78445CDCA85 /* summary_service.py */; };
 		F846416F731C89098F88510B /* SharedConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A54CC72921F51DAF9F09726 /* SharedConstants.swift */; };
 		F967F7B429F6CB777E7D0DB8 /* WerkzeugkastenCoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3045FA7836D178715D8E8F9D /* WerkzeugkastenCoreTests.swift */; };
 /* End PBXBuildFile section */
@@ -125,39 +109,23 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		015A9D71820D249B30CD2823 /* research_list.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = research_list.py; sourceTree = "<group>"; };
 		0C9AD89BF9426D42198C30DB /* NotificationHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationHelper.swift; sourceTree = "<group>"; };
-		11328E26CF59C78445CDCA85 /* summary_service.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = summary_service.py; sourceTree = "<group>"; };
 		181ED0556CE78A69F5117AE4 /* InputNormalizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputNormalizer.swift; sourceTree = "<group>"; };
 		1A54CC72921F51DAF9F09726 /* SharedConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedConstants.swift; sourceTree = "<group>"; };
 		297934768D2DB9C0B8236847 /* FinderActionHandoff.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FinderActionHandoff.swift; sourceTree = "<group>"; };
-		2A3EEE0A0F4244A4A905161A /* core.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = core.py; sourceTree = "<group>"; };
-		2C791A72EC62117F80E25D36 /* __main__.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = __main__.py; sourceTree = "<group>"; };
 		3045FA7836D178715D8E8F9D /* WerkzeugkastenCoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WerkzeugkastenCoreTests.swift; sourceTree = "<group>"; };
 		3060211CCE42A26E316070BC /* WerkzeugkastenCore.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = WerkzeugkastenCore.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		351584F5ACFD9FC20A6C7D4C /* geocoding.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = geocoding.py; sourceTree = "<group>"; };
-		3954B8F33B736FF2B45D4892 /* codex_log.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = codex_log.py; sourceTree = "<group>"; };
-		3D043D1D09F65419E47357AB /* notion_export.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = notion_export.py; sourceTree = "<group>"; };
 		43C2DC0426AFB4EDAE58BDA4 /* EngineRunner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EngineRunner.swift; sourceTree = "<group>"; };
-		44F93F510E308337609511D0 /* io_ops.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = io_ops.py; sourceTree = "<group>"; };
-		58D4BE0EDA21B4A31083F8C5 /* rest_server.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = rest_server.py; sourceTree = "<group>"; };
 		5D5D8A5D78CE1CDCE82209AC /* WindowCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowCoordinator.swift; sourceTree = "<group>"; };
 		5E799B08F555168148FB0CDD /* WerkzeugkastenCoreTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WerkzeugkastenCoreTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		5EFF0536F5C13E31AB66473A /* WerkzeugkastenMenuBarApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WerkzeugkastenMenuBarApp.swift; sourceTree = "<group>"; };
-		677A8E7873E5DCC3B38A2B7D /* cli.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = cli.py; sourceTree = "<group>"; };
-		7560BDE31895559957D708AE /* research_table.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = research_table.py; sourceTree = "<group>"; };
 		830304711401CF08505EC9CC /* KeychainStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainStore.swift; sourceTree = "<group>"; };
 		869D49FFAD2414111E1AFB17 /* SummarizeSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SummarizeSession.swift; sourceTree = "<group>"; };
-		8C99945C7A72496A6A9A58A7 /* openai_ops.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = openai_ops.py; sourceTree = "<group>"; };
 		9BA9C96D9A04A2F882B04ABD /* AppViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppViews.swift; sourceTree = "<group>"; };
 		9EA15E79BA1DEF64E3260EC5 /* SettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsStore.swift; sourceTree = "<group>"; };
-		A0E61C6A9597429654640C06 /* __init__.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = __init__.py; sourceTree = "<group>"; };
 		A33AF22B9EE5EB03E5664A2A /* WerkzeugkastenActionExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = WerkzeugkastenActionExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		D074526C6194A7A31FE77BF4 /* ActionRequestHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActionRequestHandler.swift; sourceTree = "<group>"; };
 		DA5E2387B3B583F70D9B0547 /* Werkzeugkasten.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Werkzeugkasten.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		EDC23E0CFB110D28C76C5C34 /* summarize.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = summarize.py; sourceTree = "<group>"; };
-		F1DA298A853E0553E0CA64CA /* field_types.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = field_types.py; sourceTree = "<group>"; };
-		F33F18132FFF2DB60ED87765 /* services.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = services.py; sourceTree = "<group>"; };
 		FAB967D4725A9E07D6CC3605 /* EngineModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EngineModels.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -192,22 +160,6 @@
 		45D4453731D6B8BD7802B036 /* werkzeugkasten_engine */ = {
 			isa = PBXGroup;
 			children = (
-				A0E61C6A9597429654640C06 /* __init__.py */,
-				2C791A72EC62117F80E25D36 /* __main__.py */,
-				677A8E7873E5DCC3B38A2B7D /* cli.py */,
-				3954B8F33B736FF2B45D4892 /* codex_log.py */,
-				2A3EEE0A0F4244A4A905161A /* core.py */,
-				F1DA298A853E0553E0CA64CA /* field_types.py */,
-				351584F5ACFD9FC20A6C7D4C /* geocoding.py */,
-				44F93F510E308337609511D0 /* io_ops.py */,
-				3D043D1D09F65419E47357AB /* notion_export.py */,
-				8C99945C7A72496A6A9A58A7 /* openai_ops.py */,
-				015A9D71820D249B30CD2823 /* research_list.py */,
-				7560BDE31895559957D708AE /* research_table.py */,
-				58D4BE0EDA21B4A31083F8C5 /* rest_server.py */,
-				F33F18132FFF2DB60ED87765 /* services.py */,
-				EDC23E0CFB110D28C76C5C34 /* summarize.py */,
-				11328E26CF59C78445CDCA85 /* summary_service.py */,
 			);
 			path = werkzeugkasten_engine;
 			sourceTree = "<group>";
@@ -410,22 +362,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				75F85F789B45D1E50CF19FF4 /* __init__.py in Resources */,
-				B39D4F4F49B219D3D646C00E /* __main__.py in Resources */,
-				A51273A49BE279C5869F11E8 /* cli.py in Resources */,
-				1A15626C013F1F131E97AFAA /* codex_log.py in Resources */,
-				749AA8368709E3D98D579697 /* core.py in Resources */,
-				8E1E9577CF71BEC2782F96E4 /* field_types.py in Resources */,
-				1398B9BA19054AAA1185A8D7 /* geocoding.py in Resources */,
-				A2716FDF998E5F11D01AF758 /* io_ops.py in Resources */,
-				D57CD8EC4DC48E64480B2379 /* notion_export.py in Resources */,
-				4B27384BDB26F98C43269059 /* openai_ops.py in Resources */,
-				B47DCF1F55AE076A5422ADAA /* research_list.py in Resources */,
-				518A6C266B6AA329A5E82C8B /* research_table.py in Resources */,
-				EB41C067DAEC4661DE2AF9A6 /* rest_server.py in Resources */,
-				6AA2A29CADF8E2BFC920D73A /* services.py in Resources */,
-				1CEDD53BF75389E07914AD2B /* summarize.py in Resources */,
-				F0BA80C9D60B28BCB69F3EFF /* summary_service.py in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
