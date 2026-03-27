@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import copy
 import json
+import os
 import re
-import urllib.parse
 from dataclasses import dataclass
 from typing import Any
 
@@ -14,7 +14,21 @@ from .core import LATEST_NOTION_VERSION, notion_api_token, notion_parent_page, o
 from .field_types import is_location_header
 from .geocoding import geocode_place, parse_place
 
+
+def _notion_api_token() -> str:
+    return (
+        os.environ.get("WERKZEUGKASTEN_NOTION_API_TOKEN", "")
+        or os.environ.get("NOTION_API_TOKEN", "")
+        or os.environ.get("NOTION_TOKEN", "")
+    )
+
+
+def _notion_parent_page() -> str:
+    return os.environ.get("WERKZEUGKASTEN_NOTION_PARENT_PAGE", "") or os.environ.get("NOTION_PARENT_PAGE", "")
+
+
 NOTION_API_BASE = "https://api.notion.com/v1"
+LATEST_NOTION_VERSION = "2026-03-11"
 # Notion rejects bodies around ~500KB; stay well under once JSON-escaped UTF-8 is applied.
 NOTION_REQUEST_BODY_SAFE_MAX_BYTES = 420_000
 NOTION_ABBREVIATION_NOTE = "\n\n_(Abbreviated for Notion export size limit.)_"
@@ -404,14 +418,6 @@ def split_multi_value(value: str) -> list[str]:
         if item and item not in result:
             result.append(item)
     return result
-
-
-def normalize_url_value(value: str) -> str:
-    return io_ops.normalize_url_value(value)
-
-
-def extract_source_urls(value: str) -> list[str]:
-    return io_ops.normalize_source_urls(io_ops.extract_urls(value))
 
 
 def heading_block(text: str, level: int = 2) -> dict[str, Any]:

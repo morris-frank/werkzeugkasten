@@ -1,0 +1,174 @@
+from __future__ import annotations
+
+import json
+import re
+import urllib.parse
+from enum import Enum, IntEnum
+from typing import Any
+
+_QUESTION_WORDS = {
+    "who",
+    "what",
+    "when",
+    "where",
+    "why",
+    "how",
+    "which",
+    "is",
+    "are",
+    "do",
+    "does",
+    "did",
+    "can",
+    "could",
+    "should",
+    "would",
+    "will",
+}
+
+_LOCATION_TOKENS = ("location", "address", "adress", "city", "country", "region", "state")
+_HTML_BREAK_RE = re.compile(r"\s*<br\s*/?>\s*", re.IGNORECASE)
+_URL_RE = re.compile(r"https?://[^\s<>,)\]]+|www\.[^\s<>,)\]]+", re.IGNORECASE)
+_MARKDOWN_LINK_RE = re.compile(r"\[([^\]]+)\]\((https?://[^)]+)\)")
+_REF_RE = re.compile(r"\s*\(Ref\s+\d+\)\s*$", re.IGNORECASE)
+
+
+class MdLink(IntEnum):
+    URL = 1
+    LABEL = 2
+
+
+def _remove_code_block(text: str | None, /) -> str:
+    text = unwrap_text(text)
+    lines = [line for line in map(str.strip, text.splitlines()) if not line.startswith("```") and not line.endswith("```")]
+    return "\n".join(lines)
+
+
+def _normalize_scalar(text: str, /) -> str:
+    text = unwrap_text(text)
+    if url := as_url(text):
+        return url
+    text = collapse_markdown_link(text, MdLink.URL)
+    text = _REF_RE.sub("", text)
+    text = re.sub(r"\((?:https?://|www\.)[^)]+\)", "", text).strip()
+    text = re.sub(r"\([^)]*\.[^)]*\)", "", text).strip()
+    text = re.sub(r"\s+", " ", text)
+
+    if re.fullmatch(r"[A-Z0-9]{2,}", text):
+        return text
+    if text.islower() and len(text.split()) <= 4:
+        return " ".join(word if word.isupper() else word.capitalize() for word in text.split())
+    return text
+
+
+def normalize_list(text: str | None, /) -> list[str]:
+    working = _HTML_BREAK_RE.sub(",", text.strip())
+    working = re.sub(r"\s*(?:/|\+|;)\s*", ",", working)
+    working = re.sub(r"\s*,\s*", ",", working.strip())
+    return list(set(map(_normalize_scalar, working.split(","))))
+
+
+def unwrap_text(text: str | None, /) -> str:
+    text = _HTML_BREAK_RE.sub("\n", text or "").strip()
+    return re.sub(r"\s+", " ", text)
+
+
+def is_empty(text: str | None, /) -> bool:
+    return unwrap_text(text) == ""
+
+
+def as_object_type(text: str | None, /) -> str:
+    text = unwrap_text(text)
+    text = re.sub(r"[_-]+", " ", text.strip().lower())
+    if text.endswith(" name") and len(text.split()) > 1:
+        text = text[:-5].strip()
+    if text in {"name", "title"}:
+        return "object"
+    return text or "object"
+
+
+def is_location_type(text: str | None, /) -> bool:
+    object_type = as_object_type(text)
+    return any(token in object_type for token in _LOCATION_TOKENS)
+
+
+def _normalize_url(text: str | None, /) -> str:
+    text = unwrap_text(text).strip("[]()")
+    if text.startswith("www.") or not re.match(r"^[a-z]+://", text, re.IGNORECASE):
+        text = f"https://{text}"
+    parsed = urllib.parse.urlparse(text)
+    host = parsed.netloc.lower()
+    path = parsed.path or ""
+    query_pairs = urllib.parse.parse_qsl(parsed.query, keep_blank_values=False)
+    filtered_query = [
+        (key, val)
+        for key, val in query_pairs
+        if not key.lower().startswith("utm_") and "openai" not in key.lower() and "openai" not in val.lower()
+    ]
+    query = urllib.parse.urlencode(filtered_query)
+    rebuilt = urllib.parse.urlunparse(("https", host, path.rstrip("/"), "", query, ""))
+    return rebuilt.rstrip("/") if rebuilt.endswith("/") and path in {"", "/"} else rebuilt
+
+
+def collapse_markdown_link(text: str, collapse: MdLink, /) -> str:
+    text = unwrap_text(text).strip("[]()")
+    collapsed = _MARKDOWN_LINK_RE.sub(lambda match: match.group(collapse), text)
+    if collapse == MdLink.URL:
+        return _normalize_url(collapsed)
+    return collapsed
+
+
+def as_urls(text: str | None, /) -> list[str]:
+    text = unwrap_text(text)
+    urls = [match.group(0) for match in _URL_RE.finditer(text)]
+    urls.extend(match.group(2) for match in _MARKDOWN_LINK_RE.finditer(text))
+    return list(set(map(_normalize_url, urls)))
+
+
+def as_url(text: str | None, /) -> str | None:
+    urls = as_urls(text)
+    candidate = collapse_markdown_link(text, MdLink.URL)
+    if candidate in urls:
+        return candidate
+    return None
+
+
+def as_location(text: str | None, /) -> str:
+    return collapse_markdown_link(text, MdLink.LABEL)
+
+
+def as_json(text: str | None, /) -> dict[str, Any]:
+    text = _remove_code_block(text)
+    start, end = text.find("{"), text.rfind("}")
+    if start != -1 and end != -1 and start < end:
+        text = text[start : end + 1]
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError as exc:
+        return {}
+
+
+def maybe_question(text: str | None, /) -> str | None:
+    text = unwrap_text(text)
+    if "?" in text:
+        return text
+    if text.split()[0].lower() in _QUESTION_WORDS:
+        return text if text.endswith("?") else f"{text}?"
+    return None
+
+
+def as_canonical(candidate: str, canonicals: list[str]) -> str:
+    lowered = candidate.lower()
+    for canonical in canonicals:
+        if canonical.lower() == lowered:
+            return canonical
+    best_score = 0.0
+    best_value: str | None = None
+    for canonical in canonicals:
+        score = fuzz.ratio(candidate.lower(), canonical.lower())
+        if score > best_score:
+            best_score = score
+            best_value = canonical
+    if best_score >= 92:
+        return best_value
+    return candidate
