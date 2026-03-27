@@ -1043,6 +1043,15 @@ struct SettingsWindow: View {
                                     .fixedSize(horizontal: false, vertical: true)
                             }
                         }
+                        SettingsFieldRow(title: "Mock mode") {
+                            VStack(alignment: .leading, spacing: 6) {
+                                Toggle("Return stubbed Python results", isOn: $settings.mock)
+                                Text("Skips live model calls and writes minimal mock outputs when a task normally produces files.")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+                        }
                         SettingsFieldRow(title: "Python interpreter") {
                             VStack(alignment: .leading, spacing: 8) {
                                 HStack {

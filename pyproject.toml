@@ -29,4 +29,4 @@ dependencies = [
 ]
 
 [project.scripts]
-werkzeugkasten = "werkzeugkasten:"
+werkzeugkasten = "werkzeugkasten.__main__:main"

@@ -3,17 +3,6 @@ import Foundation
 @MainActor
 public final class EngineRunner {
     private final class BundleMarker {}
-    private static let moduleFileNames = [
-        "__init__.py",
-        "__main__.py",
-        "cli.py",
-        "codex_log.py",
-        "core.py",
-        "notion_export.py",
-        "research_list.py",
-        "research_table.py",
-        "summarize.py",
-    ]
 
     private let resourceURLOverride: URL?
 
@@ -30,7 +19,7 @@ public final class EngineRunner {
         payload: [String: Any],
         configuration: EngineConfiguration
     ) throws -> PreparedCommand {
-        guard !command.requiresAPIKey || !configuration.apiKey.isEmpty else {
+        guard configuration.mock || !command.requiresAPIKey || !configuration.apiKey.isEmpty else {
             throw EngineError.missingAPIKey
         }
 
@@ -45,43 +34,30 @@ public final class EngineRunner {
             throw EngineError.invalidPayload("Invalid JSON payload.")
         }
 
-        let stdinData = try JSONSerialization.data(withJSONObject: payload, options: [])
+        let requestObject: [String: Any] = [
+            "action": command.rawValue,
+            "payload": payload,
+            "mock": configuration.mock,
+            "config": [
+                "api_key": configuration.apiKey,
+                "jina_api_key": configuration.jinaAPIKey,
+                "notion_token": configuration.notionToken,
+                "notion_parent_page": configuration.notionParentPage,
+                "open_meteo_api_key": configuration.openMeteoAPIKey,
+                "research_model": configuration.researchModel,
+                "summary_model": configuration.summaryModel,
+                "lookup_model": configuration.lookupModel,
+                "primary_language": configuration.primaryLanguage,
+            ],
+        ]
+        let stdinData = try JSONSerialization.data(withJSONObject: requestObject, options: [])
         var environment = ProcessInfo.processInfo.environment
         let existingPythonPath = environment["PYTHONPATH"].map { "\($0):" } ?? ""
         environment["PYTHONPATH"] = existingPythonPath + moduleRoot.path
-        if command.requiresAPIKey {
-            environment["WERKZEUGKASTEN_OPENAI_API_KEY"] = configuration.apiKey
-        } else {
-            environment.removeValue(forKey: "WERKZEUGKASTEN_OPENAI_API_KEY")
-        }
-        if configuration.jinaAPIKey.isEmpty {
-            environment.removeValue(forKey: "WERKZEUGKASTEN_JINA_API_KEY")
-        } else {
-            environment["WERKZEUGKASTEN_JINA_API_KEY"] = configuration.jinaAPIKey
-        }
-        if configuration.notionToken.isEmpty {
-            environment.removeValue(forKey: "WERKZEUGKASTEN_NOTION_API_TOKEN")
-        } else {
-            environment["WERKZEUGKASTEN_NOTION_API_TOKEN"] = configuration.notionToken
-        }
-        if configuration.notionParentPage.isEmpty {
-            environment.removeValue(forKey: "WERKZEUGKASTEN_NOTION_PARENT_PAGE")
-        } else {
-            environment["WERKZEUGKASTEN_NOTION_PARENT_PAGE"] = configuration.notionParentPage
-        }
-        if configuration.openMeteoAPIKey.isEmpty {
-            environment.removeValue(forKey: "WERKZEUGKASTEN_OPEN_METEO_API_KEY")
-        } else {
-            environment["WERKZEUGKASTEN_OPEN_METEO_API_KEY"] = configuration.openMeteoAPIKey
-        }
-        environment["WERKZEUGKASTEN_RESEARCH_MODEL"] = configuration.researchModel
-        environment["WERKZEUGKASTEN_SUMMARY_MODEL"] = configuration.summaryModel
-        environment["WERKZEUGKASTEN_LOOKUP_MODEL"] = configuration.lookupModel
-        environment["WERKZEUGKASTEN_PRIMARY_LANGUAGE"] = configuration.primaryLanguage
 
         return PreparedCommand(
             executableURL: interpreterURL,
-            arguments: ["-m", "werkzeugkasten", command.rawValue],
+            arguments: ["-m", "werkzeugkasten", "run"],
             environment: environment,
             workingDirectoryURL: moduleRoot,
             stdinData: stdinData
@@ -127,7 +103,8 @@ public final class EngineRunner {
                         throw EngineError.processFailure(stderrText.isEmpty ? "Python command failed." : stderrText)
                     }
 
-                    continuation.resume(returning: try Self.decode(Response.self, from: stdoutData))
+                    let envelope = try Self.decode(EngineResponseEnvelope<Response>.self, from: stdoutData)
+                    continuation.resume(returning: envelope.data)
                 } catch {
                     continuation.resume(throwing: error)
                 }
@@ -154,31 +131,42 @@ public final class EngineRunner {
             return resourceURL
         }
 
-        guard FileManager.default.fileExists(atPath: resourceURL.appendingPathComponent("__main__.py").path) else {
+        let stagedRoot = try stageFlatBundleResources(from: resourceURL)
+        guard FileManager.default.fileExists(
+            atPath: stagedRoot.appendingPathComponent("src/werkzeugkasten/__main__.py").path
+        ) else {
             throw EngineError.missingResources
         }
-
-        return try stageFlatBundleResources(from: resourceURL)
+        return stagedRoot
     }
 
     private func stageFlatBundleResources(from resourceURL: URL) throws -> URL {
         let fileManager = FileManager.default
         let root = fileManager.temporaryDirectory
-            .appendingPathComponent("werkzeugkasten-engine-bundle", isDirectory: true)
+            .appendingPathComponent("werkzeugkasten-engine-bundle-\(UUID().uuidString)", isDirectory: true)
 
         let packageDirectory = root.appendingPathComponent("src/werkzeugkasten", isDirectory: true)
         try fileManager.createDirectory(at: packageDirectory, withIntermediateDirectories: true)
 
-        for name in Self.moduleFileNames {
-            let sourceURL = resourceURL.appendingPathComponent(name)
-            let destinationURL = packageDirectory.appendingPathComponent(name)
-            guard fileManager.fileExists(atPath: sourceURL.path) else {
-                throw EngineError.missingResources
-            }
+        guard let relativePaths = fileManager.subpaths(atPath: resourceURL.path) else {
+            throw EngineError.missingResources
+        }
+
+        for relativePath in relativePaths where relativePath.hasSuffix(".py") {
+            let sourceURL = resourceURL.appendingPathComponent(relativePath)
+            let destinationURL = packageDirectory.appendingPathComponent(relativePath)
+            try fileManager.createDirectory(
+                at: destinationURL.deletingLastPathComponent(),
+                withIntermediateDirectories: true
+            )
             if fileManager.fileExists(atPath: destinationURL.path) {
                 try fileManager.removeItem(at: destinationURL)
             }
             try fileManager.copyItem(at: sourceURL, to: destinationURL)
+        }
+
+        guard fileManager.fileExists(atPath: packageDirectory.appendingPathComponent("__main__.py").path) else {
+            throw EngineError.missingResources
         }
 
         return root

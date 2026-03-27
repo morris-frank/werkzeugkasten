@@ -6,11 +6,11 @@ _PREFIX = "WERKZEUGKASTEN_"
 _UUID_RE = re.compile(r"([0-9a-fA-F]{32}|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})")
 
 
-def _environ(*keys: list[str], default: str | None = None, raise_on_missing: bool = False) -> str | None:
-    expanded = [_PREFIX + k for k in keys] + keys
+def _environ(*ks: str, default: str | None = None, raise_on_missing: bool = False) -> str | None:
+    expanded = [_PREFIX + k for k in ks] + list(ks)
     if (value := next((os.environ[e].strip() for e in expanded if e in os.environ), default)) is None:
         if raise_on_missing:
-            raise RuntimeError(f"Environment variable {next(expanded)} is not set.")
+            raise RuntimeError(f"Environment variable {expanded[0]} is not set.")
     return value
 
 

@@ -1,13 +1,53 @@
 from __future__ import annotations
 
-import json
+import os
 import sys
 from dataclasses import asdict, is_dataclass
+from functools import partial
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
-from .actions import inspect_table, prettify_codex_log, research_table, summarize
-from .internal import get_content, read_json_stdin, text_to_source
+import pandas as pd
+import typer
+import uvicorn
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel, Field
+
+Service = Literal[
+    "research-list",
+    "inspect-table",
+    "research-table",
+    "summarize-files",
+    "summarize-text",
+    "prettify-codex-log",
+]
+
+
+class EngineConfig(BaseModel):
+    api_key: str = ""
+    jina_api_key: str = ""
+    notion_token: str = ""
+    notion_parent_page: str = ""
+    open_meteo_api_key: str = ""
+    research_model: str = "gpt-5.4"
+    summary_model: str = "gpt-5.4"
+    lookup_model: str = "gpt-5.4"
+    primary_language: str = "German"
+
+
+class EngineRequest(BaseModel):
+    service: Service
+    payload: dict[str, Any] = Field(default_factory=dict)
+    config: EngineConfig = Field(default_factory=EngineConfig)
+    mock: bool = False
+
+
+class EngineResponse(BaseModel):
+    data: dict[str, Any]
+
+
+api = FastAPI(title="werkzeugkasten")
+cli = typer.Typer(add_completion=False, pretty_exceptions_enable=False)
 
 
 def _as_jsonable(value: Any) -> Any:
@@ -22,80 +62,119 @@ def _as_jsonable(value: Any) -> Any:
     return value
 
 
-def _read_command_payload() -> tuple[str, dict[str, Any]]:
-    if len(sys.argv) < 2:
-        raise ValueError("Expected a command.")
-    return sys.argv[1], read_json_stdin()
+def _read_request() -> EngineRequest:
+    payload = sys.stdin.read()
+    if not payload.strip():
+        raise ValueError("Expected JSON payload on stdin.")
+    return EngineRequest.model_validate_json(payload)
 
 
-def _summarize_text(payload: dict[str, Any]) -> dict[str, str]:
-    text = str(payload.get("text", "")).strip()
-    return {"summary_markdown": summarize([text_to_source(text)])}
+def _apply_config(config: EngineConfig) -> None:
+    values = {
+        "WERKZEUGKASTEN_OPENAI_API_KEY": config.api_key,
+        "WERKZEUGKASTEN_JINA_API_KEY": config.jina_api_key,
+        "WERKZEUGKASTEN_NOTION_API_TOKEN": config.notion_token,
+        "WERKZEUGKASTEN_NOTION_PARENT_PAGE": config.notion_parent_page,
+        "WERKZEUGKASTEN_OPEN_METEO_API_KEY": config.open_meteo_api_key,
+        "WERKZEUGKASTEN_RESEARCH_MODEL": config.research_model,
+        "WERKZEUGKASTEN_SUMMARY_MODEL": config.summary_model,
+        "WERKZEUGKASTEN_LOOKUP_MODEL": config.lookup_model,
+        "WERKZEUGKASTEN_PRIMARY_LANGUAGE": config.primary_language,
+    }
+    for key, value in values.items():
+        if value:
+            os.environ[key] = value
+        else:
+            os.environ.pop(key, None)
 
 
-def _sidecar_path(path: Path, suffix: str) -> Path:
-    return path.with_name(path.name + suffix)
+def _research_list(payload: dict[str, Any]) -> dict[str, Any]:
+    from .service import research_table
 
+    items = [str(item).strip() for item in payload.get("items", []) if str(item).strip()]
+    question = str(payload.get("question", "")).strip()
+    if not items:
+        raise ValueError("Expected at least one item.")
+    if not question:
+        raise ValueError("Expected a question.")
 
-def _summarize_files(payload: dict[str, Any]) -> dict[str, list[dict[str, str]]]:
-    files: list[dict[str, str]] = []
-    failures: list[dict[str, str]] = []
-    for raw_path in payload.get("paths", []):
-        path = Path(raw_path).expanduser()
-        try:
-            contents = get_content([path])
-            summary = summarize([path])
-            contents_path = _sidecar_path(path, ".contents.md")
-            summary_path = _sidecar_path(path, ".summary.md")
-            contents_path.write_text(contents, encoding="utf-8")
-            summary_path.write_text(summary, encoding="utf-8")
-            files.append(
-                {
-                    "input_path": str(path),
-                    "contents_path": str(contents_path),
-                    "summary_path": str(summary_path),
-                }
-            )
-        except Exception as exc:
-            failures.append({"input_path": str(path), "error": str(exc)})
-    return {"files": files, "failures": failures}
-
-
-def _inspect_table_cli(payload: dict[str, Any]) -> dict[str, object]:
-    return inspect_table(str(payload.get("raw_table_text", "")))
-
-
-def _research_table_cli(payload: dict[str, Any]) -> dict[str, object]:
     return research_table(
-        str(payload.get("raw_table_text", "")),
+        pd.DataFrame({"Item": items, question: [""] * len(items)}),
         include_sources=bool(payload.get("include_sources", False)),
-        include_source_raw=bool(payload.get("include_source_raw", False)),
+        summarize_sources=bool(payload.get("include_source_raw", False)),
         auto_tagging=bool(payload.get("auto_tagging", False)),
         nearest_neighbour=bool(payload.get("nearest_neighbour", False)),
         output_path=payload.get("output_path"),
     )
 
 
-def _prettify_codex_log_cli(payload: dict[str, Any]) -> dict[str, object]:
-    return _as_jsonable(prettify_codex_log(str(payload.get("path", ""))))
+def _inspect_table(payload: dict[str, Any]) -> dict[str, Any]:
+    from .service import inspect_table
+
+    return inspect_table(str(payload.get("raw_table_text", "")))
 
 
-def main() -> int:
-    command, payload = _read_command_payload()
+def _research_table(payload: dict[str, Any]) -> dict[str, Any]:
+    from .service import research_table
+
+    return research_table(
+        str(payload.get("raw_table_text", "")),
+        include_sources=bool(payload.get("include_sources", False)),
+        summarize_sources=bool(payload.get("include_source_raw", False)),
+        auto_tagging=bool(payload.get("auto_tagging", False)),
+        nearest_neighbour=bool(payload.get("nearest_neighbour", False)),
+        output_path=payload.get("output_path"),
+    )
+
+
+def _summarize(payload: dict[str, Any], key: str) -> dict[str, Any]:
+    from .service import summarize
+
+    return summarize(payload.get(key, ""))
+
+
+def _prettify_codex_log(payload: dict[str, Any]) -> dict[str, Any]:
+    from .service.codex_log import prettify_codex_log
+
+    return prettify_codex_log(payload)
+
+
+def _dispatch(request: EngineRequest) -> dict[str, Any]:
+    _apply_config(request.config)
     handlers = {
-        "inspect-table": _inspect_table_cli,
-        "research-table": _research_table_cli,
-        "summarize-files": _summarize_files,
-        "summarize-text": _summarize_text,
-        "prettify-codex-log": _prettify_codex_log_cli,
+        "research-list": _research_list,
+        "inspect-table": _inspect_table,
+        "research-table": _research_table,
+        "summarize-files": partial(_summarize, key="paths"),
+        "summarize-text": partial(_summarize, key="text"),
+        "prettify-codex-log": _prettify_codex_log,
     }
-    if command not in handlers:
-        raise ValueError(f"Unsupported command: {command}")
-    result = handlers[command](payload)
-    sys.stdout.write(json.dumps(_as_jsonable(result), ensure_ascii=False))
+    return _as_jsonable(handlers[request.service](request.payload))
+
+
+@api.post("/run", response_model=EngineResponse)
+def run_api(request: EngineRequest) -> EngineResponse:
+    try:
+        return EngineResponse(data=_dispatch(request))
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@cli.command()
+def run() -> None:
+    response = EngineResponse(data=_dispatch(_read_request()))
+    sys.stdout.write(response.model_dump_json())
     sys.stdout.write("\n")
-    return 0
+
+
+@cli.command()
+def serve(host: str = "127.0.0.1", port: int = 8000) -> None:
+    uvicorn.run(api, host=host, port=port)
+
+
+def main() -> None:
+    cli()
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    main()

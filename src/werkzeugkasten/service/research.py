@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-import os
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Callable, Iterable, TypeVar
+from typing import Any, Callable, Iterable, TypeVar
 
 from ..internal import choose_output_path
+from ..internal.env import research_model
 from ..internal.openai import query
 from ..internal.table import Table
 from ..internal.value import maybe_question
@@ -27,6 +27,9 @@ class ResearchResult:
     attributes: list[str]
     failures: list[str]
     started_at: datetime
+
+    def as_dict(self) -> dict[str, Any]:
+        return self.__dict__
 
     def to_markdown(self) -> str:
         lines = [
@@ -49,23 +52,6 @@ class ResearchResult:
         lines.extend(["", "## Failures", ""])
         lines.extend([f"- {failure}" for failure in self.failures] or ["- none"])
         return "\n".join(lines).rstrip() + "\n"
-
-
-@dataclass(frozen=True)
-class InspectTableResult:
-    sourceName: str
-    detectedFormat: str
-    headers: list[str]
-    keyHeader: str
-    rowCount: int
-    questionColumns: list[str]
-    attributeColumns: list[str]
-    exampleKey: str
-    objectType: str
-
-
-def _research_model() -> str:
-    return os.environ.get("WERKZEUGKASTEN_RESEARCH_MODEL", "gpt-5.4")
 
 
 def _number_of_tags(count: int) -> tuple[int, int]:
@@ -101,7 +87,7 @@ Return JSON only in this shape:
 Rows:
 {table.to_json(without={SOURCE_COLUMN, SOURCE_SUMMARY_COLUMN})}
 """
-    answer = query(prompt, model=_research_model())
+    answer = query(prompt, model=research_model)
     tags = answer.json.get("tags")
     assignments = answer.json.get("assignments")
     if not isinstance(tags, list) or not isinstance(assignments, dict):
@@ -139,7 +125,7 @@ Return JSON only in this shape:
 Rows:
 {table.to_json(without={SOURCE_COLUMN, SOURCE_SUMMARY_COLUMN})}
 """
-    answer = query(prompt, model=_research_model())
+    answer = query(prompt, model=research_model)
     neighbours = answer.json.get("neighbors")
     if not isinstance(neighbours, dict):
         return
@@ -206,21 +192,21 @@ def _split_by(items: Iterable[T], pred: Callable[[T], bool]) -> tuple[list[T], l
 
 def inspect_table(
     table: Table | str,
-) -> dict[str, object]:
+) -> dict[str, Any]:
     table = Table(table)
     questions, attributes = _split_by(table.columns, lambda header: maybe_question(header) is not None)
 
-    return InspectTableResult(
-        sourceName=table.origin,
-        detectedFormat=table.detected_format,
-        headers=list(table.columns),
-        keyHeader=table.key_header,
-        rowCount=len(table),
-        questionColumns=list(questions),
-        attributeColumns=list(attributes),
-        exampleKey=table.rows()[0].get(table.key_header, ""),
-        objectType=table.object_type,
-    )
+    return {
+        "sourceName": table.origin,
+        "detectedFormat": table.detected_format,
+        "headers": list(table.columns),
+        "keyHeader": table.key_header,
+        "rowCount": len(table),
+        "questionColumns": list(questions),
+        "attributeColumns": list(attributes),
+        "exampleKey": table.rows()[0].get(table.key_header, ""),
+        "objectType": table.object_type,
+    }
 
 
 def research_table(
@@ -233,7 +219,7 @@ def research_table(
     nearest_neighbour: bool = False,
     output_dir: Path | None = None,
     output_path: str | Path | None = None,
-) -> dict[str, object]:
+) -> dict[str, Any]:
     table = Table(table)
     questions, attributes = _split_by(table.columns, lambda header: maybe_question(header) is not None)
 
@@ -287,4 +273,4 @@ def research_table(
         result.to_markdown(),
         encoding="utf-8",
     )
-    return result
+    return result.as_dict()

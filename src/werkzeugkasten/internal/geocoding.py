@@ -1,23 +1,19 @@
 from __future__ import annotations
 
 import json
-import os
 import re
 from typing import Any
 
 import requests
 
+from ..internal.env import open_meteo_api_key
+
 _OPEN_METEO_GEOCODING_API = "https://geocoding-api.open-meteo.com/v1/search"
 _LAT_LON_RE = re.compile(r"(?P<lat>[+-]?\d{1,2}(?:\.\d+)?)\s*[,;/]\s*(?P<lon>[+-]?\d{1,3}(?:\.\d+)?)")
 
 
-def _open_meteo_api_key() -> str:
-    return os.environ.get("WERKZEUGKASTEN_OPEN_METEO_API_KEY", "").strip() or os.environ.get("OPEN_METEO_API_KEY", "").strip()
-
-
 def _geocode_with_open_meteo(value: str, /) -> dict[str, Any] | None:
-    resolved_key = _open_meteo_api_key()
-    if not resolved_key:
+    if not open_meteo_api_key:
         return None
     response = requests.get(
         _OPEN_METEO_GEOCODING_API,
@@ -26,7 +22,7 @@ def _geocode_with_open_meteo(value: str, /) -> dict[str, Any] | None:
             "count": "1",
             "language": "en",
             "format": "json",
-            "apikey": resolved_key,
+            "apikey": open_meteo_api_key,
         },
         headers={"Accept": "application/json"},
         timeout=30,

@@ -1,22 +1,21 @@
 from __future__ import annotations
 
 import mimetypes
+import os
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from typing import Callable
+from typing import BinaryIO, Callable, Union
 from urllib.parse import urlparse
 from urllib.request import url2pathname
 
 import requests
 from markitdown import MarkItDown
 
-from src.werkzeugkasten.internal.env import jina_api_key
-
-from . import Source
+from ..internal.env import jina_api_key, n_threads, url_timeout
 from .cache import LocalCache
-from .env import n_threads, url_timeout
 
 _CONTENT_SEPARATOR = "\n\n"
+Source = Union[str, requests.Response, Path, BinaryIO]
 _DOCUMENT_CONTENT_TYPES = {
     "application/pdf",
     "application/msword",
@@ -52,7 +51,7 @@ def _maybe_web_content(s: Source) -> str | None:
 
     # 2. Check by content type
     try:
-        r = requests.head(url, allow_redirects=True, timeout=url_timeout)
+        r = requests.head(url, allow_redirects=True, timeout=_url_timeout())
         ct = r.headers.get("Content-Type")
         if ct:
             if ct.split(";", 1)[0].strip() not in _DOCUMENT_CONTENT_TYPES:
@@ -70,8 +69,8 @@ def _jina_fetch(url: str) -> str:
         "X-Retain-Images": "none",
         "X-Md-Link-Style": "referenced",
     }
-    if jina_api_key:
-        headers["Authorization"] = f"Bearer {jina_api_key}"
+    if api_key := jina_api_key:
+        headers["Authorization"] = f"Bearer {api_key}"
     response = requests.get(request_url, headers=headers, timeout=30)
     body = response.text.strip()
     return body

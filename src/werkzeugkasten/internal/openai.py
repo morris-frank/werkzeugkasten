@@ -4,10 +4,10 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
 
-from openai import OpenAI, Response
+from openai import OpenAI
+from openai.types.responses import Response
 
-from src.werkzeugkasten.internal.env import openai_api_key
-
+from ..internal.env import openai_api_key
 from .value import as_json
 
 

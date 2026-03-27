@@ -10,6 +10,7 @@ public struct EngineConfiguration: Equatable, Sendable {
     public var summaryModel: String
     public var lookupModel: String
     public var primaryLanguage: String
+    public var mock: Bool
     public var pythonInterpreterPath: String
 
     public init(
@@ -22,6 +23,7 @@ public struct EngineConfiguration: Equatable, Sendable {
         summaryModel: String,
         lookupModel: String,
         primaryLanguage: String,
+        mock: Bool,
         pythonInterpreterPath: String
     ) {
         self.apiKey = apiKey
@@ -33,6 +35,7 @@ public struct EngineConfiguration: Equatable, Sendable {
         self.summaryModel = summaryModel
         self.lookupModel = lookupModel
         self.primaryLanguage = primaryLanguage
+        self.mock = mock
         self.pythonInterpreterPath = pythonInterpreterPath
     }
 }
@@ -75,6 +78,10 @@ public struct PreparedCommand: Equatable, Sendable {
         self.workingDirectoryURL = workingDirectoryURL
         self.stdinData = stdinData
     }
+}
+
+public struct EngineResponseEnvelope<Response: Decodable>: Decodable {
+    public let data: Response
 }
 
 public struct ResearchListResponse: Decodable, Equatable, Sendable {

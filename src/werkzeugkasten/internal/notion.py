@@ -9,8 +9,7 @@ from typing import Any
 
 import requests
 
-from src.werkzeugkasten.internal import group_sources_by_domain
-
+from ..internal import group_sources_by_domain
 from .env import notion_api_token, notion_parent_page
 from .geocoding import geocode_place
 from .value import as_urls, is_location_type, normalize_list

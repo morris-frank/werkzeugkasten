@@ -13,6 +13,7 @@ public final class SettingsStore: ObservableObject {
     @Published public var summaryModel: String
     @Published public var lookupModel: String
     @Published public var primaryLanguage: String
+    @Published public var mock: Bool
     @Published public var pythonInterpreterPath: String
     @Published public private(set) var keychainIssue: String?
 
@@ -46,6 +47,7 @@ public final class SettingsStore: ObservableObject {
         self.summaryModel = Self.loadDefault("summaryModel", from: self.defaults) ?? WerkzeugkastenConstants.defaultSummaryModel
         self.lookupModel = Self.loadDefault("lookupModel", from: self.defaults) ?? WerkzeugkastenConstants.defaultLookupModel
         self.primaryLanguage = Self.loadDefault("primaryLanguage", from: self.defaults) ?? WerkzeugkastenConstants.defaultPrimaryLanguage
+        self.mock = self.defaults.bool(forKey: "mock")
         self.pythonInterpreterPath = Self.loadDefault("pythonInterpreterPath", from: self.defaults) ?? WerkzeugkastenConstants.defaultPythonInterpreterPath
         self.keychainIssue = nil
         var resolvedKeychainIssue: String?
@@ -143,6 +145,7 @@ public final class SettingsStore: ObservableObject {
             forKey: "lookupModel"
         )
         defaults.set(normalizedPrimaryLanguage.isEmpty ? WerkzeugkastenConstants.defaultPrimaryLanguage : normalizedPrimaryLanguage, forKey: "primaryLanguage")
+        defaults.set(mock, forKey: "mock")
         defaults.set(normalizedInterpreter.isEmpty ? WerkzeugkastenConstants.defaultPythonInterpreterPath : normalizedInterpreter, forKey: "pythonInterpreterPath")
         defaults.set(normalizedNotionParentPage, forKey: "notionParentPage")
 
@@ -187,6 +190,7 @@ public final class SettingsStore: ObservableObject {
         summaryModel = defaults.string(forKey: "summaryModel") ?? WerkzeugkastenConstants.defaultSummaryModel
         lookupModel = defaults.string(forKey: "lookupModel") ?? WerkzeugkastenConstants.defaultLookupModel
         primaryLanguage = defaults.string(forKey: "primaryLanguage") ?? WerkzeugkastenConstants.defaultPrimaryLanguage
+        mock = defaults.bool(forKey: "mock")
         pythonInterpreterPath = defaults.string(forKey: "pythonInterpreterPath") ?? WerkzeugkastenConstants.defaultPythonInterpreterPath
     }
 
@@ -209,6 +213,7 @@ public final class SettingsStore: ObservableObject {
             summaryModel: summaryModel.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? WerkzeugkastenConstants.defaultSummaryModel : summaryModel.trimmingCharacters(in: .whitespacesAndNewlines),
             lookupModel: lookupModel.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? WerkzeugkastenConstants.defaultLookupModel : lookupModel.trimmingCharacters(in: .whitespacesAndNewlines),
             primaryLanguage: resolvedLanguage,
+            mock: mock,
             pythonInterpreterPath: normalizedInterpreter
         )
     }

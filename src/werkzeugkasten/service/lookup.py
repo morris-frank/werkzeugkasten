@@ -4,8 +4,7 @@ import json
 import os
 from dataclasses import dataclass
 
-from src.werkzeugkasten.internal.env import lookup_model
-
+from ..internal.env import lookup_model
 from ..internal.openai import query
 from ..internal.value import as_object_type, maybe_question
 

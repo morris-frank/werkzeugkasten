@@ -130,29 +130,6 @@ def _parse_codex_log(path: str | Path) -> list[CompletedTurn]:
     return turns
 
 
-@dataclass(frozen=True)
-class CodexLogResult:
-    output_path: Path
-    completed_turn_count: int
-    image_count: int
-    tool_call_count: int
-    total_token_count: int | None
-
-
-def prettify_codex_log(path: str | Path) -> CodexLogResult:
-    log_path = Path(path).expanduser()
-    turns = _parse_codex_log(log_path)
-    output_path = log_path.with_name(log_path.name + ".transcript.md")
-    output_path.write_text(_render_transcript(turns), encoding="utf-8")
-    return CodexLogResult(
-        output_path=output_path,
-        completed_turn_count=len(turns),
-        image_count=sum(turn.image_count for turn in turns),
-        tool_call_count=sum(turn.tool_call_count for turn in turns),
-        total_token_count=sum(turn.total_tokens or 0 for turn in turns) or None,
-    )
-
-
 def _finalize_turn(turn: TurnState, completed_at: datetime | None) -> CompletedTurn:
     prompt = turn.prompt.strip() or "_No user prompt captured._"
     answer = turn.final_answer or turn.last_agent_message or "_No final answer captured._"
@@ -311,3 +288,17 @@ def _format_duration(seconds: int) -> str:
     if remainder and not hours:
         parts.append(f"{remainder}s")
     return " ".join(parts) if parts else "0s"
+
+
+def prettify_codex_log(path: str | Path) -> dict[str, Any]:
+    log_path = Path(path).expanduser()
+    turns = _parse_codex_log(log_path)
+    output_path = log_path.with_name(log_path.name + ".transcript.md")
+    output_path.write_text(_render_transcript(turns), encoding="utf-8")
+    return {
+        "output_path": output_path.as_posix(),
+        "completed_turn_count": len(turns),
+        "image_count": sum(turn.image_count for turn in turns),
+        "tool_call_count": sum(turn.tool_call_count for turn in turns),
+        "total_token_count": sum(turn.total_tokens or 0 for turn in turns) or None,
+    }
