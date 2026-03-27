@@ -14,9 +14,8 @@ public enum WerkzeugkastenConstants {
     }
     public static let defaultResearchModel = "gpt-5.4"
     public static let defaultSummaryModel = "gpt-5.4"
-    /// Comma-separated language names passed to the summarization prompt (default: English + German).
-    public static let defaultSummaryMirrorLanguages = "English,German"
-    public static let summaryMirrorLanguagesKey = "summaryMirrorLanguages"
+    public static let defaultLookupModel = "gpt-5.4"
+    public static let defaultPrimaryLanguage = "German"
 
     // Research List / Research Table run options — defaults and UserDefaults keys (persist across launches).
     public static let defaultResearchIncludeSources = false

@@ -50,9 +50,9 @@ public final class EngineRunner {
         let existingPythonPath = environment["PYTHONPATH"].map { "\($0):" } ?? ""
         environment["PYTHONPATH"] = existingPythonPath + moduleRoot.path
         if command.requiresAPIKey {
-            environment["OPENAI_API_KEY"] = configuration.apiKey
+            environment["WERKZEUGKASTEN_OPENAI_API_KEY"] = configuration.apiKey
         } else {
-            environment.removeValue(forKey: "OPENAI_API_KEY")
+            environment.removeValue(forKey: "WERKZEUGKASTEN_OPENAI_API_KEY")
         }
         if configuration.jinaAPIKey.isEmpty {
             environment.removeValue(forKey: "WERKZEUGKASTEN_JINA_API_KEY")
@@ -76,11 +76,12 @@ public final class EngineRunner {
         }
         environment["WERKZEUGKASTEN_RESEARCH_MODEL"] = configuration.researchModel
         environment["WERKZEUGKASTEN_SUMMARY_MODEL"] = configuration.summaryModel
-        environment["WERKZEUGKASTEN_SUMMARY_MIRROR_LANGUAGES"] = configuration.summaryMirrorLanguages
+        environment["WERKZEUGKASTEN_LOOKUP_MODEL"] = configuration.lookupModel
+        environment["WERKZEUGKASTEN_PRIMARY_LANGUAGE"] = configuration.primaryLanguage
 
         return PreparedCommand(
             executableURL: interpreterURL,
-            arguments: ["-m", "werkzeugkasten_engine", command.rawValue],
+            arguments: ["-m", "werkzeugkasten", command.rawValue],
             environment: environment,
             workingDirectoryURL: moduleRoot,
             stdinData: stdinData
@@ -148,7 +149,7 @@ public final class EngineRunner {
             throw EngineError.missingResources
         }
 
-        let packagedRoot = resourceURL.appendingPathComponent("werkzeugkasten_engine", isDirectory: true)
+        let packagedRoot = resourceURL.appendingPathComponent("src/werkzeugkasten", isDirectory: true)
         if FileManager.default.fileExists(atPath: packagedRoot.appendingPathComponent("__main__.py").path) {
             return resourceURL
         }
@@ -164,8 +165,8 @@ public final class EngineRunner {
         let fileManager = FileManager.default
         let root = fileManager.temporaryDirectory
             .appendingPathComponent("werkzeugkasten-engine-bundle", isDirectory: true)
-        let packageDirectory = root.appendingPathComponent("werkzeugkasten_engine", isDirectory: true)
 
+        let packageDirectory = root.appendingPathComponent("src/werkzeugkasten", isDirectory: true)
         try fileManager.createDirectory(at: packageDirectory, withIntermediateDirectories: true)
 
         for name in Self.moduleFileNames {

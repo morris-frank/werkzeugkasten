@@ -25,7 +25,7 @@ targets:
     platform: macOS
     sources:
       - path: WerkzeugkastenCore
-      - path: werkzeugkasten_engine
+      - path: src
         buildPhase: resources
         excludes:
           - __pycache__

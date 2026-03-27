@@ -1,12 +1,14 @@
 import io
 import json
-import os
 import re
+import urllib.parse
 from datetime import datetime
 from pathlib import Path
 from typing import Any, BinaryIO, Union
 
 import requests
+
+from .content import get_content
 
 _DEFAULT_OUTPUT_DIR = Path.home() / "Desktop" / "werkzeugkasten"
 _MAX_SLUG_LENGTH = 48
@@ -14,20 +16,20 @@ _MAX_SLUG_LENGTH = 48
 Source = Union[str, requests.Response, Path, BinaryIO]
 
 
-def primary_language() -> str:
-    return os.environ.get("WERKZEUGKASTEN_PRIMARY_LANGUAGE", "German")
-
-
-def n_threads() -> int:
-    return int(os.environ.get("WERKZEUGKASTEN_N_THREADS", os.environ.get("N_THREADS", "8")))
-
-
-def url_timeout() -> int:
-    return int(os.environ.get("WERKZEUGKASTEN_URL_TIMEOUT", os.environ.get("URL_TIMEOUT", "10")))
-
-
 def text_to_source(text: str) -> Source:
     return io.BytesIO(text.encode("utf-8"))
+
+
+def group_sources_by_domain(sources: list[Source], /) -> tuple[dict[str, list[Source]], list[Source]]:
+    grouped: dict[str, list[Source]] = {}
+    ungrouped: list[Source] = []
+    for source in sources:
+        domain = urllib.parse.urlparse(source).netloc
+        if domain:
+            grouped.setdefault(domain, []).append(source)
+        else:
+            ungrouped.append(source)
+    return grouped, ungrouped
 
 
 def _slugify(text: str) -> str:

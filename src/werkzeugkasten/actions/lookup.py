@@ -4,8 +4,10 @@ import json
 import os
 from dataclasses import dataclass
 
-from werkzeugkasten_engine.internal.openai import query
-from werkzeugkasten_engine.internal.value import as_object_type, maybe_question
+from src.werkzeugkasten.internal.env import lookup_model
+
+from ..internal.openai import query
+from ..internal.value import as_object_type, maybe_question
 
 
 @dataclass(frozen=True)
@@ -14,10 +16,6 @@ class LookupAnswer:
     text: str
     sources: list[str]
     error: str | None = None
-
-
-def _lookup_model() -> str:
-    return os.environ.get("WERKZEUGKASTEN_LOOKUP_MODEL", "gpt-5.4")
 
 
 def _prompt_make_explicit_question(header: str, key: str, object_type: str) -> str:
@@ -80,7 +78,7 @@ def lookup_row(
 ) -> LookupAnswer:
     key = row.get(key_header, "").strip() or "[blank]"
 
-    answer = query(_prompt_lookup(key_header, key, row, missing_columns, question_columns), model=_lookup_model())
+    answer = query(_prompt_lookup(key_header, key, row, missing_columns, question_columns), model=lookup_model)
 
     try:
         data = answer.json

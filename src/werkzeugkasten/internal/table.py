@@ -10,7 +10,7 @@ from typing import Any, Iterator
 import markdown
 import pandas as pd
 
-from werkzeugkasten_engine.internal.value import as_canonical, as_object_type, as_url, as_urls, is_empty, normalize_list, str_contains
+from .value import as_canonical, as_object_type, as_url, as_urls, is_empty, normalize_list, str_contains
 
 
 class Policy(Enum):

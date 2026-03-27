@@ -8,8 +8,8 @@ public struct EngineConfiguration: Equatable, Sendable {
     public var openMeteoAPIKey: String
     public var researchModel: String
     public var summaryModel: String
-    /// Comma-separated language names (e.g. `English,German`) for matching the summary language to the source.
-    public var summaryMirrorLanguages: String
+    public var lookupModel: String
+    public var primaryLanguage: String
     public var pythonInterpreterPath: String
 
     public init(
@@ -20,7 +20,8 @@ public struct EngineConfiguration: Equatable, Sendable {
         openMeteoAPIKey: String,
         researchModel: String,
         summaryModel: String,
-        summaryMirrorLanguages: String,
+        lookupModel: String,
+        primaryLanguage: String,
         pythonInterpreterPath: String
     ) {
         self.apiKey = apiKey
@@ -30,7 +31,8 @@ public struct EngineConfiguration: Equatable, Sendable {
         self.openMeteoAPIKey = openMeteoAPIKey
         self.researchModel = researchModel
         self.summaryModel = summaryModel
-        self.summaryMirrorLanguages = summaryMirrorLanguages
+        self.lookupModel = lookupModel
+        self.primaryLanguage = primaryLanguage
         self.pythonInterpreterPath = pythonInterpreterPath
     }
 }

@@ -1,26 +1,21 @@
 from __future__ import annotations
 
-import os
 import sqlite3
 from pathlib import Path
 from typing import Any
 from urllib.parse import unquote, urlsplit, urlunsplit
 
-
-def _cache_location() -> Path:
-    configured = os.environ.get("WERKZEUGKASTEN_CACHE_LOCATION", "") or "~/.cache/werkzeugkasten/content_cache.sqlite3"
-    return Path(configured).expanduser()
+from .env import cache_location
 
 
 class LocalCache:
     def __init__(self):
-        self.db_path = _cache_location()
-        with sqlite3.connect(self.db_path) as conn:
+        with sqlite3.connect(cache_location) as conn:
             conn.execute(f"CREATE TABLE IF NOT EXISTS content (k TEXT PRIMARY KEY, v TEXT)")
 
     def __getitem__(self, k: Any, /) -> str | None:
         if not (key := self._cache_key(k)) is None:
-            with sqlite3.connect(self.db_path) as conn:
+            with sqlite3.connect(cache_location) as conn:
                 result = conn.execute(f"SELECT v FROM content WHERE k = ?", (key,)).fetchone()
                 if result is None:
                     return None
@@ -29,7 +24,7 @@ class LocalCache:
 
     def __setitem__(self, k: Any, v: str, /):
         if not (key := self._cache_key(k)) is None:
-            with sqlite3.connect(self.db_path) as conn:
+            with sqlite3.connect(cache_location) as conn:
                 conn.execute(f"INSERT OR REPLACE INTO content (k, v) VALUES (?, ?)", (key, v))
 
     def _cache_key(self, k: Any, /) -> str | None:

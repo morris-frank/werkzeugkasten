@@ -6,12 +6,12 @@ from datetime import datetime
 from pathlib import Path
 from typing import Callable, Iterable, TypeVar
 
-from werkzeugkasten_engine.actions import summarize
-from werkzeugkasten_engine.actions.lookup import lookup_row
-from werkzeugkasten_engine.internal import choose_output_path, split_by
-from werkzeugkasten_engine.internal.openai import query
-from werkzeugkasten_engine.internal.table import Table
-from werkzeugkasten_engine.internal.value import maybe_question
+from ..internal import choose_output_path
+from ..internal.openai import query
+from ..internal.table import Table
+from ..internal.value import maybe_question
+from .lookup import lookup_row
+from .summarize import summarize
 
 SOURCE_COLUMN = "Sources"
 SOURCE_SUMMARY_COLUMN = "Sources[RAW]"

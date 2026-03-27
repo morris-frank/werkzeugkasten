@@ -1,0 +1,32 @@
+[project]
+name = "werkzeugkasten"
+version = "0.1.0-alpha.1"
+requires-python = ">=3.11"
+dependencies = [
+  "azure-ai-documentintelligence",
+  "azure-identity",
+  "fastapi",
+  "lxml",
+  "mammoth",
+  "markdown",
+  "markitdown",
+  "olefile",
+  "openai",
+  "openpyxl",
+  "pandas",
+  "pdfminer.six",
+  "pdfplumber",
+  "pydantic",
+  "pydub",
+  "python-pptx",
+  "rapidfuzz",
+  "requests",
+  "SpeechRecognition",
+  "typer",
+  "uvicorn[standard]",
+  "xlrd",
+  "youtube-transcript-api",
+]
+
+[project.scripts]
+werkzeugkasten = "werkzeugkasten:"

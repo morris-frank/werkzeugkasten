@@ -6,11 +6,8 @@ from dataclasses import asdict, is_dataclass
 from pathlib import Path
 from typing import Any
 
-from werkzeugkasten_engine.actions.codex_log import prettify_codex_log
-from werkzeugkasten_engine.actions.research import inspect_table, research_table
-from werkzeugkasten_engine.actions.summarize import summarize
-from werkzeugkasten_engine.internal import read_json_stdin, text_to_source
-from werkzeugkasten_engine.internal.content import get_content
+from .actions import inspect_table, prettify_codex_log, research_table, summarize
+from .internal import get_content, read_json_stdin, text_to_source
 
 
 def _as_jsonable(value: Any) -> Any:

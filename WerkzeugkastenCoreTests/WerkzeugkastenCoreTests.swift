@@ -30,7 +30,7 @@ final class WerkzeugkastenCoreTests: XCTestCase {
     func testPreparedCommandInjectsEnvironment() throws {
         let temp = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         try FileManager.default.createDirectory(at: temp, withIntermediateDirectories: true)
-        let packageDirectory = temp.appendingPathComponent("werkzeugkasten_engine")
+        let packageDirectory = temp.appendingPathComponent("src/werkzeugkasten")
         try FileManager.default.createDirectory(at: packageDirectory, withIntermediateDirectories: true)
         try "print('ok')".write(to: packageDirectory.appendingPathComponent("__main__.py"), atomically: true, encoding: .utf8)
 
@@ -42,7 +42,8 @@ final class WerkzeugkastenCoreTests: XCTestCase {
             openMeteoAPIKey: "openmeteo-key",
             researchModel: "research-model",
             summaryModel: "summary-model",
-            summaryMirrorLanguages: "English,French",
+            lookupModel: "lookup-model",
+            primaryLanguage: "French",
             pythonInterpreterPath: "/bin/echo"
         )
 
@@ -52,15 +53,16 @@ final class WerkzeugkastenCoreTests: XCTestCase {
             configuration: configuration
         )
 
-        XCTAssertEqual(prepared.arguments, ["-m", "werkzeugkasten_engine", "summarize-text"])
-        XCTAssertEqual(prepared.environment["OPENAI_API_KEY"], "key")
+        XCTAssertEqual(prepared.arguments, ["-m", "werkzeugkasten", "summarize-text"])
+        XCTAssertEqual(prepared.environment["WERKZEUGKASTEN_OPENAI_API_KEY"], "key")
         XCTAssertEqual(prepared.environment["WERKZEUGKASTEN_JINA_API_KEY"], "jina-key")
         XCTAssertEqual(prepared.environment["WERKZEUGKASTEN_NOTION_API_TOKEN"], "notion-token")
         XCTAssertEqual(prepared.environment["WERKZEUGKASTEN_NOTION_PARENT_PAGE"], "parent-page")
         XCTAssertEqual(prepared.environment["WERKZEUGKASTEN_OPEN_METEO_API_KEY"], "openmeteo-key")
         XCTAssertEqual(prepared.environment["WERKZEUGKASTEN_RESEARCH_MODEL"], "research-model")
         XCTAssertEqual(prepared.environment["WERKZEUGKASTEN_SUMMARY_MODEL"], "summary-model")
-        XCTAssertEqual(prepared.environment["WERKZEUGKASTEN_SUMMARY_MIRROR_LANGUAGES"], "English,French")
+        XCTAssertEqual(prepared.environment["WERKZEUGKASTEN_LOOKUP_MODEL"], "lookup-model")
+        XCTAssertEqual(prepared.environment["WERKZEUGKASTEN_PRIMARY_LANGUAGE"], "French")
         XCTAssertEqual(prepared.workingDirectoryURL, temp)
     }
 
@@ -68,7 +70,7 @@ final class WerkzeugkastenCoreTests: XCTestCase {
     func testPreparedCommandSkipsAPIKeyForPrettifyCodexLog() throws {
         let temp = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         try FileManager.default.createDirectory(at: temp, withIntermediateDirectories: true)
-        let packageDirectory = temp.appendingPathComponent("werkzeugkasten_engine")
+        let packageDirectory = temp.appendingPathComponent("src/werkzeugkasten")
         try FileManager.default.createDirectory(at: packageDirectory, withIntermediateDirectories: true)
         try "print('ok')".write(to: packageDirectory.appendingPathComponent("__main__.py"), atomically: true, encoding: .utf8)
 
@@ -80,7 +82,8 @@ final class WerkzeugkastenCoreTests: XCTestCase {
             openMeteoAPIKey: "",
             researchModel: "research-model",
             summaryModel: "summary-model",
-            summaryMirrorLanguages: "English,German",
+            lookupModel: "lookup-model",
+            primaryLanguage: "French",
             pythonInterpreterPath: "/bin/echo"
         )
 
@@ -90,8 +93,8 @@ final class WerkzeugkastenCoreTests: XCTestCase {
             configuration: configuration
         )
 
-        XCTAssertEqual(prepared.arguments, ["-m", "werkzeugkasten_engine", "prettify-codex-log"])
-        XCTAssertNil(prepared.environment["OPENAI_API_KEY"])
+        XCTAssertEqual(prepared.arguments, ["-m", "werkzeugkasten", "prettify-codex-log"])
+        XCTAssertNil(prepared.environment["WERKZEUGKASTEN_OPENAI_API_KEY"])
     }
 
     func testDecodeResponse() throws {
@@ -117,7 +120,8 @@ final class WerkzeugkastenCoreTests: XCTestCase {
             openMeteoAPIKey: "",
             researchModel: "research-model",
             summaryModel: "summary-model",
-            summaryMirrorLanguages: "English,German",
+            lookupModel: "lookup-model",
+            primaryLanguage: "French",
             pythonInterpreterPath: "/bin/echo"
         )
 
@@ -130,7 +134,7 @@ final class WerkzeugkastenCoreTests: XCTestCase {
         XCTAssertTrue(
             FileManager.default.fileExists(
                 atPath: prepared.workingDirectoryURL!
-                    .appendingPathComponent("werkzeugkasten_engine/__main__.py")
+                    .appendingPathComponent("werkzeugkasten/src/__main__.py")
                     .path
             )
         )
@@ -169,7 +173,8 @@ final class WerkzeugkastenCoreTests: XCTestCase {
         store.notionParentPage = "parent-id"
         store.researchModel = "research"
         store.summaryModel = "summary"
-        store.summaryMirrorLanguages = "English,Spanish"
+        store.lookupModel = "lookup-model"
+        store.primaryLanguage = "French"
         store.pythonInterpreterPath = "/bin/echo"
         try store.save()
 
@@ -191,7 +196,8 @@ final class WerkzeugkastenCoreTests: XCTestCase {
         XCTAssertEqual(reloaded.notionParentPage, "parent-id")
         XCTAssertEqual(reloaded.researchModel, "research")
         XCTAssertEqual(reloaded.summaryModel, "summary")
-        XCTAssertEqual(reloaded.summaryMirrorLanguages, "English,Spanish")
+        XCTAssertEqual(reloaded.lookupModel, "lookup-model")
+        XCTAssertEqual(reloaded.primaryLanguage, "French")
         XCTAssertEqual(reloaded.pythonInterpreterPath, "/bin/echo")
 
         try? KeychainStore.delete(service: service, account: openAIAccount)

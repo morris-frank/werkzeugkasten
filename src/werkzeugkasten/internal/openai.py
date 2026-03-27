@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-import os
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
 
 from openai import OpenAI, Response
+
+from src.werkzeugkasten.internal.env import openai_api_key
 
 from .value import as_json
 
@@ -62,13 +63,6 @@ def _web_search_tool() -> dict[str, Any]:
     }
 
 
-def _openai_client(api_key: str | None = None) -> OpenAI:
-    resolved_key = (api_key or os.environ.get("OPENAI_API_KEY", "")).strip()
-    if not resolved_key:
-        raise RuntimeError("OPENAI_API_KEY is not set.")
-    return OpenAI(api_key=resolved_key)
-
-
 def _reasoning_for_model(model: str, *, decreased_effort: bool = False) -> dict[str, Any] | None:
     normalized = model.strip().lower()
     if normalized.startswith("gpt-5"):
@@ -85,7 +79,7 @@ def query(
     include_web_sources: bool = False,
     decreased_effort: bool = False,
 ) -> QueryAnswer:
-    response = _openai_client().responses.create(
+    response = OpenAI(api_key=openai_api_key).responses.create(
         input=prompt_text,
         model=model,
         reasoning=_reasoning_for_model(model, decreased_effort=decreased_effort),

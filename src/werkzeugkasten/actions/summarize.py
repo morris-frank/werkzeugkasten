@@ -4,9 +4,11 @@ import os
 import tempfile
 from pathlib import Path
 
-from werkzeugkasten_engine.internal import Source, primary_language
-from werkzeugkasten_engine.internal.content import get_content
-from werkzeugkasten_engine.internal.openai import query
+from src.werkzeugkasten.internal import Source
+
+from ..internal.content import get_content
+from ..internal.env import primary_language
+from ..internal.openai import query
 
 MAX_SUMMARY_INPUT = 120_000
 DOWNLOADED_SOURCE_DIR = Path(tempfile.gettempdir()) / "werkzeugkasten-source-downloads"
@@ -17,10 +19,9 @@ def _summary_model() -> str:
 
 
 def _prompt_languages_instruction() -> str:
-    lang = primary_language()
-    if lang == "English":
+    if primary_language == "English":
         return f"Always produce the summary in English. Translate to English if necessary."
-    return f"If the text is in {lang}, produce the summary in that same language. Otherwise, produce the summary in English."
+    return f"If the text is in {primary_language}, produce the summary in that same language. Otherwise, produce the summary in English."
 
 
 def _prompt_summarize(content: str, /, filename: str | None = None, timestamp: str | None = None) -> str:
@@ -58,18 +59,6 @@ def _truncate_for_upload(prompt: str, limit: int = MAX_SUMMARY_INPUT) -> str:
     if len(prompt) <= limit:
         return prompt
     return prompt[:limit] + "\n\n[Truncated before upload]"
-
-
-def _group_sources_by_domain(sources: list[Source], /) -> tuple[dict[str, list[Source]], list[Source]]:
-    grouped: dict[str, list[Source]] = {}
-    ungrouped: list[Source] = []
-    for source in sources:
-        domain = urllib.parse.urlparse(source).netloc
-        if domain:
-            grouped.setdefault(domain, []).append(source)
-        else:
-            ungrouped.append(source)
-    return grouped, ungrouped
 
 
 def summarize(sources: list[Source], /) -> str:

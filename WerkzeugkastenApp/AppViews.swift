@@ -1027,12 +1027,17 @@ struct SettingsWindow: View {
                                 .textFieldStyle(.roundedBorder)
                                 .controlSize(.large)
                         }
-                        SettingsFieldRow(title: "Summary mirror languages") {
+                        SettingsFieldRow(title: "Lookup model") {
+                            TextField("gpt-5.4", text: $settings.lookupModel)
+                                .textFieldStyle(.roundedBorder)
+                                .controlSize(.large)
+                        }
+                        SettingsFieldRow(title: "Primary language") {
                             VStack(alignment: .leading, spacing: 6) {
-                                TextField("English, German", text: $settings.summaryMirrorLanguages)
+                                TextField("German", text: $settings.primaryLanguage)
                                     .textFieldStyle(.roundedBorder)
                                     .controlSize(.large)
-                                Text("Comma-separated language names. The summary matches the source when it is in one of these languages; otherwise it uses English.")
+                                Text("The summary matches the source when it is in this language; otherwise it uses English.")
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
                                     .fixedSize(horizontal: false, vertical: true)
