@@ -39,29 +39,32 @@ _DOCUMENT_CONTENT_TYPES = {
 
 def _maybe_web_content(s: Source) -> str | None:
     if not isinstance(s, str):
-        return False
+        return None
     url = s.strip()
     if not url.startswith(("http:", "https:")):
-        return False
+        return None
 
     # 1. Check by extension
     path = url2pathname(urlparse(url).path)
     extension = Path(path).suffix.lower()
     content_type, _ = mimetypes.guess_type(extension)
     if content_type in _DOCUMENT_CONTENT_TYPES:
-        return False
+        return None
 
     if url_timeout() <= 0:
-        return True
+        return url
 
     # 2. Check by content type
     try:
         r = requests.head(url, allow_redirects=True, timeout=url_timeout())
         ct = r.headers.get("Content-Type")
         if ct:
-            return ct.split(";", 1)[0].strip() not in _DOCUMENT_CONTENT_TYPES
+            if ct.split(";", 1)[0].strip() not in _DOCUMENT_CONTENT_TYPES:
+                return url
+            return None
     except requests.RequestException:
-        return True
+        return url
+    return url
 
 
 def _jina_fetch(url: str) -> str:
@@ -101,6 +104,8 @@ def _reference_converter(as_markdown: bool) -> Callable[[Source], str]:
 
 
 def get_content(sources: list[Source], /, *, as_markdown: bool = True) -> str:
+    if not sources:
+        return ""
     converter = _reference_converter(as_markdown)
     with ThreadPoolExecutor(max_workers=min(n_threads(), len(sources))) as executor:
         contents = list(executor.map(converter, sources))

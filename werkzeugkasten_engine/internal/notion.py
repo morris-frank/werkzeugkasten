@@ -4,15 +4,14 @@ import copy
 import json
 import os
 import re
+import urllib.parse
 from dataclasses import dataclass
 from typing import Any
 
 import requests
 
-from . import io_ops
-from .core import LATEST_NOTION_VERSION, notion_api_token, notion_parent_page, open_meteo_api_key
-from .field_types import is_location_header
-from .geocoding import geocode_place, parse_place
+from .geocoding import geocode_place
+from .value import as_urls, is_location_type
 
 
 def _notion_api_token() -> str:
@@ -60,7 +59,7 @@ def notion_headers(token: str) -> dict[str, str]:
 
 
 def notion_request(method: str, path: str, body: dict[str, Any] | None = None) -> dict[str, Any]:
-    token = notion_api_token().strip()
+    token = _notion_api_token().strip()
     if not token:
         raise ValueError("Set a Notion API Token in Settings to export to Notion.")
     url = f"{NOTION_API_BASE}{path}"
@@ -89,7 +88,7 @@ def notion_request(method: str, path: str, body: dict[str, Any] | None = None) -
 
 
 def page_parent_id() -> str:
-    configured = notion_parent_page().strip()
+    configured = _notion_parent_page().strip()
     if not configured:
         raise ValueError("Set a Notion Parent Page ID or URL in Settings to export to Notion.")
     return normalize_notion_id(configured)
@@ -136,7 +135,7 @@ def iter_row_child_documents(
 ) -> list[tuple[str, str]]:
     segments: list[tuple[str, str]] = []
     if sources_column and row.get(sources_column, "").strip():
-        source_urls = extract_source_urls(row[sources_column].replace("\n", ","))
+        source_urls = as_urls(row[sources_column])
         raw_map = parse_source_raw_map(row.get(source_raw_column, "")) if source_raw_column else {}
         for _domain, urls in group_urls_by_domain(source_urls).items():
             for url in urls:
@@ -317,10 +316,8 @@ def infer_column_specs(
     list_like_columns: set[str],
     url_like_columns: set[str],
     long_text_columns: set[str],
-    open_meteo_key: str,
 ) -> list[NotionColumnSpec]:
     specs: list[NotionColumnSpec] = []
-    geocode_cache: dict[str, dict[str, Any] | None] = {}
     for header in headers:
         if header == key_header:
             specs.append(NotionColumnSpec(name=header, kind="title", property_definition={"title": {}}))
@@ -339,14 +336,9 @@ def infer_column_specs(
         if not values:
             specs.append(NotionColumnSpec(name=header, kind="rich_text", property_definition={"rich_text": {}}))
             continue
-        if is_location_column(header):
-            if not open_meteo_key:
-                specs.append(NotionColumnSpec(name=header, kind="rich_text", property_definition={"rich_text": {}}))
-                continue
+        if is_location_type(header):
             sample = values[:25]
-            parseable = sum(
-                1 for value in sample if parse_place_value(value, open_meteo_key=open_meteo_key, cache=geocode_cache) is not None
-            )
+            parseable = sum(1 for value in sample if geocode_place(value) is not None)
             if parseable and parseable >= max(1, len(sample) // 2):
                 specs.append(NotionColumnSpec(name=header, kind="place", property_definition={"place": {}}))
             else:
@@ -380,9 +372,6 @@ def _looks_numeric(value: str) -> bool:
 def _property_value(
     spec: NotionColumnSpec,
     value: str,
-    *,
-    open_meteo_key: str,
-    geocode_cache: dict[str, dict[str, Any] | None],
 ) -> dict[str, Any] | None:
     if not value:
         return None
@@ -398,7 +387,7 @@ def _property_value(
     if spec.kind == "url":
         return {"url": value}
     if spec.kind == "place":
-        place = parse_place_value(value, open_meteo_key=open_meteo_key, cache=geocode_cache)
+        place = geocode_place(value)
         return {"place": place} if place else None
     if spec.kind == "select":
         return {"select": {"name": value[:100]}}
@@ -455,7 +444,7 @@ def render_row_children(
     blocks: list[dict[str, Any]] = []
     if sources_column and row.get(sources_column, "").strip():
         blocks.append(heading_block("Sources", level=2))
-        source_urls = extract_source_urls(row[sources_column].replace("\n", ","))
+        source_urls = as_urls(row[sources_column])
         raw_map = parse_source_raw_map(row.get(source_raw_column, "")) if source_raw_column else {}
         for domain, urls in group_urls_by_domain(source_urls).items():
             blocks.append(heading_block(domain, level=3))
@@ -479,7 +468,11 @@ def render_row_children(
 
 
 def group_urls_by_domain(urls: list[str]) -> dict[str, list[str]]:
-    return io_ops.group_urls_by_domain(urls)
+    grouped: dict[str, list[str]] = {}
+    for url in urls:
+        domain = urllib.parse.urlparse(url).netloc or "unknown"
+        grouped.setdefault(domain, []).append(url)
+    return grouped
 
 
 def parse_source_raw_map(value: str) -> dict[str, str]:
@@ -493,28 +486,6 @@ def parse_source_raw_map(value: str) -> dict[str, str]:
         if url:
             mapping[url] = body
     return mapping
-
-
-def is_location_column(header: str) -> bool:
-    return is_location_header(header)
-
-
-def geocode_place_value(
-    value: str,
-    *,
-    open_meteo_key: str,
-    cache: dict[str, dict[str, Any] | None],
-) -> dict[str, Any] | None:
-    return geocode_place(value, api_key=open_meteo_key, cache=cache)
-
-
-def parse_place_value(
-    value: str,
-    *,
-    open_meteo_key: str = "",
-    cache: dict[str, dict[str, Any] | None] | None = None,
-) -> dict[str, Any] | None:
-    return parse_place(value, api_key=open_meteo_key, cache=cache)
 
 
 def _chunk_text(text: str, limit: int = 1800) -> list[str]:
@@ -549,7 +520,6 @@ def export_dataset_to_notion(
     long_text_columns: set[str],
 ) -> dict[str, Any]:
     parent_page_id = page_parent_id()
-    open_meteo_key = open_meteo_api_key().strip()
     specs = infer_column_specs(
         headers,
         rows,
@@ -561,7 +531,6 @@ def export_dataset_to_notion(
         list_like_columns=list_like_columns,
         url_like_columns=url_like_columns,
         long_text_columns=long_text_columns,
-        open_meteo_key=open_meteo_key,
     )
 
     properties = {spec.name: spec.property_definition for spec in specs if spec.property_definition is not None}
@@ -614,7 +583,6 @@ def export_dataset_to_notion(
             property_value = _property_value(
                 spec,
                 value,
-                open_meteo_key=open_meteo_key,
                 geocode_cache=geocode_cache,
             )
             if property_value is not None:

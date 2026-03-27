@@ -6,6 +6,8 @@ import urllib.parse
 from enum import Enum, IntEnum
 from typing import Any
 
+from rapidfuzz import fuzz
+
 _QUESTION_WORDS = {
     "who",
     "what",
@@ -62,10 +64,11 @@ def _normalize_scalar(text: str, /) -> str:
 
 
 def normalize_list(text: str | None, /) -> list[str]:
-    working = _HTML_BREAK_RE.sub(",", text.strip())
+    working = _HTML_BREAK_RE.sub(",", unwrap_text(text))
     working = re.sub(r"\s*(?:/|\+|;)\s*", ",", working)
     working = re.sub(r"\s*,\s*", ",", working.strip())
-    return list(set(map(_normalize_scalar, working.split(","))))
+    values = [_normalize_scalar(item) for item in working.split(",") if item.strip()]
+    return list(dict.fromkeys(values))
 
 
 def unwrap_text(text: str | None, /) -> str:
@@ -150,11 +153,17 @@ def as_json(text: str | None, /) -> dict[str, Any]:
 
 def maybe_question(text: str | None, /) -> str | None:
     text = unwrap_text(text)
+    if not text:
+        return None
     if "?" in text:
         return text
     if text.split()[0].lower() in _QUESTION_WORDS:
         return text if text.endswith("?") else f"{text}?"
     return None
+
+
+def str_contains(text: str | None, needle: str | None, /) -> bool:
+    return unwrap_text(needle).lower() in unwrap_text(text).lower()
 
 
 def as_canonical(candidate: str, canonicals: list[str]) -> str:
@@ -170,5 +179,5 @@ def as_canonical(candidate: str, canonicals: list[str]) -> str:
             best_score = score
             best_value = canonical
     if best_score >= 92:
-        return best_value
+        return best_value or candidate
     return candidate

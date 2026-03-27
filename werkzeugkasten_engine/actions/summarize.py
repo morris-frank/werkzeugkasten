@@ -4,9 +4,9 @@ import os
 import tempfile
 from pathlib import Path
 
-from werkzeugkasten_engine.internal import Source
+from werkzeugkasten_engine.internal import Source, primary_language
 from werkzeugkasten_engine.internal.content import get_content
-from werkzeugkasten_engine.internal.openai import openai_client
+from werkzeugkasten_engine.internal.openai import query
 
 MAX_SUMMARY_INPUT = 120_000
 DOWNLOADED_SOURCE_DIR = Path(tempfile.gettempdir()) / "werkzeugkasten-source-downloads"
@@ -17,10 +17,10 @@ def _summary_model() -> str:
 
 
 def _prompt_languages_instruction() -> str:
-    primary_language = primary_language()
-    if primary_language == "English":
+    lang = primary_language()
+    if lang == "English":
         return f"Always produce the summary in English. Translate to English if necessary."
-    return f"If the text is in {primary_language}, produce the summary in that same language. Otherwise, produce the summary in English."
+    return f"If the text is in {lang}, produce the summary in that same language. Otherwise, produce the summary in English."
 
 
 def _prompt_summarize(content: str, /, filename: str | None = None, timestamp: str | None = None) -> str:
@@ -54,7 +54,7 @@ Document content:
 """
 
 
-def truncate_for_upload(prompt: str, limit: int = MAX_SUMMARY_INPUT) -> str:
+def _truncate_for_upload(prompt: str, limit: int = MAX_SUMMARY_INPUT) -> str:
     if len(prompt) <= limit:
         return prompt
     return prompt[:limit] + "\n\n[Truncated before upload]"
@@ -62,10 +62,9 @@ def truncate_for_upload(prompt: str, limit: int = MAX_SUMMARY_INPUT) -> str:
 
 def summarize(sources: list[Source], /) -> str:
     content = get_content(sources)
-    response = openai_client().responses.create(
-        _prompt_summarize(content),
+    safe_content = _truncate_for_upload(content)
+    summary = query(
+        _prompt_summarize(safe_content),
         model=_summary_model(),
     )
-    summary = (response.output_text or "").strip()
-
-    return summary
+    return summary.text
