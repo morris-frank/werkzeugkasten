@@ -2,6 +2,8 @@ import os
 import re
 from pathlib import Path
 
+from pydantic import BaseModel
+
 _PREFIX = "WERKZEUGKASTEN_"
 _UUID_RE = re.compile(r"([0-9a-fA-F]{32}|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})")
 
@@ -27,16 +29,35 @@ def boolean(value: str) -> bool:
     return value.lower() in {"1", "true", "yes", "on"}
 
 
-cache_location = lambda: Path(_environ("cache_location", default="~/.cache/werkzeugkasten/content_cache.sqlite3")).resolve()
-jina_api_key = lambda: _environ("jina_api_key", "JINA_API_TOKEN")
-lookup_model = lambda: _environ("lookup_model", default="gpt-5.4")
-mock_enabled = lambda: boolean(_environ("mock", default=""))
-n_threads = lambda: int(_environ("n_threads", default="8"))
-notion_api_token = lambda: _environ("notion_api_token", "NOTION_TOKEN")
-notion_parent_page = lambda: uuid(_environ("notion_parent_page"))
-open_meteo_api_key = lambda: _environ("open_meteo_api_key")
-openai_api_key = lambda: _environ("openai_api_key", raise_on_missing=True) or ""
-primary_language = lambda: _environ("primary_language", default="German")
-research_model = lambda: _environ("research_model", default="gpt-5.4")
-summary_model = lambda: _environ("summary_model", default="gpt-5.4")
-url_timeout = lambda: int(_environ("url_timeout", default="10"))
+class KastenConfig(BaseModel):
+    cache_location: Path = Path("~/.cache/werkzeugkasten/content_cache.sqlite3").resolve()
+    jina_api_key: str = ""
+    lookup_model: str = "gpt-5.4"
+    mock_enabled: bool = False
+    n_threads: int = 8
+    notion_api_token: str = ""
+    notion_parent_page: str = ""
+    open_meteo_api_key: str = ""
+    openai_api_key: str = ""
+    primary_language: str = "German"
+    research_model: str = "gpt-5.4"
+    summary_model: str = "gpt-5.4"
+    url_timeout: int = 10
+
+
+kasten_config: KastenConfig = KastenConfig()
+
+
+cache_location = lambda: Path(_environ("cache_location", default=kasten_config.cache_location))
+jina_api_key = lambda: _environ("jina_api_key", default=kasten_config.jina_api_key)
+lookup_model = lambda: _environ("lookup_model", default=kasten_config.lookup_model)
+mock_enabled = lambda: boolean(_environ("mock", default=kasten_config.mock))
+n_threads = lambda: int(_environ("n_threads", default=kasten_config.n_threads))
+notion_api_token = lambda: _environ("notion_api_token", default=kasten_config.notion_api_token)
+notion_parent_page = lambda: uuid(_environ("notion_parent_page", default=kasten_config.notion_parent_page))
+open_meteo_api_key = lambda: _environ("open_meteo_api_key", default=kasten_config.open_meteo_api_key)
+openai_api_key = lambda: _environ("openai_api_key", default=kasten_config.openai_api_key)
+primary_language = lambda: _environ("primary_language", default=kasten_config.primary_language)
+research_model = lambda: _environ("research_model", default=kasten_config.research_model)
+summary_model = lambda: _environ("summary_model", default=kasten_config.summary_model)
+url_timeout = lambda: int(_environ("url_timeout", default=kasten_config.url_timeout))

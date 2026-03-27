@@ -13,6 +13,8 @@ import uvicorn
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
+from .internal.env import KastenConfig, kasten_config
+
 Service = Literal[
     "research-list",
     "inspect-table",
@@ -23,22 +25,10 @@ Service = Literal[
 ]
 
 
-class EngineConfig(BaseModel):
-    api_key: str = ""
-    jina_api_key: str = ""
-    notion_token: str = ""
-    notion_parent_page: str = ""
-    open_meteo_api_key: str = ""
-    research_model: str = "gpt-5.4"
-    summary_model: str = "gpt-5.4"
-    lookup_model: str = "gpt-5.4"
-    primary_language: str = "German"
-
-
 class EngineRequest(BaseModel):
     service: Service
     payload: dict[str, Any] = Field(default_factory=dict)
-    config: EngineConfig = Field(default_factory=EngineConfig)
+    config: KastenConfig = Field(default_factory=KastenConfig)
 
 
 class EngineResponse(BaseModel):
@@ -66,25 +56,6 @@ def _read_request() -> EngineRequest:
     if not payload.strip():
         raise ValueError("Expected JSON payload on stdin.")
     return EngineRequest.model_validate_json(payload)
-
-
-def _apply_config(config: EngineConfig) -> None:
-    values = {
-        "WERKZEUGKASTEN_openai_api_key": config.api_key,
-        "WERKZEUGKASTEN_jina_api_key": config.jina_api_key(),
-        "WERKZEUGKASTEN_notion_api_token": config.notion_token,
-        "WERKZEUGKASTEN_notion_parent_page": config.notion_parent_page(),
-        "WERKZEUGKASTEN_open_meteo_api_key": config.open_meteo_api_key(),
-        "WERKZEUGKASTEN_research_model": config.research_model(),
-        "WERKZEUGKASTEN_summary_model": config.summary_model(),
-        "WERKZEUGKASTEN_lookup_model": config.lookup_model(),
-        "WERKZEUGKASTEN_primary_language": config.primary_language(),
-    }
-    for key, value in values.items():
-        if value:
-            os.environ[key] = value
-        else:
-            os.environ.pop(key, None)
 
 
 def _research_list(payload: dict[str, Any]) -> dict[str, Any]:
@@ -139,7 +110,8 @@ def _prettify_codex_log(payload: dict[str, Any]) -> dict[str, Any]:
 
 
 def _dispatch(request: EngineRequest) -> dict[str, Any]:
-    _apply_config(request.config)
+    global kasten_config
+    kasten_config = request.config
     handlers = {
         "research-list": _research_list,
         "inspect-table": _inspect_table,
