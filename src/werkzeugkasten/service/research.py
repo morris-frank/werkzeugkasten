@@ -15,7 +15,7 @@ from .lookup import lookup_object
 from .models import InspectTableResponse, QueryUsage, ResearchTableResponse
 
 
-def research_response_to_markdown(researchResponse: ResearchTableResponse) -> str:
+def _research_response_to_markdown(researchResponse: ResearchTableResponse) -> str:
     lines = [
         "# Web Research",
         "",
@@ -219,7 +219,7 @@ def research_table(
 
     question_columns = [column for column in table.columns if maybe_question(column)]
     researchResponse = ResearchTableResponse(
-        table=table.to_json(),
+        table=str(table.to_json()),
         format=table.format,
         output_path=destination.as_posix(),
         object_type=table.object_type,
@@ -232,14 +232,14 @@ def research_table(
         includes_sources_summary=include_sources_summary,
         includes_auto_tags=auto_tagging,
         includes_nearest_neighbours=nearest_neighbour,
-        mean_count_fields_researched=mean(count_fields_researched),
+        mean_count_fields_researched=mean(count_fields_researched) if count_fields_researched else 0,
         researched_fields=list(researched_fields),
         sources=sources,
         usage=usage,
     )
 
     destination.write_text(
-        research_response_to_markdown(researchResponse),
+        _research_response_to_markdown(researchResponse),
         encoding="utf-8",
     )
     return researchResponse

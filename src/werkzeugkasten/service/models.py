@@ -59,7 +59,8 @@ class InspectTableResponse(BaseModel):
 
 
 class ResearchTableResponse(BaseModel):
-    table: list[dict[str, Any]]
+    # table: list[dict[str, Any]]
+    table: str
     format: str
     output_path: str
     object_type: str

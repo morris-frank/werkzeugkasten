@@ -5,14 +5,11 @@ from typing import Any
 
 import typer
 import uvicorn
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from pydantic import BaseModel, Field
 
-from . import service
 from .internal.env import E
-from .service.models import *
-
-AnyResponse = SummarizeSourcesResponse | ResearchTableResponse | InspectTableResponse | PrettifyCodexLogResponse
+from .service import *
 
 
 class EngineRequest(BaseModel):
@@ -21,42 +18,39 @@ class EngineRequest(BaseModel):
     config: dict[str, str] = Field(default_factory=dict)
 
 
+class EngineResponse(BaseModel):
+    data: dict[str, Any]
+
+
 api = FastAPI(title="werkzeugkasten")
 cli = typer.Typer(add_completion=False, pretty_exceptions_enable=False)
 
 
-def _read_request() -> EngineRequest:
-    payload = sys.stdin.read()
-    if not payload.strip():
-        raise ValueError("Expected JSON payload on stdin.")
-    return EngineRequest.model_validate_json(payload)
-
-
 @api.post("/research-list", response_model=ResearchTableResponse)
-def research_list(request: EngineRequest) -> ResearchTableResponse:
+def research_list_api(request: EngineRequest) -> ResearchTableResponse:
     E.update(request.config)
-    return service.research_list(
+    return research_list(
         items=request.payload.get("items", ""),
         question=request.payload.get("question", ""),
         output_path=request.payload.get("output_path"),
-        include_sources=bool(request.payload.get("include_sources", False)),
-        include_sources_summary=bool(request.payload.get("include_sources_summary", False)),
+        # include_sources=bool(request.payload.get("include_sources", False)),
+        # include_sources_summary=bool(request.payload.get("include_sources_summary", False)),
         # source_column_policy=request.payload.get("source_column_policy", "merge"),
         # source_summary_column_policy=request.payload.get("source_summary_column_policy", "merge"),
     )
 
 
 @api.post("/inspect-table", response_model=InspectTableResponse)
-def inspect_table(request: EngineRequest) -> InspectTableResponse:
+def inspect_table_api(request: EngineRequest) -> InspectTableResponse:
     E.update(request.config)
-    return service.inspect_table(str(request.payload.get("table", "")))
+    return inspect_table(str(request.payload.get("table", "")))
 
 
 @api.post("/research-table", response_model=ResearchTableResponse)
-def research_table(request: EngineRequest) -> ResearchTableResponse:
+def research_table_api(request: EngineRequest) -> ResearchTableResponse:
     E.update(request.config)
 
-    return service.research_table(
+    return research_table(
         str(request.payload.get("table", "")),
         include_sources=bool(request.payload.get("include_sources", False)),
         include_sources_summary=bool(request.payload.get("include_source_summary", False)),
@@ -71,23 +65,36 @@ def research_table(request: EngineRequest) -> ResearchTableResponse:
 
 
 @api.post("/summarize", response_model=SummarizeSourcesResponse)
-def summarize(request: EngineRequest) -> dict[str, Any]:
+def summarize_api(request: EngineRequest) -> SummarizeSourcesResponse:
     E.update(request.config)
-    return service.summarize_sources(request.payload.get("sources", ""))
+    return summarize_sources(request.payload.get("sources", ""))
 
 
 @api.post("/prettify-codex-log", response_model=PrettifyCodexLogResponse)
-def prettify_codex_log(request: EngineRequest) -> PrettifyCodexLogResponse:
+def prettify_codex_log_api(request: EngineRequest) -> PrettifyCodexLogResponse:
     E.update(request.config)
-    return service.prettify_codex_log(request.payload.get("path", ""))
+    return prettify_codex_log(request.payload.get("path", ""))
 
 
-@api.post("/run", response_model=AnyResponse)
-def run_api(request: EngineRequest) -> AnyResponse:
-    try:
-        return api.routes[request.service](request)
-    except Exception as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+_engine_routes = {
+    "research-list": research_list_api,
+    "inspect-table": inspect_table_api,
+    "research-table": research_table_api,
+    "summarize-files": summarize_api,
+    "summarize-text": summarize_api,
+    "prettify-codex-log": prettify_codex_log_api,
+}
+
+
+@cli.command()
+def run() -> None:
+    payload = sys.stdin.read()
+    if not payload.strip():
+        raise ValueError("Expected JSON payload on stdin.")
+    request = EngineRequest.model_validate_json(payload)
+    response = _engine_routes[request.service](request=request)
+    sys.stdout.write(EngineResponse(data=response.model_dump()).model_dump_json())
+    sys.stdout.write("\n")
 
 
 @cli.command()

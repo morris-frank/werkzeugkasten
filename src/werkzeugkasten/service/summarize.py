@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import io
 
-from ..internal import Source, sources_to_urls
+from ..internal import Source
 from ..internal.content import get_content
 from ..internal.env import E, E_int
 from ..internal.openai import query
