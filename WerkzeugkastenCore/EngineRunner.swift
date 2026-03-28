@@ -40,7 +40,7 @@ public final class EngineRunner {
             "config": [
                 "openai_api_key": configuration.openAIKey,
                 "jina_api_key": configuration.jinaAPIKey,
-                "notion_token": configuration.notionToken,
+                "notion_api_token": configuration.notionApiToken,
                 "notion_parent_page": configuration.notionParentPage,
                 "open_meteo_key": configuration.openMeteoKey,
                 "research_model": configuration.researchModel,

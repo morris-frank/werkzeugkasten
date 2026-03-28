@@ -6,7 +6,7 @@ import Security
 public final class SettingsStore: ObservableObject {
     @Published public var openAIKey: String
     @Published public var jinaAPIKey: String
-    @Published public var notionToken: String
+    @Published public var notionApiToken: String
     @Published public var openMeteoKey: String
     @Published public var notionParentPage: String
     @Published public var researchModel: String
@@ -83,13 +83,13 @@ public final class SettingsStore: ObservableObject {
         }
 
         do {
-            self.notionToken = try KeychainStore.load(
+            self.notionApiToken = try KeychainStore.load(
                 service: keychainService,
                 account: notionKeychainAccount,
                 accessGroup: keychainAccessGroup
             ) ?? ""
         } catch {
-            self.notionToken = ""
+            self.notionApiToken = ""
             resolvedKeychainIssue = Self.describeKeychainFailure(
                 error,
                 accessGroup: keychainAccessGroup,
@@ -134,7 +134,7 @@ public final class SettingsStore: ObservableObject {
         let nLookupModel = lookupModel.trimmingCharacters(in: .whitespacesAndNewlines)
         let nOpenAIKey = openAIKey.trimmingCharacters(in: .whitespacesAndNewlines)
         let nJinaAPIKey = jinaAPIKey.trimmingCharacters(in: .whitespacesAndNewlines)
-        let nNotionToken = notionToken.trimmingCharacters(in: .whitespacesAndNewlines)
+        let nNotionToken = notionApiToken.trimmingCharacters(in: .whitespacesAndNewlines)
         let nOpenMeteoKey = openMeteoKey.trimmingCharacters(in: .whitespacesAndNewlines)
         let nNotionParentPage = notionParentPage.trimmingCharacters(in: .whitespacesAndNewlines)
 
@@ -183,7 +183,7 @@ public final class SettingsStore: ObservableObject {
 
         openAIKey = nOpenAIKey
         jinaAPIKey = nJinaAPIKey
-        notionToken = nNotionToken
+        notionApiToken = nNotionToken
         openMeteoKey = nOpenMeteoKey
         notionParentPage = nNotionParentPage
         researchModel = defaults.string(forKey: "researchModel") ?? WerkzeugkastenConstants.defaultResearchModel
@@ -206,7 +206,7 @@ public final class SettingsStore: ObservableObject {
         return EngineConfiguration(
             openAIKey: openAIKey.trimmingCharacters(in: .whitespacesAndNewlines),
             jinaAPIKey: jinaAPIKey.trimmingCharacters(in: .whitespacesAndNewlines),
-            notionToken: notionToken.trimmingCharacters(in: .whitespacesAndNewlines),
+            notionApiToken: notionApiToken.trimmingCharacters(in: .whitespacesAndNewlines),
             notionParentPage: notionParentPage.trimmingCharacters(in: .whitespacesAndNewlines),
             openMeteoKey: openMeteoKey.trimmingCharacters(in: .whitespacesAndNewlines),
             researchModel: researchModel.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? WerkzeugkastenConstants.defaultResearchModel : researchModel.trimmingCharacters(in: .whitespacesAndNewlines),

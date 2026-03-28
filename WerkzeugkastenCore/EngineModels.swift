@@ -3,7 +3,7 @@ import Foundation
 public struct EngineConfiguration: Equatable, Sendable {
     public var openAIKey: String
     public var jinaAPIKey: String
-    public var notionToken: String
+    public var notionApiToken: String
     public var notionParentPage: String
     public var openMeteoKey: String
     public var researchModel: String
@@ -16,7 +16,7 @@ public struct EngineConfiguration: Equatable, Sendable {
     public init(
         openAIKey: String,
         jinaAPIKey: String,
-        notionToken: String,
+        notionApiToken: String,
         notionParentPage: String,
         openMeteoKey: String,
         researchModel: String,
@@ -28,7 +28,7 @@ public struct EngineConfiguration: Equatable, Sendable {
     ) {
         self.openAIKey = openAIKey
         self.jinaAPIKey = jinaAPIKey
-        self.notionToken = notionToken
+        self.notionApiToken = notionApiToken
         self.notionParentPage = notionParentPage
         self.openMeteoKey = openMeteoKey
         self.researchModel = researchModel

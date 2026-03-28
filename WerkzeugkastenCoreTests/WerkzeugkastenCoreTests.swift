@@ -35,9 +35,9 @@ final class WerkzeugkastenCoreTests: XCTestCase {
         try "print('ok')".write(to: packageDirectory.appendingPathComponent("__main__.py"), atomically: true, encoding: .utf8)
 
         let configuration = EngineConfiguration(
-            openAIKey: "key",
+            openAIKey: "openai-key",
             jinaAPIKey: "jina-key",
-            notionToken: "notion-token",
+            notionApiToken: "notion-api-token",
             notionParentPage: "parent-page",
             openMeteoKey: "openmeteo-key",
             researchModel: "research-model",
@@ -60,9 +60,9 @@ final class WerkzeugkastenCoreTests: XCTestCase {
         )
         XCTAssertEqual(request["service"] as? String, "summarize-text")
         let config = try XCTUnwrap(request["config"] as? [String: String])
-        XCTAssertEqual(config["api_key"], "key")
+        XCTAssertEqual(config["openai_key"], "openai-key")
         XCTAssertEqual(config["jina_api_key"], "jina-key")
-        XCTAssertEqual(config["notion_token"], "notion-token")
+        XCTAssertEqual(config["notion_api_token"], "notion-api-token")
         XCTAssertEqual(config["notion_parent_page"], "parent-page")
         XCTAssertEqual(config["open_meteo_key"], "openmeteo-key")
         XCTAssertEqual(config["research_model"], "research-model")
@@ -83,7 +83,7 @@ final class WerkzeugkastenCoreTests: XCTestCase {
         let configuration = EngineConfiguration(
             openAIKey: "",
             jinaAPIKey: "",
-            notionToken: "",
+            notionApiToken: "",
             notionParentPage: "",
             openMeteoKey: "",
             researchModel: "research-model",
@@ -125,9 +125,9 @@ final class WerkzeugkastenCoreTests: XCTestCase {
         try "print('ok')".write(to: temp.appendingPathComponent("service/helper.py"), atomically: true, encoding: .utf8)
 
         let configuration = EngineConfiguration(
-            openAIKey: "key",
+            openAIKey: "openai-key",
             jinaAPIKey: "",
-            notionToken: "",
+            notionApiToken: "",
             notionParentPage: "",
             openMeteoKey: "",
             researchModel: "research-model",
@@ -188,7 +188,7 @@ final class WerkzeugkastenCoreTests: XCTestCase {
         )
         store.openAIKey = "secret"
         store.jinaAPIKey = "jina-secret"
-        store.notionToken = "notion-secret"
+        store.notionApiToken = "notion-secret"
         store.openMeteoKey = "openmeteo-secret"
         store.notionParentPage = "parent-id"
         store.researchModel = "research"
@@ -212,7 +212,7 @@ final class WerkzeugkastenCoreTests: XCTestCase {
 
         XCTAssertEqual(reloaded.openAIKey, "secret")
         XCTAssertEqual(reloaded.jinaAPIKey, "jina-secret")
-        XCTAssertEqual(reloaded.notionToken, "notion-secret")
+        XCTAssertEqual(reloaded.notionApiToken, "notion-secret")
         XCTAssertEqual(reloaded.openMeteoKey, "openmeteo-secret")
         XCTAssertEqual(reloaded.notionParentPage, "parent-id")
         XCTAssertEqual(reloaded.researchModel, "research")
@@ -246,7 +246,7 @@ final class WerkzeugkastenCoreTests: XCTestCase {
         let configuration = EngineConfiguration(
             openAIKey: "",
             jinaAPIKey: "",
-            notionToken: "",
+            notionApiToken: "",
             notionParentPage: "",
             openMeteoKey: "",
             researchModel: "research-model",

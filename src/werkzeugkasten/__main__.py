@@ -12,7 +12,7 @@ import uvicorn
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
-from .internal.env import KastenConfig, kasten_config
+from .internal.env import E
 
 Service = Literal[
     "research-list",
@@ -109,8 +109,7 @@ def _prettify_codex_log(payload: dict[str, Any]) -> dict[str, Any]:
 
 
 def _dispatch(request: EngineRequest) -> dict[str, Any]:
-    global kasten_config
-    kasten_config = request.config
+    E.update_defaults(request.config)
     handlers = {
         "research-list": _research_list,
         "inspect-table": _inspect_table,

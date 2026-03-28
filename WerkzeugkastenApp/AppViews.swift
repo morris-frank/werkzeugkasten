@@ -1003,7 +1003,7 @@ struct SettingsWindow: View {
                                 .controlSize(.large)
                         }
                         SettingsFieldRow(title: "Notion API Token") {
-                            SecureField("secret_...", text: $settings.notionToken)
+                            SecureField("secret_...", text: $settings.notionApiToken)
                                 .textFieldStyle(.roundedBorder)
                                 .controlSize(.large)
                         }
