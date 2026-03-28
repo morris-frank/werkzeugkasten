@@ -17,7 +17,7 @@ class E:
         "research_model": "gpt-5.4",
         "summary_model": "gpt-5.4",
         "source_column": "Sources",
-        "source_summary_column": "Sources[RAW]",
+        "source_summary_column": "Source Summary",
         "tags_column": "Tags",
         "notion_request_body_safe_max_bytes": 420_000,
     }

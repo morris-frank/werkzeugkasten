@@ -1,61 +1,44 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Iterable
+from statistics import mean
+
+import pandas as pd
 
 from ..internal import choose_output_path
 from ..internal.env import E_req
 from ..internal.openai import query
 from ..internal.table import Policy, Table
-from ..internal.value import maybe_question
-from .lookup import lookup_row
-from .summarize import summarize
+from ..internal.value import as_list, maybe_question
+from .lookup import lookup_object
+from .models import InspectTableResponse, QueryUsage, ResearchTableResponse
 
 
-@dataclass(frozen=True)
-class ResearchRowResult:
-    row: dict[str, str]
-    failure: str | None = None
-
-
-@dataclass(frozen=True)
-class ResearchResult:
-    _table: Table
-    output_path: str
-    format: str
-    headers: list[str]
-    row_count: int
-    question_columns: list[str]
-    attribute_columns: list[str]
-    example_key: str
-    object_type: str
-
-    def as_dict(self) -> dict[str, Any]:
-        return {k: v for k, v in self.__dict__.items() if not k.startswith("_")}
-
-    def to_markdown(self) -> str:
-        lines = [
-            "# Research",
-            "",
-            f"- Generated: {datetime.now().astimezone().strftime('%Y-%m-%d %H:%M:%S %Z')}",
-            f"- Source: {self._table.origin}",
-            f"- Detected format: {self._table.format}",
-            f"- Rows: {len(self._table)}",
-            "",
-            "## Detected Columns",
-            "",
-            "Questions:",
-        ]
-        lines.extend([f"- {column}" for column in self.question_columns] or ["- none"])
-        lines.extend(["", "Attributes:"])
-        lines.extend([f"- {column}" for column in self.attribute_columns] or ["- none"])
-        lines.extend(["", "## Merged Table", ""])
-        lines.extend(str(self._table))
-        lines.extend(["", "## Failures", ""])
-        # lines.extend([f"- {failure}" for failure in self.failures] or ["- none"])
-        return "\n".join(lines).rstrip() + "\n"
+def research_response_to_markdown(researchResponse: ResearchTableResponse) -> str:
+    lines = [
+        "# Web Research",
+        "",
+        f"Looked up {len(researchResponse.table)} `{researchResponse.object_type}`s: ",
+        "",
+        f"- Usage: {researchResponse.usage.token_count} tokens",
+        f"- Number of queries: {researchResponse.usage.number_queries}",
+        f"- Mean number of fields researched: {researchResponse.mean_count_fields_researched}",
+        f"- Researched fields: {', '.join(researchResponse.researched_fields)}",
+        f"- Sources: {', '.join(researchResponse.sources)}",
+        f"- Generated: {datetime.now().astimezone().strftime('%Y-%m-%d %H:%M:%S %Z')}",
+        "",
+        "## Researched columns",
+        "",
+        "### Questions",
+        "",
+    ]
+    lines.extend([f"- {column}" for column in researchResponse.question_columns] or ["_none_"])
+    lines.extend(["", "### Attributes", ""])
+    lines.extend([f"- {column}" for column in researchResponse.attribute_columns] or ["_none_"])
+    lines.extend(["", "## Final table", ""])
+    lines.extend(str(researchResponse.table))
+    return "\n".join(lines).rstrip() + "\n"
 
 
 def _number_of_tags(count: int) -> tuple[int, int]:
@@ -68,7 +51,7 @@ def _apply_auto_tags(
     table: Table,
     *,
     column_name: str,
-) -> None:
+) -> QueryUsage:
     if len(table) < 2:
         return
     minimum_tags, maximum_tags = _number_of_tags(len(table))
@@ -91,9 +74,10 @@ Return JSON only in this shape:
 Rows:
 {table.to_json(without={E_req["source_column"], E_req["source_summary_column"]})}
 """
-    answer = query(prompt, model=E_req["research_model"])
-    tags = answer.json.get("tags")
-    assignments = answer.json.get("assignments")
+    queryResponse = query(prompt, model=E_req["research_model"])
+    queryJSON = queryResponse.as_json
+    tags = queryJSON.get("tags")
+    assignments = queryJSON.get("assignments")
     if not isinstance(tags, list) or not isinstance(assignments, dict):
         return
     allowed_tags = {str(tag).strip() for tag in tags if str(tag).strip()}
@@ -103,15 +87,16 @@ Rows:
             continue
         normalized = [str(tag).strip() for tag in values if str(tag).strip() in allowed_tags]
         table[object, column_name] = ", ".join(dict.fromkeys(normalized))
+    return queryResponse.usage
 
 
 def _apply_nearest_neighbours(
     table: Table,
     *,
     column_name: str,
-) -> None:
+) -> QueryUsage:
     if len(table) < 2:
-        return
+        return QueryUsage()
     prompt = f"""You are comparing {table.object_type} rows, which were prefilled with metadata.
 
 For each {table.object_type}, identify the 1 to 3 most similar other {table.object_type}s based on the row summary.
@@ -149,61 +134,23 @@ Rows:
                 break
         table[label, column_name] = ", ".join(matches)
 
-
-def _research_row(
-    row: dict[str, str],
-    research_columns: list[str],
-    questions: list[str],
-    include_sources: bool,
-    summarize_sources: bool,
-    object_type: str,
-):
-    missing_columns = [column for column in research_columns if not row.get(column, "").strip()]
-    if not missing_columns:
-        return ResearchRowResult(row=row)
-    answer = lookup_row(
-        row,
-        object_type,
-        missing_columns,
-        questions,
-    )
-    if error := answer.get("error"):
-        return ResearchRowResult(row=row, failure=f"{row[object_type]}: {error or 'No response.'}")
-    for column in missing_columns:
-        row[column] = answer["data"].get(column, row.get(column, ""))
-
-    if include_sources:
-        row[E_req["source_column"]] = ", ".join(answer["sources"])
-    if summarize_sources:
-        row[E_req["source_summary_column"]] = summarize(answer["sources"])
-    return ResearchRowResult(row=row)
-
-
-def _questions_attributes(columns: Iterable[str], /) -> tuple[list[str], list[str]]:
-    questions: list[str] = []
-    attributes: list[str] = []
-    for column in columns:
-        (questions if maybe_question(column) else attributes).append(column)
-    return questions, attributes
+    return answer.usage
 
 
 def inspect_table(
     table: Table | str,
-) -> dict[str, Any]:
+) -> InspectTableResponse:
     table = Table(table)
-    questions, attributes = _questions_attributes(table.columns)
-
-    return ResearchResult(
-        _table=table,
-        output_path="",
+    questions = [column for column in table.columns if maybe_question(column)]
+    return InspectTableResponse(
         format=table.format,
-        headers=list(table.columns),
-        row_count=len(table),
-        question_columns=questions,
-        attribute_columns=attributes,
-        example_key=next(iter(table)).get(table.object_type, ""),
         object_type=table.object_type,
-    ).as_dict()
+        example_object=next(iter(table)).get(table.object_type, ""),
+        row_count=len(table),
+        columns=list(table.columns),
+        question_columns=questions,
+        attribute_columns=[column for column in table.columns if not column in questions],
+    )
 
 
 def research_table(
@@ -211,71 +158,112 @@ def research_table(
     /,
     *,
     include_sources: bool = False,
-    summarize_sources: bool = False,
+    include_sources_summary: bool = False,
     auto_tagging: bool = False,
     nearest_neighbour: bool = False,
-    output_dir: Path | None = None,
     output_path: str | Path | None = None,
     source_column_policy: Policy = Policy.MERGE,
-    source_raw_column_policy: Policy = Policy.MERGE,
+    source_summary_column_policy: Policy = Policy.MERGE,
     tag_column_policy: Policy = Policy.MERGE,
     nearest_column_policy: Policy = Policy.MERGE,
-) -> dict[str, Any]:
+) -> ResearchTableResponse:
     table = Table(table)
-    questions, attributes = _questions_attributes(table.columns)
-
-    research_columns = questions + attributes
-
     started_at = datetime.now().astimezone()
 
     destination = choose_output_path(
         started_at,
         f"{table.object_type}-research",
-        output_dir,
         explicit_path=output_path,
     )
-    failures: list[str] = []
 
     if include_sources:
         table.add_column(E_req["source_column"], policy=source_column_policy)
-    if summarize_sources:
-        table.add_column(E_req["source_summary_column"], policy=source_raw_column_policy)
+    if include_sources_summary:
+        table.add_column(E_req["source_summary_column"], policy=source_summary_column_policy)
 
+    researched_fields: set[str] = set()
+    count_fields_researched: list[int] = []
+    usage = QueryUsage()
+    sources: list[str] = []
     for row in table:
-        result = _research_row(row, research_columns, questions, include_sources, summarize_sources, table.object_type)
-        if result.failure:
-            failures.append(result.failure)
-        if result.row:
-            table[result.row[table.object_type]] = result.row
+        # TODO: handle non-named tables
+        object_name = row.get(table.object_type)
+        if not object_name:
+            continue
+        lookup_response = lookup_object(
+            row,
+            object_type=table.object_type,
+            object_name=object_name,
+            include_sources=include_sources,
+            include_sources_summary=include_sources_summary,
+        )
+        researched_fields.update(lookup_response.researched_fields)
+        count_fields_researched.append(lookup_response.count_fields_researched)
+        usage += lookup_response.usage
+        sources.extend(lookup_response.sources)
+        table[row[table.object_type]] = lookup_response.data
 
     if auto_tagging:
         table.add_column(E_req["tags_column"], policy=tag_column_policy)
-        _apply_auto_tags(
+        usage += _apply_auto_tags(
             table,
             column_name=E_req["tags_column"],
         )
     if nearest_neighbour:
         nearest_column = f"Closest {table.object_type.title()}"
         table.add_column(nearest_column, policy=nearest_column_policy)
-        _apply_nearest_neighbours(
+        usage += _apply_nearest_neighbours(
             table,
             column_name=nearest_column,
         )
 
-    result = ResearchResult(
-        _table=table,
-        output_path=destination.as_posix(),
+    question_columns = [column for column in table.columns if maybe_question(column)]
+    researchResponse = ResearchTableResponse(
+        table=table.to_json(),
         format=table.format,
-        headers=list(table.columns),
-        row_count=len(table),
-        question_columns=questions,
-        attribute_columns=attributes,
-        example_key=next(iter(table)).get(table.object_type, ""),
+        output_path=destination.as_posix(),
         object_type=table.object_type,
+        example_object=next(iter(table)).get(table.object_type, ""),
+        row_count=len(table),
+        columns=list(table.columns),
+        question_columns=question_columns,
+        attribute_columns=[column for column in table.columns if not column in question_columns],
+        includes_sources=include_sources,
+        includes_sources_summary=include_sources_summary,
+        includes_auto_tags=auto_tagging,
+        includes_nearest_neighbours=nearest_neighbour,
+        mean_count_fields_researched=mean(count_fields_researched),
+        researched_fields=list(researched_fields),
+        sources=sources,
+        usage=usage,
     )
 
     destination.write_text(
-        result.to_markdown(),
+        research_response_to_markdown(researchResponse),
         encoding="utf-8",
     )
-    return result.as_dict()
+    return researchResponse
+
+
+def research_list(
+    items: list[str] | str,
+    question: str,
+    output_path: str | Path | None = None,
+    include_sources: bool = False,
+    include_sources_summary: bool = False,
+    source_column_policy: Policy = Policy.MERGE,
+    source_summary_column_policy: Policy = Policy.MERGE,
+) -> ResearchTableResponse:
+
+    items = as_list(items)
+    question = str(question).strip()
+
+    table = pd.DataFrame({question: ""}, index=items)
+    return research_table(
+        table,
+        include_sources=include_sources,
+        include_sources_summary=include_sources_summary,
+        output_path=output_path,
+        source_column_policy=source_column_policy,
+        source_summary_column_policy=source_summary_column_policy,
+    )

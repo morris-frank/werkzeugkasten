@@ -2,66 +2,14 @@ from __future__ import annotations
 
 import json
 import re
-from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
 
 from openai import OpenAI
 from openai.types.responses import Response
 
-from ..internal.env import E, E_bool, E_req
-from .value import as_json
-
-
-@dataclass(frozen=True)
-class QueryAnswer:
-    text: str
-    response: Response | Any
-
-    @staticmethod
-    def from_response(response: Response) -> QueryAnswer:
-        return QueryAnswer(text=(response.output_text or "").strip(), response=response)
-
-    @property
-    def json(self) -> dict[str, Any]:
-        return as_json(self.text)
-
-    @property
-    def sources(self) -> list[str]:
-        urls: list[str] = []
-        seen: set[str] = set()
-        for output in getattr(self.response, "output", []) or []:
-            if getattr(output, "type", None) != "web_search_call":
-                continue
-            action = getattr(output, "action", None)
-            if action is None and isinstance(output, dict):
-                action = output.get("action")
-            sources = getattr(action, "sources", None)
-            if sources is None and isinstance(action, dict):
-                sources = action.get("sources")
-            for source in sources or []:
-                url = getattr(source, "url", None)
-                if url is None and isinstance(source, dict):
-                    url = source.get("url")
-                url = str(url or "").strip()
-                if url and url not in seen:
-                    seen.add(url)
-                    urls.append(url)
-        return urls
-
-
-@dataclass(frozen=True)
-class MockUsage:
-    total_tokens: int
-    input_tokens: int
-    output_tokens: int
-
-
-@dataclass(frozen=True)
-class MockResponse:
-    usage: MockUsage
-    output: list[Any]
-    tool_choice: Any = None
+from ..service.models import QueryResponse, QueryUsage
+from .env import E, E_bool, E_req
 
 
 def _mock_text(prompt_text: str) -> str:
@@ -128,6 +76,29 @@ def _reasoning_for_model(model: str, *, decreased_effort: bool = False) -> dict[
     return None
 
 
+def _extract_sources(response: Response) -> list[str]:
+    urls: list[str] = []
+    seen: set[str] = set()
+    for output in getattr(response, "output", []) or []:
+        if getattr(output, "type", None) != "web_search_call":
+            continue
+        action = getattr(output, "action", None)
+        if action is None and isinstance(output, dict):
+            action = output.get("action")
+        sources = getattr(action, "sources", None)
+        if sources is None and isinstance(action, dict):
+            sources = action.get("sources")
+        for source in sources or []:
+            url = getattr(source, "url", None)
+            if url is None and isinstance(source, dict):
+                url = source.get("url")
+            url = str(url or "").strip()
+            if url and url not in seen:
+                seen.add(url)
+                urls.append(url)
+    return urls
+
+
 def query(
     prompt_text: str,
     /,
@@ -136,15 +107,19 @@ def query(
     use_web_search: bool = False,
     include_web_sources: bool = False,
     decreased_effort: bool = False,
-) -> QueryAnswer:
+) -> QueryResponse:
     if E_bool["mock"]:
         text = _mock_text(prompt_text)
-        usage = MockUsage(
-            total_tokens=len(prompt_text.split()) + len(text.split()),
-            input_tokens=len(prompt_text.split()),
-            output_tokens=len(text.split()),
+        return QueryResponse(
+            text=text,
+            sources=[],
+            usage=QueryUsage(
+                number_queries=1,
+                token_count=len(prompt_text.split()) + len(text.split()),
+                input_tokens=len(prompt_text.split()),
+                output_tokens=len(text.split()),
+            ),
         )
-        return QueryAnswer(text=text, response=MockResponse(usage=usage, output=[]))
 
     response = OpenAI(api_key=E_req["openai_api_key"]).responses.create(
         input=prompt_text,
@@ -153,4 +128,12 @@ def query(
         tools=[_web_search_tool()] if use_web_search else None,
         include=["web_search_call.action.sources"] if include_web_sources else None,
     )
-    return QueryAnswer.from_response(response)
+
+    sources = _extract_sources(response)
+    usage = QueryUsage(
+        number_queries=1,
+        token_count=response.usage.total_tokens,
+        input_tokens=response.usage.input_tokens,
+        output_tokens=response.usage.output_tokens,
+    )
+    return QueryResponse(text=response.output_text, sources=sources, usage=usage)

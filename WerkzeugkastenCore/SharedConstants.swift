@@ -17,25 +17,15 @@ public enum WerkzeugkastenConstants {
     public static let defaultLookupModel = "gpt-5.4"
     public static let defaultPrimaryLanguage = "German"
 
-    // Research List / Research Table run options — defaults and UserDefaults keys (persist across launches).
-    public static let defaultResearchIncludeSources = false
-    public static let defaultResearchIncludeSourceRaw = false
-    public static let defaultResearchAutoTagging = false
-    public static let defaultResearchNearestNeighbour = false
-    public static let defaultResearchExportToNotion = false
-    /// Raw value for `GeneratedColumnPolicy`-style merge/overwrite (engine + UI).
-    public static let defaultResearchColumnPolicyRawValue = "merge"
-
     public static let researchRunIncludeSourcesKey = "researchRunIncludeSources"
-    public static let researchRunIncludeSourceRawKey = "researchRunIncludeSourceRaw"
+    public static let researchRunIncludeSourceSummaryKey = "researchRunIncludeSourceSummary"
     public static let researchRunAutoTaggingKey = "researchRunAutoTagging"
     public static let researchRunNearestNeighbourKey = "researchRunNearestNeighbour"
     public static let researchRunExportToNotionKey = "researchRunExportToNotion"
     public static let researchRunSourcePolicyKey = "researchRunSourcePolicy"
-    public static let researchRunSourceRawPolicyKey = "researchRunSourceRawPolicy"
+    public static let researchRunSourceSummaryPolicyKey = "researchRunSourceSummaryPolicy"
     public static let researchRunTagPolicyKey = "researchRunTagPolicy"
     public static let researchRunNearestPolicyKey = "researchRunNearestPolicy"
-    public static let researchRunRecordIDPolicyKey = "researchRunRecordIDPolicy"
     public static var defaultCodexDirectoryURL: URL {
         FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".codex", isDirectory: true)
     }

@@ -1,17 +1,12 @@
 from __future__ import annotations
 
 import io
-import tempfile
-from pathlib import Path
-from typing import Any
 
-from ..internal import Source
+from ..internal import Source, sources_to_urls
 from ..internal.content import get_content
-from ..internal.env import E
+from ..internal.env import E, E_int
 from ..internal.openai import query
-
-MAX_SUMMARY_INPUT = 120_000
-DOWNLOADED_SOURCE_DIR = Path(tempfile.gettempdir()) / "werkzeugkasten-source-downloads"
+from .models import SummarizeSourcesResponse
 
 
 def _prompt_languages_instruction() -> str:
@@ -53,7 +48,8 @@ Document content:
 """
 
 
-def _truncate_for_upload(prompt: str, limit: int = MAX_SUMMARY_INPUT) -> str:
+def _truncate_for_upload(prompt: str, limit: int | None = None) -> str:
+    limit = limit or E_int["MAX_SUMMARY_INPUT", 120_000]
     if len(prompt) <= limit:
         return prompt
     return prompt[:limit] + "\n\n[Truncated before upload]"
@@ -63,20 +59,20 @@ def _text_to_source(text: str) -> io.BytesIO:
     return io.BytesIO(text.encode("utf-8"))
 
 
-def summarize(sources: list[Source] | str, /) -> dict[str, Any]:
+def summarize_sources(sources: list[Source] | str, /) -> SummarizeSourcesResponse:
     if isinstance(sources, str):
         sources = [_text_to_source(sources)]
     content = get_content(sources)
     safe_content = _truncate_for_upload(content)
-    summary = query(
+    queryResponse = query(
         _prompt_summarize(safe_content),
         model=E["summary_model"],
     )
-    return {
-        "summary": summary.text,
-        "content": content,
-        "token_count": summary.response.usage.total_tokens,
-        "input_tokens": summary.response.usage.input_tokens,
-        "output_tokens": summary.response.usage.output_tokens,
-        "sources": summary.response.tool_choice.to_json() if summary.response.tool_choice else None,
-    }
+
+    return SummarizeSourcesResponse(
+        summary=queryResponse.text,
+        content=content,
+        token_count=queryResponse.response.usage.total_tokens,
+        input_tokens=queryResponse.response.usage.input_tokens,
+        output_tokens=queryResponse.response.usage.output_tokens,
+    )

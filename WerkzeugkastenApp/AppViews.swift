@@ -328,6 +328,7 @@ private struct CopyableTagList: View {
     }
 }
 
+// TODO: update new name when question etc is changed
 private struct OutputPathCard: View {
     let defaultPath: String
     @Binding var outputPath: String
@@ -358,38 +359,35 @@ private struct OutputPathCard: View {
 
 private struct ResearchRunOptionsState: Equatable {
     var includeSources: Bool
-    var includeSourceRaw: Bool
+    var includeSourceSummary: Bool
     var autoTagging: Bool
     var nearestNeighbour: Bool
     var exportToNotion: Bool
     var sourcePolicy: GeneratedColumnPolicy
-    var sourceRawPolicy: GeneratedColumnPolicy
+    var sourceSummaryPolicy: GeneratedColumnPolicy
     var tagPolicy: GeneratedColumnPolicy
     var nearestPolicy: GeneratedColumnPolicy
-    var recordIDPolicy: GeneratedColumnPolicy
 
     init(
-        includeSources: Bool = WerkzeugkastenConstants.defaultResearchIncludeSources,
-        includeSourceRaw: Bool = WerkzeugkastenConstants.defaultResearchIncludeSourceRaw,
-        autoTagging: Bool = WerkzeugkastenConstants.defaultResearchAutoTagging,
-        nearestNeighbour: Bool = WerkzeugkastenConstants.defaultResearchNearestNeighbour,
-        exportToNotion: Bool = WerkzeugkastenConstants.defaultResearchExportToNotion,
-        sourcePolicy: GeneratedColumnPolicy = GeneratedColumnPolicy(rawValue: WerkzeugkastenConstants.defaultResearchColumnPolicyRawValue) ?? .merge,
-        sourceRawPolicy: GeneratedColumnPolicy = GeneratedColumnPolicy(rawValue: WerkzeugkastenConstants.defaultResearchColumnPolicyRawValue) ?? .merge,
-        tagPolicy: GeneratedColumnPolicy = GeneratedColumnPolicy(rawValue: WerkzeugkastenConstants.defaultResearchColumnPolicyRawValue) ?? .merge,
-        nearestPolicy: GeneratedColumnPolicy = GeneratedColumnPolicy(rawValue: WerkzeugkastenConstants.defaultResearchColumnPolicyRawValue) ?? .merge,
-        recordIDPolicy: GeneratedColumnPolicy = GeneratedColumnPolicy(rawValue: WerkzeugkastenConstants.defaultResearchColumnPolicyRawValue) ?? .merge
+        includeSources: Bool = false,
+        includeSourceSummary: Bool = false,
+        autoTagging: Bool = false,
+        nearestNeighbour: Bool = false,
+        exportToNotion: Bool = false,
+        sourcePolicy: GeneratedColumnPolicy = .merge,
+        sourceSummaryPolicy: GeneratedColumnPolicy = .merge,
+        tagPolicy: GeneratedColumnPolicy = .merge,
+        nearestPolicy: GeneratedColumnPolicy = .merge,
     ) {
         self.includeSources = includeSources
-        self.includeSourceRaw = includeSourceRaw
+        self.includeSourceSummary = includeSourceSummary
         self.autoTagging = autoTagging
         self.nearestNeighbour = nearestNeighbour
         self.exportToNotion = exportToNotion
         self.sourcePolicy = sourcePolicy
-        self.sourceRawPolicy = sourceRawPolicy
+        self.sourceSummaryPolicy = sourceSummaryPolicy
         self.tagPolicy = tagPolicy
         self.nearestPolicy = nearestPolicy
-        self.recordIDPolicy = recordIDPolicy
     }
 
     static func load(from defaults: UserDefaults = .standard) -> ResearchRunOptionsState {
@@ -398,48 +396,40 @@ private struct ResearchRunOptionsState: Equatable {
             return defaults.bool(forKey: key)
         }
         func storedPolicy(_ key: String) -> GeneratedColumnPolicy {
-            let raw = defaults.string(forKey: key) ?? WerkzeugkastenConstants.defaultResearchColumnPolicyRawValue
+            let raw = defaults.string(forKey: key) ?? "merge"
             return GeneratedColumnPolicy(rawValue: raw) ?? .merge
         }
         return ResearchRunOptionsState(
-            includeSources: storedBool(WerkzeugkastenConstants.researchRunIncludeSourcesKey, default: WerkzeugkastenConstants.defaultResearchIncludeSources),
-            includeSourceRaw: storedBool(WerkzeugkastenConstants.researchRunIncludeSourceRawKey, default: WerkzeugkastenConstants.defaultResearchIncludeSourceRaw),
-            autoTagging: storedBool(WerkzeugkastenConstants.researchRunAutoTaggingKey, default: WerkzeugkastenConstants.defaultResearchAutoTagging),
-            nearestNeighbour: storedBool(WerkzeugkastenConstants.researchRunNearestNeighbourKey, default: WerkzeugkastenConstants.defaultResearchNearestNeighbour),
-            exportToNotion: storedBool(WerkzeugkastenConstants.researchRunExportToNotionKey, default: WerkzeugkastenConstants.defaultResearchExportToNotion),
+            includeSources: storedBool(WerkzeugkastenConstants.researchRunIncludeSourcesKey, default: false),
+            includeSourceSummary: storedBool(WerkzeugkastenConstants.researchRunIncludeSourceSummaryKey, default: false),
+            autoTagging: storedBool(WerkzeugkastenConstants.researchRunAutoTaggingKey, default: false),
+            nearestNeighbour: storedBool(WerkzeugkastenConstants.researchRunNearestNeighbourKey, default: false),
+            exportToNotion: storedBool(WerkzeugkastenConstants.researchRunExportToNotionKey, default: false),
             sourcePolicy: storedPolicy(WerkzeugkastenConstants.researchRunSourcePolicyKey),
-            sourceRawPolicy: storedPolicy(WerkzeugkastenConstants.researchRunSourceRawPolicyKey),
+            sourceSummaryPolicy: storedPolicy(WerkzeugkastenConstants.researchRunSourceSummaryPolicyKey),
             tagPolicy: storedPolicy(WerkzeugkastenConstants.researchRunTagPolicyKey),
             nearestPolicy: storedPolicy(WerkzeugkastenConstants.researchRunNearestPolicyKey),
-            recordIDPolicy: storedPolicy(WerkzeugkastenConstants.researchRunRecordIDPolicyKey)
         )
     }
 
     func save(to defaults: UserDefaults = .standard) {
         defaults.set(includeSources, forKey: WerkzeugkastenConstants.researchRunIncludeSourcesKey)
-        defaults.set(includeSourceRaw, forKey: WerkzeugkastenConstants.researchRunIncludeSourceRawKey)
+        defaults.set(includeSourceSummary, forKey: WerkzeugkastenConstants.researchRunIncludeSourceSummaryKey)
         defaults.set(autoTagging, forKey: WerkzeugkastenConstants.researchRunAutoTaggingKey)
         defaults.set(nearestNeighbour, forKey: WerkzeugkastenConstants.researchRunNearestNeighbourKey)
         defaults.set(exportToNotion, forKey: WerkzeugkastenConstants.researchRunExportToNotionKey)
         defaults.set(sourcePolicy.rawValue, forKey: WerkzeugkastenConstants.researchRunSourcePolicyKey)
-        defaults.set(sourceRawPolicy.rawValue, forKey: WerkzeugkastenConstants.researchRunSourceRawPolicyKey)
+        defaults.set(sourceSummaryPolicy.rawValue, forKey: WerkzeugkastenConstants.researchRunSourceSummaryPolicyKey)
         defaults.set(tagPolicy.rawValue, forKey: WerkzeugkastenConstants.researchRunTagPolicyKey)
         defaults.set(nearestPolicy.rawValue, forKey: WerkzeugkastenConstants.researchRunNearestPolicyKey)
-        defaults.set(recordIDPolicy.rawValue, forKey: WerkzeugkastenConstants.researchRunRecordIDPolicyKey)
     }
 
     mutating func setIncludeSources(_ value: Bool) {
         includeSources = value
-        if !value {
-            includeSourceRaw = false
-        }
     }
 
-    mutating func setIncludeSourceRaw(_ value: Bool) {
-        includeSourceRaw = value
-        if value {
-            includeSources = true
-        }
+    mutating func setIncludeSourceSummary(_ value: Bool) {
+        includeSourceSummary = value
     }
 
     mutating func setAutoTagging(_ value: Bool) {
@@ -458,16 +448,15 @@ private struct ResearchRunOptionsState: Equatable {
 
     var payload: [String: Any] {
         [
-            "include_sources": includeSources || includeSourceRaw,
-            "include_source_raw": includeSourceRaw,
+            "include_sources": includeSources,
+            "include_source_summary": includeSourceSummary,
             "auto_tagging": autoTagging || nearestNeighbour,
             "nearest_neighbour": nearestNeighbour,
             "export_to_notion": exportToNotion,
             "source_column_policy": sourcePolicy.rawValue,
-            "source_raw_column_policy": sourceRawPolicy.rawValue,
+            "source_summary_column_policy": sourceSummaryPolicy.rawValue,
             "tag_column_policy": tagPolicy.rawValue,
             "nearest_column_policy": nearestPolicy.rawValue,
-            "record_id_column_policy": recordIDPolicy.rawValue,
         ]
     }
 }
@@ -483,9 +472,9 @@ private struct ResearchOptionsCard: View {
                 get: { options.includeSources },
                 set: { options.setIncludeSources($0) }
             ))
-            Toggle("Include Sources[RAW]", isOn: Binding(
-                get: { options.includeSourceRaw },
-                set: { options.setIncludeSourceRaw($0) }
+            Toggle("Include Source Summary", isOn: Binding(
+                get: { options.includeSourceSummary },
+                set: { options.setIncludeSourceSummary($0) }
             ))
             Toggle("Auto Tagging", isOn: Binding(
                 get: { options.autoTagging },
@@ -497,11 +486,10 @@ private struct ResearchOptionsCard: View {
             ))
             Toggle("Export to Notion", isOn: $options.exportToNotion)
             collisionControl(title: "Sources", enabled: options.includeSources, selection: $options.sourcePolicy)
-            collisionControl(title: "Sources[RAW]", enabled: options.includeSourceRaw, selection: $options.sourceRawPolicy)
+            collisionControl(title: "Source Summary", enabled: options.includeSourceSummary, selection: $options.sourceSummaryPolicy)
             collisionControl(title: "Tags", enabled: options.autoTagging || options.nearestNeighbour, selection: $options.tagPolicy)
             collisionControl(title: "Closest \(objectType.capitalized)", enabled: options.nearestNeighbour, selection: $options.nearestPolicy)
-            collisionControl(title: "Record ID", enabled: options.exportToNotion, selection: $options.recordIDPolicy)
-            Text("`Sources[RAW]` fetches source pages through Jina and can make the output much larger. `Nearest Neighbour` uses a second pass over the generated table and depends on `Auto Tagging`.")
+            Text("`Source Summary` summarizes source pages fetched through Jina and can make the output much larger. `Nearest Neighbour` uses a second pass over the generated table and depends on `Auto Tagging`.")
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -640,17 +628,16 @@ struct ResearchListWindow: View {
     }
 
     private func run() {
-        let items = parsedItems
         Task {
             isRunning = true
             errorText = nil
-            status = "Running research for \(items.count) item(s)..."
+            status = "Running research for \(parsedItems.count) item(s)..."
             defer { isRunning = false }
             do {
                 let response: ResearchListResponse = try await runner.run(
                     .researchList,
                     payload: [
-                        "items": items,
+                        "items": inputText,
                         "question": question,
                         "output_path": outputPath,
                     ].merging(options.payload) { _, new in new },
@@ -784,7 +771,7 @@ struct ResearchTableWindow: View {
             do {
                 preview = try await runner.run(
                     .inspectTable,
-                    payload: ["raw_table_text": inputText, "source_name": sourceName],
+                    payload: ["table": inputText, "source_name": sourceName],
                     configuration: try settings.configuration()
                 )
                 status = "Detected \(preview?.rowCount ?? 0) row(s)"
@@ -812,7 +799,7 @@ struct ResearchTableWindow: View {
                 let response: ResearchTableResponse = try await runner.run(
                     .researchTable,
                     payload: [
-                        "raw_table_text": inputText,
+                        "table": inputText,
                         "source_name": sourceName,
                         "output_path": outputPath,
                     ].merging(options.payload) { _, new in new },

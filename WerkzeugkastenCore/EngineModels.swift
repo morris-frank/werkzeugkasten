@@ -86,19 +86,23 @@ public struct EngineResponseEnvelope<Response: Decodable>: Decodable {
 
 public struct ResearchListResponse: Decodable, Equatable, Sendable {
     public let outputPath: String
-    public let itemCount: Int
-    public let completedCount: Int
+    public let format: String
     public let headers: [String]
+    public let rowCount: Int
     public let questionColumns: [String]
     public let attributeColumns: [String]
+    public let exampleKey: String
+    public let objectType: String
 
     enum CodingKeys: String, CodingKey {
         case outputPath = "output_path"
-        case itemCount = "item_count"
-        case completedCount = "completed_count"
+        case format = "format"
         case headers
+        case rowCount = "row_count"
         case questionColumns = "question_columns"
         case attributeColumns = "attribute_columns"
+        case exampleKey = "example_key"
+        case objectType = "object_type"
     }
 }
 

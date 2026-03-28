@@ -28,16 +28,42 @@ _QUESTION_WORDS = {
     "will",
 }
 
+_OBJECT_TYPE_CANONICALS = {"name", "title", "[blank]", "object", "blank"}
+
+
 _LOCATION_TOKENS = ("location", "address", "adress", "city", "country", "region", "state")
 _HTML_BREAK_RE = re.compile(r"\s*<br\s*/?>\s*", re.IGNORECASE)
 _URL_RE = re.compile(r"https?://[^\s<>,)\]]+|www\.[^\s<>,)\]]+", re.IGNORECASE)
 _MARKDOWN_LINK_RE = re.compile(r"\[([^\]]+)\]\((https?://[^)]+)\)")
 _REF_RE = re.compile(r"\s*\(Ref\s+\d+\)\s*$", re.IGNORECASE)
+_SPACES_RE = re.compile(r"\s+")
+_NEWLINES_RE = re.compile(r"\n+")
+_DELIMITER_RE = re.compile(r"\s*(?:/|\+|,|;)\s*")  # Replace /, +, or ; with comma
 
 
 class MdLink(IntEnum):
     URL = 1
     LABEL = 2
+
+
+# TODO: !!! ExtensionDtype
+
+# as_*
+#   "If I read this as value of type X what do I get?"
+#   functions are used to convert text to a canonical form.
+#   They throw errors if cast fails.
+#   They are destructive!
+#   There is no check for any other possible canonical forms.
+
+# maybe_*
+#   "Can I read this as value of type X?"
+#   functions are used to convert text to a canonical form.
+#   They return None if cast fails.
+#   So can be used in conditional statements.
+#   There is no check for any other possible canonical forms.
+
+
+# make V.as_* and V.maybe_*
 
 
 def _remove_code_block(text: str | None, /) -> str:
@@ -52,28 +78,36 @@ def _normalize_scalar(text: str, /) -> str:
         return url
     text = collapse_markdown_link(text, MdLink.URL)
     text = _REF_RE.sub("", text)
-    text = re.sub(r"\((?:https?://|www\.)[^)]+\)", "", text).strip()
-    text = re.sub(r"\([^)]*\.[^)]*\)", "", text).strip()
-    text = re.sub(r"\s+", " ", text)
+    text = re.sub(r"\((?:https?://|www\.)[^)]+\)", "", text).strip()  # Remove URLs
+    text = re.sub(r"\([^)]*\.[^)]*\)", "", text).strip()  # Remove file extensions
+    text = _SPACES_RE.sub(" ", text)  # Replace multiple spaces with single space.
 
-    if re.fullmatch(r"[A-Z0-9]{2,}", text):
+    if re.fullmatch(r"[A-Z0-9]{2,}", text):  # If text is all uppercase and has at least 2 chars
         return text
     if text.islower() and len(text.split()) <= 4:
         return " ".join(word if word.isupper() else word.capitalize() for word in text.split())
     return text
 
 
-def normalize_list(text: str | None, /) -> list[str]:
-    working = _HTML_BREAK_RE.sub(",", unwrap_text(text))
-    working = re.sub(r"\s*(?:/|\+|;)\s*", ",", working)
-    working = re.sub(r"\s*,\s*", ",", working.strip())
-    values = [_normalize_scalar(item) for item in working.split(",") if item.strip()]
+# FIXME: Only top-level delimiter is supported -> newlines with commas in the lines should split only on newlines
+def as_list(text: str | None | list[str], /) -> list[str]:
+    if isinstance(text, list):
+        normList = text
+    else:
+        working = _NEWLINES_RE.sub(",", unwrap_text(text))  # Replace newlines with commas
+        working = _HTML_BREAK_RE.sub(",", unwrap_text(text))  # Replace <br> with comma
+        working = re.sub(r"\s*(?:/|\+|;)\s*", ",", working)  # Replace /, +, or ; with comma
+        working = re.sub(r"\s*,\s*", ",", working.strip())  # Replace multiple commas with single comma
+        normList = working.split(",")
+    values = [_normalize_scalar(item) for item in normList if item.strip()]
     return list(dict.fromkeys(values))
 
 
 def unwrap_text(text: str | None, /) -> str:
-    text = _HTML_BREAK_RE.sub("\n", text or "").strip()
-    return re.sub(r"\s+", " ", text)
+    text = str(text) or ""
+    text = _HTML_BREAK_RE.sub("\n", text).strip()
+    text = _SPACES_RE.sub(" ", text)  # Replace multiple spaces with single space
+    return text
 
 
 def is_empty(text: str | None, /) -> bool:
@@ -82,12 +116,12 @@ def is_empty(text: str | None, /) -> bool:
 
 def as_object_type(text: str | None, /) -> str:
     text = unwrap_text(text)
-    text = re.sub(r"[_-]+", " ", text.strip().lower())
-    if text.endswith(" name") and len(text.split()) > 1:
-        text = text[:-5].strip()
-    if text in {"name", "title"}:
+    text = re.sub(r"[_-]+", " ", text)  # Replace hyphens and underscores with spaces
+    if text.lower().endswith(" name") and len(text.split()) > 1:
+        text = text[:-5]
+    if not text or text.lower() in _OBJECT_TYPE_CANONICALS:
         return "object"
-    return text or "object"
+    return text
 
 
 def is_location_type(text: str | None, /) -> bool:
@@ -182,3 +216,17 @@ def as_canonical(candidate: str, canonicals: list[str]) -> str:
     if best_score >= 92:
         return best_value or candidate
     return candidate
+
+
+def fuzz_equals(a: str | None, b: str | None, /) -> bool:
+    if a is None or b is None:
+        return False
+    if a == b:
+        return True
+    a, b = unwrap_text(a), unwrap_text(b)
+    if a == b:
+        return True
+    # NOTE: 90 is the threshold for "fuzz equals"
+    if fuzz.ratio(a, b) >= 90:
+        return True
+    return False

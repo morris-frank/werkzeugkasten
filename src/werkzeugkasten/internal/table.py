@@ -10,7 +10,7 @@ from typing import Any, Iterator
 import markdown
 import pandas as pd
 
-from .value import as_canonical, as_object_type, as_url, as_urls, is_empty, normalize_list, str_contains
+from .value import as_canonical, as_list, as_object_type, as_url, as_urls, is_empty, str_contains
 
 
 class Policy(Enum):
@@ -25,6 +25,9 @@ class ColumnType(Enum):
     LIST = "list"
     QUESTION = "question"
     SCALAR = "scalar"
+
+
+# TODO: !!! ExtensionDtype
 
 
 class Table:
@@ -63,7 +66,7 @@ class Table:
 
     @property
     def object_type(self) -> str:
-        return as_object_type(self._df.index.name or "Key")
+        return as_object_type(self._df.index.name)
 
     @property
     def origin(self) -> str:
@@ -81,7 +84,7 @@ class Table:
         if isinstance(key, str):
             row = key
             if not isinstance(value, dict):
-                raise ValueError("Value must be a dictionary if key is a string.")
+                raise ValueError("Value must be a the row as a dictionary when setting a row.")
             for column, value in value.items():
                 if column in self:
                     self[row, column] = value
@@ -104,6 +107,7 @@ class Table:
         self._policies[column] = policy
         self._normalize_column(column)
 
+    # FIXME: Fuse this logic with value.py
     def _column_type(self, column: str, /) -> ColumnType:
         values = self._df[column].dropna()
         if not isinstance(values, pd.Series) or values.empty:
@@ -120,6 +124,7 @@ class Table:
         if any(str_contains(column, token) for token in ("location", "address", "city", "country", "region", "state")):
             return ColumnType.LOCATION
 
+        # FIXME: Fuse this logic with as_list!
         delimiter_hits = sum(1 for value in values if re.search(r"\s*(?:/|\+|,|;)\s*", value))
         if delimiter_hits >= max(2, len(values) // 3):
             return ColumnType.LIST
@@ -131,6 +136,8 @@ class Table:
         return ColumnType.SCALAR
 
     def _normalize_column(self, column: str, /):
+        df = self._df
+        df[column].dtype
         match self._column_type(column):
             case ColumnType.LONG_TEXT:
                 self._df[column] = self._df[column].str.strip()
@@ -139,7 +146,7 @@ class Table:
             case ColumnType.LIST | ColumnType.SCALAR:
                 canonicals: list[str] = []
                 for value in self._df[column]:
-                    norm_value = ", ".join(normalize_list(value))
+                    norm_value = ", ".join(as_list(value))
                     canonical = as_canonical(norm_value, canonicals)
                     canonicals.append(canonical)
                 self._df[column] = canonicals

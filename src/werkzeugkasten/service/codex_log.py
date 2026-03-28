@@ -7,6 +7,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from .models import PrettifyCodexLogResponse
+
 PLAN_BLOCK_RE = re.compile(r"<proposed_plan>\s*(.*?)\s*</proposed_plan>", re.DOTALL)
 TOOL_CALL_TYPES = {"function_call", "custom_tool_call", "web_search_call"}
 
@@ -290,15 +292,15 @@ def _format_duration(seconds: int) -> str:
     return " ".join(parts) if parts else "0s"
 
 
-def prettify_codex_log(path: str | Path) -> dict[str, Any]:
+def prettify_codex_log(path: str | Path) -> PrettifyCodexLogResponse:
     log_path = Path(path).expanduser()
     turns = _parse_codex_log(log_path)
     output_path = log_path.with_name(log_path.name + ".transcript.md")
     output_path.write_text(_render_transcript(turns), encoding="utf-8")
-    return {
-        "output_path": output_path.as_posix(),
-        "completed_turn_count": len(turns),
-        "image_count": sum(turn.image_count for turn in turns),
-        "tool_call_count": sum(turn.tool_call_count for turn in turns),
-        "total_token_count": sum(turn.total_tokens or 0 for turn in turns) or None,
-    }
+    return PrettifyCodexLogResponse(
+        output_path=output_path.as_posix(),
+        completed_turn_count=len(turns),
+        image_count=sum(turn.image_count for turn in turns),
+        tool_call_count=sum(turn.tool_call_count for turn in turns),
+        total_token_count=sum(turn.total_tokens or 0 for turn in turns) or None,
+    )

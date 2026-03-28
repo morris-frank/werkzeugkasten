@@ -1,18 +1,14 @@
 from __future__ import annotations
 
-import copy
 import json
-import re
-from collections import defaultdict
 from dataclasses import dataclass
 from typing import Any
 
 import requests
 
-from ..internal import group_sources_by_domain
 from .env import E, E_req
 from .geocoding import geocode_place
-from .value import as_urls, is_location_type, normalize_list
+from .value import as_list, as_urls, is_location_type
 
 
 # TODO: Merge into table.py -> integrate with parsing around tables
@@ -72,171 +68,6 @@ def _request_api(method: str, path: str, body: dict[str, Any] | None = None) -> 
 
 def _request_json_byte_length(body: dict[str, Any]) -> int:
     return len(json.dumps(body, ensure_ascii=True).encode("utf-8"))
-
-
-def _truncate_utf8_bytes(text: str, max_bytes: int) -> str:
-    if max_bytes <= 0:
-        return ""
-    encoded = text.encode("utf-8")
-    if len(encoded) <= max_bytes:
-        return text
-    truncated = encoded[:max_bytes]
-    while truncated and (truncated[-1] & 0b1100_0000) == 0b1000_0000:
-        truncated = truncated[:-1]
-    return truncated.decode("utf-8", errors="ignore")
-
-
-def _format_source_raw(value: str, segment_texts: dict[str, str]) -> str:
-    elements: list[str] = []
-    for part in [part.strip() for part in re.split(r"\n(?=URL:\s)", value or "") if part.strip()]:
-        lines = part.splitlines()
-        if not lines:
-            continue
-        url = lines[0].replace("URL:", "").strip()
-        body = "\n".join(lines[1:]).strip()
-        if url:
-            sid = f"raw:{url}"
-            body = segment_texts.get(sid, body)
-            elements.append(f"URL: {url}\n{body}")
-    return "\n\n".join(elements)
-
-
-def _parse_source_raw_map(value: str) -> defaultdict[str, str]:
-    mapping = defaultdict(str)
-    for part in [part.strip() for part in re.split(r"\n(?=URL:\s)", value or "") if part.strip()]:
-        lines = part.splitlines()
-        if not lines:
-            continue
-        url = lines[0].replace("URL:", "").strip()
-        body = "\n".join(lines[1:]).strip()
-        if url:
-            mapping[url] = body
-    return mapping
-
-
-def _apply_segment_texts_to_row(
-    base_row: dict[str, str],
-    segment_texts: dict[str, str],
-    *,
-    source_raw_column: str | None,
-) -> dict[str, str]:
-    row = dict(base_row)
-    for key, text in segment_texts.items():
-        if key.startswith("col:"):
-            row[key[4:]] = text
-    if source_raw_column and source_raw_column in row:
-        row[source_raw_column] = _format_source_raw(row[source_raw_column], segment_texts)
-    return row
-
-
-def _shrink_property_values_for_request_size(properties: dict[str, Any]) -> dict[str, Any]:
-    """Last resort when database properties alone exceed the safe limit (rare)."""
-
-    def halve_rich_text_chunks(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
-        out: list[dict[str, Any]] = []
-        for item in items:
-            if not isinstance(item, dict):
-                continue
-            text_obj = item.get("text")
-            if isinstance(text_obj, dict) and "content" in text_obj:
-                content = text_obj["content"]
-                if isinstance(content, str) and content:
-                    new_item = copy.deepcopy(item)
-                    new_item["text"]["content"] = _truncate_utf8_bytes(content, max(0, len(content.encode("utf-8")) // 2))
-                    out.append(new_item)
-                else:
-                    out.append(copy.deepcopy(item))
-            else:
-                out.append(copy.deepcopy(item))
-        return out
-
-    shrunk: dict[str, Any] = {}
-    for name, payload in properties.items():
-        if not isinstance(payload, dict):
-            shrunk[name] = copy.deepcopy(payload)
-            continue
-        p = copy.deepcopy(payload)
-        if "title" in p and isinstance(p["title"], list):
-            p["title"] = halve_rich_text_chunks(p["title"])
-        if "rich_text" in p and isinstance(p["rich_text"], list):
-            p["rich_text"] = halve_rich_text_chunks(p["rich_text"])
-        shrunk[name] = p
-    return shrunk
-
-
-def _ensure_notion_safe_create_page_body(
-    create_page_body: dict[str, Any],
-    row: dict[str, str],
-    long_text_columns: set[str],
-    sources_column: str | None,
-    source_raw_column: str | None,
-) -> dict[str, Any]:
-    if _request_json_byte_length(create_page_body) <= E["notion_request_body_safe_max_bytes"]:
-        return create_page_body
-
-    parent = create_page_body.get("parent")
-    properties = create_page_body.get("properties") or {}
-    base_only: dict[str, Any] = {"parent": parent, "properties": properties}
-    for _ in range(96):
-        if _request_json_byte_length(base_only) <= E["notion_request_body_safe_max_bytes"]:
-            break
-        prev = _request_json_byte_length(base_only)
-        properties = _shrink_property_values_for_request_size(properties)
-        base_only = {"parent": parent, "properties": properties}
-        if _request_json_byte_length(base_only) >= prev:
-            break
-
-    segments = _iter_row_child_documents(row, long_text_columns, sources_column, source_raw_column)
-    if not segments:
-        out: dict[str, Any] = {"parent": parent, "properties": properties}
-        children = render_row_children(row, long_text_columns, sources_column, source_raw_column)
-        if children:
-            out["children"] = children
-        while _request_json_byte_length(out) > E["notion_request_body_safe_max_bytes"] and out.get("children"):
-            out.pop("children", None)
-        return out
-
-    sizes = [len(text.encode("utf-8")) for _, text in segments]
-
-    def _build_at_scale(scale: float) -> dict[str, Any]:
-        segment_texts: dict[str, str] = {}
-        for (seg_id, text), size in zip(segments, sizes):
-            if size == 0:
-                segment_texts[seg_id] = text
-                continue
-            limit = int(scale * size)
-            if limit >= size:
-                segment_texts[seg_id] = text
-            else:
-                truncated = _truncate_utf8_bytes(text, limit)
-                if len(truncated.encode("utf-8")) < size:
-                    segment_texts[seg_id] = truncated + "\n\n_(Abbreviated for Notion export size limit.)_"
-                else:
-                    segment_texts[seg_id] = text
-        adjusted_row = _apply_segment_texts_to_row(row, segment_texts, source_raw_column=source_raw_column)
-        children = render_row_children(adjusted_row, long_text_columns, sources_column, source_raw_column)
-        trial: dict[str, Any] = {"parent": parent, "properties": properties}
-        if children:
-            trial["children"] = children
-        return trial
-
-    low, high = 0.0, 1.0
-    best_trial: dict[str, Any] | None = None
-    for _ in range(56):
-        mid = (low + high) / 2.0
-        trial = _build_at_scale(mid)
-        if _request_json_byte_length(trial) <= E["notion_request_body_safe_max_bytes"]:
-            best_trial = trial
-            low = mid
-        else:
-            high = mid
-
-    trial = best_trial if best_trial is not None else _build_at_scale(0.0)
-    scale = low
-    while _request_json_byte_length(trial) > E["notion_request_body_safe_max_bytes"] and scale > 1e-12:
-        scale *= 0.88
-        trial = _build_at_scale(scale)
-    return trial
 
 
 # TODO: Move to a values.py -> integrate with parsing around tables
@@ -330,7 +161,7 @@ def _property_value(
     if spec.kind == "select":
         return {"select": {"name": value[:100]}}
     if spec.kind == "multi_select":
-        options = [{"name": item[:100]} for item in normalize_list(value)]
+        options = [{"name": item[:100]} for item in as_list(value)]
         return {"multi_select": options}
     if spec.kind == "relation":
         return {"relation": []}
@@ -346,24 +177,8 @@ def _paragraph_block(text: str) -> dict[str, Any]:
     return {"object": "block", "type": "paragraph", "paragraph": {"rich_text": _rich_text_array(text)}}
 
 
-def _bulleted_block(text: str) -> dict[str, Any]:
-    return {"object": "block", "type": "bulleted_list_item", "bulleted_list_item": {"rich_text": _rich_text_array(text, max_chars=180)}}
-
-
 def _linked_bulleted_block(url: str) -> dict[str, Any]:
     return {"object": "block", "type": "bulleted_list_item", "bulleted_list_item": {"rich_text": _linked_rich_text(url)}}
-
-
-def _toggle_block(title: str, children: list[dict[str, Any]], *, url: str | None = None) -> dict[str, Any]:
-    rich_text = _linked_rich_text(url, title) if url else _rich_text_array(title, max_chars=180)
-    return {
-        "object": "block",
-        "type": "toggle",
-        "toggle": {
-            "rich_text": rich_text,
-            "children": children[:50],
-        },
-    }
 
 
 def _rich_text_array(text: str, *, max_chars: int = 1800) -> list[dict[str, Any]]:
@@ -385,60 +200,29 @@ def _linked_rich_text(url: str, label: str | None = None) -> list[dict[str, Any]
     ]
 
 
-# TODO: overlap with _iter_row_child_documents -> find intersection
 def render_row_children(
-    row: dict[str, str], long_text_columns: set[str], sources_column: str | None, source_raw_column: str | None
+    row: dict[str, str], long_text_columns: set[str], sources_column: str | None, source_summary_column: str | None
 ) -> list[dict[str, Any]]:
     blocks: list[dict[str, Any]] = []
     if sources_column and row.get(sources_column, "").strip():
         blocks.append(_heading_block("Sources", level=2))
-        source_urls = as_urls(row[sources_column])
-        raw_map = _parse_source_raw_map(row.get(source_raw_column, "")) if source_raw_column else {}
-        for domain, urls in group_sources_by_domain(source_urls).items():
-            blocks.append(_heading_block(domain, level=3))
-            for url in urls:
-                raw_body = raw_map.get(url, "")
-                if raw_body:
-                    children = [_paragraph_block(chunk) for chunk in _chunk_text(raw_body)]
-                    blocks.append(_toggle_block(url, children, url=url))
-                else:
-                    blocks.append(_linked_bulleted_block(url))
-    for column in sorted(long_text_columns):
-        value = row.get(column, "").strip()
-        if not value:
-            continue
-        if column == source_raw_column:
-            continue
-        blocks.append(_heading_block(column, level=2))
-        for chunk in _chunk_text(value):
+        for url in as_urls(row[sources_column]):
+            blocks.append(_linked_bulleted_block(url))
+    if source_summary_column and row.get(source_summary_column, "").strip():
+        blocks.append(_heading_block("Source Summary", level=2))
+        for chunk in _chunk_text(row.get(source_summary_column, "")):
             blocks.append(_paragraph_block(chunk))
-    return blocks[:100]
-
-
-# TODO: overlap with _iter_row_child_documents -> find intersection
-def _iter_row_child_documents(
-    row: dict[str, str],
-    long_text_columns: set[str],
-    sources_column: str | None,
-    source_raw_column: str | None,
-) -> list[tuple[str, str]]:
-    segments: list[tuple[str, str]] = []
-    if sources_column and row.get(sources_column, "").strip():
-        source_urls = as_urls(row[sources_column])
-        raw_map = _parse_source_raw_map(row.get(source_raw_column, "")) if source_raw_column else {}
-        for _domain, urls in group_sources_by_domain(source_urls).items():
-            for url in urls:
-                raw_body = raw_map.get(url, "")
-                if raw_body:
-                    segments.append((f"raw:{url}", raw_body))
     for column in sorted(long_text_columns):
-        value = row.get(column, "").strip()
-        if not value:
-            continue
-        if column == source_raw_column:
-            continue
-        segments.append((f"col:{column}", value))
-    return segments
+        if value := row.get(column, "").strip():
+            blocks.append(_heading_block(column, level=2))
+            for chunk in _chunk_text(value):
+                blocks.append(_paragraph_block(chunk))
+
+    while _request_json_byte_length(blocks) > E["notion_request_body_safe_max_bytes"]:
+        if len(blocks) <= 1:
+            raise RuntimeError("Notion page body is too large to create.")
+        blocks.pop()
+    return blocks
 
 
 def export_dataset_to_notion(
@@ -448,7 +232,7 @@ def export_dataset_to_notion(
     rows: list[dict[str, str]],
     object_type: str,
     sources_column: str | None,
-    source_raw_column: str | None,
+    source_summary_column: str | None,
     tags_column: str | None,
     nearest_column: str | None,
     record_id_column: str | None,
@@ -523,20 +307,12 @@ def export_dataset_to_notion(
             )
             if property_value is not None:
                 properties_payload[header] = property_value
+
         create_page_body = {
             "parent": {"type": "data_source_id", "data_source_id": data_source_id},
             "properties": properties_payload,
         }
-        children = render_row_children(row, long_text_columns, sources_column, source_raw_column)
-        if children:
-            create_page_body["children"] = children
-        create_page_body = _ensure_notion_safe_create_page_body(
-            create_page_body,
-            row,
-            long_text_columns,
-            sources_column,
-            source_raw_column,
-        )
+        create_page_body["children"] = render_row_children(row, long_text_columns, sources_column, source_summary_column)
         page = _request_api("POST", "/pages", create_page_body)
         page_id = page.get("id")
         record_id = row.get(record_id_column or "", "").strip()
@@ -551,13 +327,9 @@ def export_dataset_to_notion(
             page_id = pages_by_record_id.get(row.get(record_id_column, "").strip())
             if not page_id:
                 continue
-            relation_ids = [
-                {"id": pages_by_record_id[item]} for item in normalize_list(row.get(nearest_column, "")) if item in pages_by_record_id
-            ]
+            relation_ids = [{"id": pages_by_record_id[item]} for item in as_list(row.get(nearest_column, "")) if item in pages_by_record_id]
             if not relation_ids:
-                relation_ids = [
-                    {"id": page_ids_by_key[item]} for item in normalize_list(row.get(nearest_column, "")) if item in page_ids_by_key
-                ]
+                relation_ids = [{"id": page_ids_by_key[item]} for item in as_list(row.get(nearest_column, "")) if item in page_ids_by_key]
             if not relation_ids:
                 continue
             _request_api(

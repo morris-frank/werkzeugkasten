@@ -26,8 +26,8 @@ Werkzeugkasten is a macOS menu-bar app with a Finder action for lightweight rese
 
 - `include_sources`
    Include the URLS of the web sources in a new column `"Sources"`
-- `include_source_raw`
-   Include the _content_ of the web sources in a new column `"Sources[RAW]"`
+- `include_source_summary`
+   Include a summary of the web sources in a new column `"Source Summary"`
 - `auto_tagging`
    Use the filled table to infer sensible categories, new column `"Tags"`
 - `nearest_neighbour`

@@ -1,53 +1,28 @@
 from __future__ import annotations
 
 import sys
-from dataclasses import asdict, is_dataclass
-from functools import partial
-from pathlib import Path
-from typing import Any, Literal
+from typing import Any
 
-import pandas as pd
 import typer
 import uvicorn
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
+from . import service
 from .internal.env import E
+from .service.models import *
 
-Service = Literal[
-    "research-list",
-    "inspect-table",
-    "research-table",
-    "summarize-files",
-    "summarize-text",
-    "prettify-codex-log",
-]
+AnyResponse = SummarizeSourcesResponse | ResearchTableResponse | InspectTableResponse | PrettifyCodexLogResponse
 
 
 class EngineRequest(BaseModel):
-    service: Service
+    service: str
     payload: dict[str, Any] = Field(default_factory=dict)
     config: dict[str, str] = Field(default_factory=dict)
 
 
-class EngineResponse(BaseModel):
-    data: dict[str, Any]
-
-
 api = FastAPI(title="werkzeugkasten")
 cli = typer.Typer(add_completion=False, pretty_exceptions_enable=False)
-
-
-def _as_jsonable(value: Any) -> Any:
-    if isinstance(value, Path):
-        return str(value)
-    if is_dataclass(value):
-        return {key: _as_jsonable(item) for key, item in asdict(value).items()}
-    if isinstance(value, dict):
-        return {str(key): _as_jsonable(item) for key, item in value.items()}
-    if isinstance(value, list):
-        return [_as_jsonable(item) for item in value]
-    return value
 
 
 def _read_request() -> EngineRequest:
@@ -57,88 +32,62 @@ def _read_request() -> EngineRequest:
     return EngineRequest.model_validate_json(payload)
 
 
-def _research_list(payload: dict[str, Any]) -> dict[str, Any]:
-    from .service import research_table
-
-    items = [str(item).strip() for item in payload.get("items", []) if str(item).strip()]
-    question = str(payload.get("question", "")).strip()
-    if not items:
-        raise ValueError("Expected at least one item.")
-    if not question:
-        raise ValueError("Expected a question.")
-
-    return research_table(
-        pd.DataFrame({"Item": items, question: [""] * len(items)}),
-        include_sources=bool(payload.get("include_sources", False)),
-        summarize_sources=bool(payload.get("include_source_raw", False)),
-        auto_tagging=bool(payload.get("auto_tagging", False)),
-        nearest_neighbour=bool(payload.get("nearest_neighbour", False)),
-        output_path=payload.get("output_path"),
-        source_column_policy=payload.get("source_column_policy", "merge"),
-        source_raw_column_policy=payload.get("source_raw_column_policy", "merge"),
-        tag_column_policy=payload.get("tag_column_policy", "merge"),
-        nearest_column_policy=payload.get("nearest_column_policy", "merge"),
-        record_id_column_policy=payload.get("record_id_column_policy", "merge"),
-    )
-
-
-def _inspect_table(payload: dict[str, Any]) -> dict[str, Any]:
-    from .service import inspect_table
-
-    return inspect_table(str(payload.get("raw_table_text", "")))
-
-
-def _research_table(payload: dict[str, Any]) -> dict[str, Any]:
-    from .service import research_table
-
-    return research_table(
-        str(payload.get("raw_table_text", "")),
-        include_sources=bool(payload.get("include_sources", False)),
-        summarize_sources=bool(payload.get("include_source_raw", False)),
-        auto_tagging=bool(payload.get("auto_tagging", False)),
-        nearest_neighbour=bool(payload.get("nearest_neighbour", False)),
-        output_path=payload.get("output_path"),
-    )
-
-
-def _summarize(payload: dict[str, Any], key: str) -> dict[str, Any]:
-    from .service import summarize
-
-    return summarize(payload.get(key, ""))
-
-
-def _prettify_codex_log(payload: dict[str, Any]) -> dict[str, Any]:
-    from .service.codex_log import prettify_codex_log
-
-    return prettify_codex_log(payload)
-
-
-def _dispatch(request: EngineRequest) -> dict[str, Any]:
+@api.post("/research-list", response_model=ResearchTableResponse)
+def research_list(request: EngineRequest) -> ResearchTableResponse:
     E.update(request.config)
-    handlers = {
-        "research-list": _research_list,
-        "inspect-table": _inspect_table,
-        "research-table": _research_table,
-        "summarize-files": partial(_summarize, key="paths"),
-        "summarize-text": partial(_summarize, key="text"),
-        "prettify-codex-log": _prettify_codex_log,
-    }
-    return _as_jsonable(handlers[request.service](request.payload))
+    return service.research_list(
+        items=request.payload.get("items", ""),
+        question=request.payload.get("question", ""),
+        output_path=request.payload.get("output_path"),
+        include_sources=bool(request.payload.get("include_sources", False)),
+        include_sources_summary=bool(request.payload.get("include_sources_summary", False)),
+        # source_column_policy=request.payload.get("source_column_policy", "merge"),
+        # source_summary_column_policy=request.payload.get("source_summary_column_policy", "merge"),
+    )
 
 
-@api.post("/run", response_model=EngineResponse)
-def run_api(request: EngineRequest) -> EngineResponse:
+@api.post("/inspect-table", response_model=InspectTableResponse)
+def inspect_table(request: EngineRequest) -> InspectTableResponse:
+    E.update(request.config)
+    return service.inspect_table(str(request.payload.get("table", "")))
+
+
+@api.post("/research-table", response_model=ResearchTableResponse)
+def research_table(request: EngineRequest) -> ResearchTableResponse:
+    E.update(request.config)
+
+    return service.research_table(
+        str(request.payload.get("table", "")),
+        include_sources=bool(request.payload.get("include_sources", False)),
+        include_sources_summary=bool(request.payload.get("include_source_summary", False)),
+        auto_tagging=bool(request.payload.get("auto_tagging", False)),
+        nearest_neighbour=bool(request.payload.get("nearest_neighbour", False)),
+        output_path=request.payload.get("output_path"),
+        # source_column_policy=request.payload.get("source_column_policy", "merge"),
+        # source_summary_column_policy=request.payload.get("source_summary_column_policy", "merge"),
+        # tag_column_policy=request.payload.get("tag_column_policy", "merge"),
+        # nearest_column_policy=request.payload.get("nearest_column_policy", "merge"),
+    )
+
+
+@api.post("/summarize", response_model=SummarizeSourcesResponse)
+def summarize(request: EngineRequest) -> dict[str, Any]:
+    E.update(request.config)
+    return service.summarize_sources(request.payload.get("sources", ""))
+
+
+@api.post("/prettify-codex-log", response_model=PrettifyCodexLogResponse)
+def prettify_codex_log(request: EngineRequest) -> PrettifyCodexLogResponse:
+    E.update(request.config)
+    return service.prettify_codex_log(request.payload.get("path", ""))
+
+
+@api.post("/run", response_model=AnyResponse)
+def run_api(request: EngineRequest) -> AnyResponse:
     try:
-        return EngineResponse(data=_dispatch(request))
+        return api.routes[request.service](request)
     except Exception as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
-
-
-@cli.command()
-def run() -> None:
-    response = EngineResponse(data=_dispatch(_read_request()))
-    sys.stdout.write(response.model_dump_json())
-    sys.stdout.write("\n")
 
 
 @cli.command()
