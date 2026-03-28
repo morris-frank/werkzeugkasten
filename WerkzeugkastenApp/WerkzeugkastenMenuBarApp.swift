@@ -27,6 +27,7 @@ struct WerkzeugkastenMenuBarApp: App {
                 .environmentObject(settings)
                 .environmentObject(windowCoordinator)
         }
+        .windowStyle(.hiddenTitleBar)
         .defaultWindowPlacement(centeredWindowPlacement)
         .windowResizability(.contentMinSize)
         .windowIdealSize(.fitToContent)
@@ -39,6 +40,7 @@ struct WerkzeugkastenMenuBarApp: App {
                 .environmentObject(settings)
                 .environmentObject(windowCoordinator)
         }
+        .windowStyle(.hiddenTitleBar)
         .defaultWindowPlacement(centeredWindowPlacement)
         .windowResizability(.contentMinSize)
         .windowIdealSize(.fitToContent)
@@ -51,7 +53,9 @@ struct WerkzeugkastenMenuBarApp: App {
                 .environmentObject(settings)
                 .environmentObject(summarizeSession)
                 .environmentObject(windowCoordinator)
+        
         }
+        .windowStyle(.hiddenTitleBar)
         .defaultWindowPlacement(centeredWindowPlacement)
         .windowResizability(.contentMinSize)
         .windowIdealSize(.fitToContent)
@@ -65,6 +69,7 @@ struct WerkzeugkastenMenuBarApp: App {
                 .environmentObject(settings)
                 .environmentObject(windowCoordinator)
         }
+        .windowStyle(.hiddenTitleBar)
         .defaultWindowPlacement(centeredWindowPlacement)
         .windowResizability(.contentMinSize)
         .windowIdealSize(.fitToContent)
@@ -77,6 +82,7 @@ struct WerkzeugkastenMenuBarApp: App {
                 .environmentObject(settings)
                 .environmentObject(windowCoordinator)
         }
+        .windowStyle(.hiddenTitleBar)
         .defaultWindowPlacement(centeredWindowPlacement)
         .windowResizability(.contentSize)
         .restorationBehavior(.disabled)

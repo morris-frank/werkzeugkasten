@@ -58,7 +58,7 @@ class Table:
         return self._df.columns.tolist()
 
     @property
-    def key_header(self) -> str:
+    def object_type(self) -> str:
         return as_object_type(self._df.index.name or "Key")
 
     @property
@@ -71,7 +71,7 @@ class Table:
 
     def __iter__(self) -> Iterator[dict[str, str]]:
         for key, row in self._df.iterrows():
-            yield {**row, self.key_header: str(key)}
+            yield {**row, self.object_type: str(key)}
 
     def __setitem__(self, key: tuple[str, str] | str, value: Any | dict[str, str]) -> None:
         if isinstance(key, str):
@@ -92,9 +92,9 @@ class Table:
     def __len__(self) -> int:
         return len(self._df)
 
-    def add_column(self, column: str, *, value: Any, policy: Policy = Policy.MERGE) -> None:
-        if column in self or policy == Policy.OVERWRITE:
-            self._df[column] = value
+    def add_column(self, column: str, policy: Policy) -> None:
+        if not column in self or policy == Policy.OVERWRITE:
+            self._df[column] = ""
         self._policies[column] = policy
         self._normalize_column(column)
 

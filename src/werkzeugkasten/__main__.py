@@ -74,6 +74,11 @@ def _research_list(payload: dict[str, Any]) -> dict[str, Any]:
         auto_tagging=bool(payload.get("auto_tagging", False)),
         nearest_neighbour=bool(payload.get("nearest_neighbour", False)),
         output_path=payload.get("output_path"),
+        source_column_policy=payload.get("source_column_policy", "merge"),
+        source_raw_column_policy=payload.get("source_raw_column_policy", "merge"),
+        tag_column_policy=payload.get("tag_column_policy", "merge"),
+        nearest_column_policy=payload.get("nearest_column_policy", "merge"),
+        record_id_column_policy=payload.get("record_id_column_policy", "merge"),
     )
 
 
@@ -109,7 +114,7 @@ def _prettify_codex_log(payload: dict[str, Any]) -> dict[str, Any]:
 
 
 def _dispatch(request: EngineRequest) -> dict[str, Any]:
-    E.update_defaults(request.config)
+    E.update(request.config)
     handlers = {
         "research-list": _research_list,
         "inspect-table": _inspect_table,

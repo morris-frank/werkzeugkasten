@@ -8,7 +8,7 @@ from typing import Any, Iterable
 from ..internal import choose_output_path
 from ..internal.env import E_req
 from ..internal.openai import query
-from ..internal.table import Table
+from ..internal.table import Policy, Table
 from ..internal.value import maybe_question
 from .lookup import lookup_row
 from .summarize import summarize
@@ -22,23 +22,27 @@ class ResearchRowResult:
 
 @dataclass(frozen=True)
 class ResearchResult:
-    table: Table
-    questions: list[str]
-    attributes: list[str]
-    failures: list[str]
-    started_at: datetime
+    _table: Table
+    output_path: str
+    format: str
+    headers: list[str]
+    row_count: int
+    question_columns: list[str]
+    attribute_columns: list[str]
+    example_key: str
+    object_type: str
 
     def as_dict(self) -> dict[str, Any]:
-        return self.__dict__
+        return {k: v for k, v in self.__dict__.items() if not k.startswith("_")}
 
     def to_markdown(self) -> str:
         lines = [
             "# Research",
             "",
             f"- Generated: {self.started_at.strftime('%Y-%m-%d %H:%M:%S %Z')}",
-            f"- Source: {self.table.origin}",
-            f"- Detected format: {self.table.detected_format}",
-            f"- Rows: {len(self.table)}",
+            f"- Source: {self._table.origin}",
+            f"- Detected format: {self._table.format}",
+            f"- Rows: {len(self._table)}",
             "",
             "## Detected Columns",
             "",
@@ -48,7 +52,7 @@ class ResearchResult:
         lines.extend(["", "Attributes:"])
         lines.extend([f"- {column}" for column in self.attributes] or ["- none"])
         lines.extend(["", "## Merged Table", ""])
-        lines.extend(str(self.table))
+        lines.extend(str(self._table))
         lines.extend(["", "## Failures", ""])
         lines.extend([f"- {failure}" for failure in self.failures] or ["- none"])
         return "\n".join(lines).rstrip() + "\n"
@@ -68,7 +72,7 @@ def _apply_auto_tags(
     if len(table) < 2:
         return
     minimum_tags, maximum_tags = _number_of_tags(len(table))
-    prompt = f"""You are categorizing {table.key_header} rows, which were prefilled with metadata.
+    prompt = f"""You are categorizing {table.object_type} rows, which were prefilled with metadata.
 
 Choose a compact but discriminative set of categorical tags for the sample as a whole.
 - Prefer tags that separate the samples meaningfully.
@@ -108,9 +112,9 @@ def _apply_nearest_neighbours(
 ) -> None:
     if len(table) < 2:
         return
-    prompt = f"""You are comparing {table.key_header} rows, which were prefilled with metadata.
+    prompt = f"""You are comparing {table.object_type} rows, which were prefilled with metadata.
 
-For each {table.key_header}, identify the 1 to 3 most similar other {table.key_header}s based on the row summary.
+For each {table.object_type}, identify the 1 to 3 most similar other {table.object_type}s based on the row summary.
 - Do not include the row itself.
 - Prefer the strongest semantic matches.
 
@@ -129,7 +133,7 @@ Rows:
     neighbours = answer.json.get("neighbors")
     if not isinstance(neighbours, dict):
         return
-    labels = {f"row-{index}": row.get(table.key_header, "").strip() or f"Row {index}" for index, row in table}
+    labels = {f"row-{index}": row.get(table.object_type, "").strip() or f"Row {index}" for index, row in table}
     for row_id, label in labels.items():
         raw_matches = neighbours.get(row_id, [])
         if not isinstance(raw_matches, list):
@@ -153,19 +157,19 @@ def _research_row(
     questions: list[str],
     include_sources: bool,
     summarize_sources: bool,
-    key_header: str,
+    object_type: str,
 ):
     missing_columns = [column for column in research_columns if not row.get(column, "").strip()]
     if not missing_columns:
         return ResearchRowResult(row=row)
     answer = lookup_row(
         row,
-        key_header,
+        object_type,
         missing_columns,
         questions,
     )
     if answer.error:
-        return ResearchRowResult(failure=f"{row[key_header]}: {answer.error or 'No response.'}")
+        return ResearchRowResult(failure=f"{row[object_type]}: {answer.error or 'No response.'}")
     for column in missing_columns:
         row[column] = answer.data.get(column, row.get(column, ""))
 
@@ -190,17 +194,17 @@ def inspect_table(
     table = Table(table)
     questions, attributes = _questions_attributes(table.columns)
 
-    return {
-        "sourceName": table.origin,
-        "detectedFormat": table.detected_format,
-        "headers": list(table.columns),
-        "keyHeader": table.key_header,
-        "rowCount": len(table),
-        "questionColumns": list(questions),
-        "attributeColumns": list(attributes),
-        "exampleKey": table.rows()[0].get(table.key_header, ""),
-        "objectType": table.object_type,
-    }
+    return ResearchResult(
+        _table=table,
+        output_path="",
+        format=table.format,
+        headers=list(table.columns),
+        row_count=len(table),
+        question_columns=questions,
+        attribute_columns=attributes,
+        example_key=next(iter(table)).get(table.object_type, ""),
+        object_type=table.object_type,
+    ).as_dict()
 
 
 def research_table(
@@ -213,6 +217,11 @@ def research_table(
     nearest_neighbour: bool = False,
     output_dir: Path | None = None,
     output_path: str | Path | None = None,
+    source_column_policy: Policy = Policy.MERGE,
+    source_raw_column_policy: Policy = Policy.MERGE,
+    tag_column_policy: Policy = Policy.MERGE,
+    nearest_column_policy: Policy = Policy.MERGE,
+    record_id_column_policy: Policy = Policy.MERGE,
 ) -> dict[str, Any]:
     table = Table(table)
     questions, attributes = _questions_attributes(table.columns)
@@ -223,44 +232,48 @@ def research_table(
 
     destination = choose_output_path(
         started_at,
-        f"{table.key_header}-research",
+        f"{table.object_type}-research",
         output_dir,
         explicit_path=output_path,
     )
     failures: list[str] = []
 
     if include_sources:
-        table.add_column(E_req["source_column"])
+        table.add_column(E_req["source_column"], policy=source_column_policy)
     if summarize_sources:
-        table.add_column(E_req["source_summary_column"])
+        table.add_column(E_req["source_summary_column"], policy=source_raw_column_policy)
 
     for row in table:
-        result = _research_row(row, research_columns, questions, include_sources, summarize_sources, table.key_header)
+        result = _research_row(row, research_columns, questions, include_sources, summarize_sources, table.object_type)
         if result.failure:
             failures.append(result.failure)
         if result.row:
-            table[result.row[table.key_header]] = result.row
+            table[result.row[table.object_type]] = result.row
 
     if auto_tagging:
-        table.add_column(E_req["tags_column"])
+        table.add_column(E_req["tags_column"], policy=tag_column_policy)
         _apply_auto_tags(
             table,
             column_name=E_req["tags_column"],
         )
     if nearest_neighbour:
-        nearest_column = f"Closest {table.key_header.title()}"
-        table.add_column(nearest_column)
+        nearest_column = f"Closest {table.object_type.title()}"
+        table.add_column(nearest_column, policy=nearest_column_policy)
         _apply_nearest_neighbours(
             table,
             column_name=nearest_column,
         )
 
     result = ResearchResult(
-        table=table,
-        questions=questions,
-        attributes=attributes,
-        failures=failures,
-        started_at=started_at,
+        _table=table,
+        output_path=destination.as_posix(),
+        format=table.format,
+        headers=list(table.columns),
+        row_count=len(table),
+        question_columns=questions,
+        attribute_columns=attributes,
+        example_key=next(iter(table)).get(table.object_type, ""),
+        object_type=table.object_type,
     )
 
     destination.write_text(

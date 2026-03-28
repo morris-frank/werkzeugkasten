@@ -23,12 +23,8 @@ class E:
     }
 
     @classmethod
-    def update_defaults(cls, kwargs: dict[str, Any]) -> None:
-        for key, value in kwargs.items():
-            if key in cls.__defaults__:
-                setattr(cls, key, value)
-            else:
-                raise ValueError(f"Invalid key: {key}")
+    def update(cls, kwargs: dict[str, Any]) -> None:
+        cls.__defaults__.update(kwargs)
 
     def __class_getitem__(cls, item: tuple[str, Any] | str) -> str:
         key, default = item if isinstance(item, tuple) else (item, cls.__defaults__.get(item, ""))

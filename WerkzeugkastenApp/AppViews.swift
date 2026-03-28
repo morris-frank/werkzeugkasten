@@ -36,51 +36,38 @@ private struct SectionCard<Content: View>: View {
                 .font(.system(size: 14, weight: .semibold))
             content
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.vertical, 6)
+        // .frame(maxWidth: .infinity, alignment: .leading)
+        // .padding(.vertical, 6)
     }
 }
 
 private struct WindowSurface<Content: View>: View {
     let minWidth: CGFloat
+    let minHeight: CGFloat
     let title: String
     @ViewBuilder let content: Content
 
     var body: some View {
         ZStack {
-            Color(nsColor: .windowBackgroundColor)
-                .ignoresSafeArea()
-
-            RoundedRectangle(cornerRadius: 34, style: .continuous)
-                .fill(Color.black.opacity(0.08))
-                .blur(radius: 18)
-                .padding(.horizontal, 10)
-                .padding(.vertical, 8)
-
-            RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .fill(
-                    LinearGradient(
-                        colors: [
-                            Color(red: 0.97, green: 0.97, blue: 0.95),
-                            Color(red: 0.92, green: 0.92, blue: 0.88),
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 24, style: .continuous)
-                        .stroke(Color.white.opacity(0.82), lineWidth: 1)
-                )
-                .overlay(alignment: .topLeading) {
-                    content
-                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-                        .padding(.horizontal, 20)
-                        .padding(.vertical, 16)
-                }
-                .padding(8)
+            LinearGradient(
+            colors: [
+                Color(red: 0.97, green: 0.97, blue: 0.95),
+                Color(red: 0.92, green: 0.92, blue: 0.88),
+            ],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+        .ignoresSafeArea()
+    VStack {
+        Text(title)
+            .font(.system(size: 14, weight: .semibold))
+            content
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                .padding(.horizontal, 20)
+                .padding(.vertical, 16)
         }
-        .frame(minWidth: minWidth, alignment: .topLeading)
+        }
+        .frame(minWidth: minWidth, idealWidth: minWidth * 1.1, minHeight: minHeight, idealHeight: minHeight * 1.1, maxHeight: .infinity, alignment: .topLeading)
         .preferredColorScheme(.light)
     }
 }
@@ -238,6 +225,47 @@ private enum GeneratedColumnPolicy: String, CaseIterable, Identifiable {
     }
 }
 
+
+private struct CopyableStringList: View {
+    let title: String
+    let values: [String]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text(title)
+                    .font(.subheadline.weight(.semibold))
+                Spacer()
+                Button("Copy all") {
+                    copyToPasteboard(values.joined(separator: "\n"))
+                }
+                .disabled(values.isEmpty)
+            }
+            if values.isEmpty {
+                Text("None")
+                    .foregroundStyle(.secondary)
+            } else {
+                    ForEach(values, id: \.self) { value in
+                        HStack(spacing: 6) {
+                            Text(value)
+                                .textSelection(.enabled)
+                                .lineLimit(nil)
+                            Button {
+                                copyToPasteboard(value)
+                            } label: {
+                                Image(systemName: "doc.on.doc", )
+                            }
+                            .buttonStyle(.plain)
+                        }
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        // .background(Capsule(style: .continuous).fill(.tertiary.opacity(0.55)))
+                    }
+            }
+        }
+    }
+}
+
 private struct CopyableTagList: View {
     let title: String
     let values: [String]
@@ -267,7 +295,7 @@ private struct CopyableTagList: View {
                             Button {
                                 copyToPasteboard(value)
                             } label: {
-                                Image(systemName: "doc.on.doc")
+                                Image(systemName: "doc.on.doc", )
                             }
                             .buttonStyle(.plain)
                         }
@@ -515,7 +543,7 @@ struct ResearchListWindow: View {
     }
 
     var body: some View {
-        WindowSurface(minWidth: 560, title: "Research List") {
+        WindowSurface(minWidth: 400, minHeight: 600, title: "Research List") {
             ScrollView {
                 VStack(alignment: .leading, spacing: 12) {
                     SectionCard(title: "Input") {
@@ -646,7 +674,7 @@ struct ResearchTableWindow: View {
     }
 
     var body: some View {
-        WindowSurface(minWidth: 600, title: "Research Table") {
+        WindowSurface(minWidth: 600, minHeight: 600, title: "Research Table") {
             ScrollView {
                 VStack(alignment: .leading, spacing: 12) {
                     SectionCard(title: "Input") {
@@ -668,10 +696,10 @@ struct ResearchTableWindow: View {
 
                     if let preview {
                         SectionCard(title: "Detected Structure") {
-                            Text("Format: \(preview.detectedFormat)")
+                            Text("Format: \(preview.format)")
                             Text("Rows: \(preview.rowCount)")
-                            Text("Key column: \(preview.keyHeader)")
-                            CopyableTagList(title: "Question Columns", values: preview.questionColumns)
+                            Text("Object type: \(preview.objectType)")
+                            CopyableStringList(title: "Question Columns", values: preview.questionColumns)
                             CopyableTagList(title: "Attribute Columns", values: preview.attributeColumns)
                         }
                     }
@@ -698,6 +726,8 @@ struct ResearchTableWindow: View {
                         HStack {
                             Button("Run Table Research") { run() }
                                 .disabled(isRunning || inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                                .buttonStyle(.borderedProminent)
+                                .controlSize(.large)
                             if hasWrittenOutput {
                                 Button("Open Output") { openPath(outputPath) }
                             }
@@ -772,15 +802,13 @@ struct ResearchTableWindow: View {
                 outputPath = response.outputPath
                 status = "Wrote \(URL(fileURLWithPath: response.outputPath).lastPathComponent)"
                 preview = TablePreview(
-                    sourceName: sourceName,
-                    detectedFormat: response.detectedFormat,
+                    format: response.format,
                     headers: response.headers,
-                    keyHeader: response.headers.first ?? "",
                     rowCount: response.rowCount,
                     questionColumns: response.questionColumns,
                     attributeColumns: response.attributeColumns,
-                    exampleKey: preview?.exampleKey ?? "",
-                    objectType: preview?.objectType ?? ""
+                    exampleKey: response.exampleKey,
+                    objectType: response.objectType
                 )
             } catch {
                 errorText = error.localizedDescription
@@ -794,7 +822,7 @@ struct SummarizeWindow: View {
     @EnvironmentObject private var session: SummarizeSession
 
     var body: some View {
-        WindowSurface(minWidth: 600, title: "Summarize") {
+        WindowSurface(minWidth: 600, minHeight: 400, title: "Summarize") {
             ScrollView {
                 VStack(alignment: .leading, spacing: 12) {
                     SectionCard(title: "Input") {
@@ -836,29 +864,13 @@ struct SummarizeWindow: View {
                             .disabled(session.isRunning || (session.inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && session.fileURLs.isEmpty))
                     }
 
-                    if !session.summaryMarkdown.isEmpty {
+                    if !session.summary.isEmpty {
                         SectionCard(title: "Summary") {
-                            TextEditor(text: .constant(session.summaryMarkdown))
+                            TextEditor(text: .constant(session.summary))
                                 .font(.body.monospaced())
                                 .frame(minHeight: 200)
                             Button("Copy Summary") {
-                                copyToPasteboard(session.summaryMarkdown)
-                            }
-                        }
-                    }
-
-                    if let fileResult = session.fileResult, !fileResult.files.isEmpty || !fileResult.failures.isEmpty {
-                        SectionCard(title: "File Results") {
-                            ForEach(fileResult.files) { file in
-                                HStack {
-                                    Text(URL(fileURLWithPath: file.summaryPath).lastPathComponent)
-                                    Spacer()
-                                    Button("Open") { openPath(file.summaryPath) }
-                                }
-                            }
-                            ForEach(fileResult.failures) { failure in
-                                Text("\(failure.inputPath): \(failure.error)")
-                                    .foregroundStyle(.red)
+                                copyToPasteboard(session.summary)
                             }
                         }
                     }
@@ -883,7 +895,7 @@ struct PrettifyCodexLogWindow: View {
     @State private var errorText: String?
 
     var body: some View {
-        WindowSurface(minWidth: 580, title: "Prettify Codex Log") {
+        WindowSurface(minWidth: 580, minHeight: 600, title: "Prettify Codex Log") {
             VStack(alignment: .leading, spacing: 16) {
                 SectionCard(title: "Log") {
                     FileDropArea(label: "Drop a Codex `.jsonl` session log here") { urls in
@@ -988,7 +1000,7 @@ struct SettingsWindow: View {
     @State private var errorText: String?
 
     var body: some View {
-        WindowSurface(minWidth: 620, title: "Settings") {
+        WindowSurface(minWidth: 620, minHeight: 760, title: "Settings") {
             VStack(alignment: .leading, spacing: 16) {
                 SectionCard(title: "Shared Configuration") {
                     Grid(alignment: .leading, horizontalSpacing: 16, verticalSpacing: 12) {

@@ -13,14 +13,14 @@ def _prompt_make_explicit_question(header: str, key: str, object_type: str) -> s
 
 
 def _prompt_lookup(
-    key_header: str,
+    object_type: str,
     key: str,
     row: dict[str, str],
     missing_columns: list[str],
     question_columns: set[str],
 ) -> str:
-    object_type = as_object_type(key_header)
-    known_values = [f"- {column}: {value}" for column, value in row.items() if column != key_header and str(value).strip()]
+    object_type = as_object_type(object_type)
+    known_values = [f"- {column}: {value}" for column, value in row.items() if column != object_type and str(value).strip()]
     missing_lines: list[str] = []
     for column in missing_columns:
         if column in question_columns:
@@ -32,9 +32,8 @@ def _prompt_lookup(
     missing_section = "\n".join(missing_lines) if missing_lines else "- none"
     return f"""Research this {object_type} using web search and fill the missing table fields.
 
-Key column: {key_header}
 Object type: {object_type}
-{key_header}: {key}
+{object_type}: {key}
 
 Known row values:
 {known_section}
@@ -62,13 +61,13 @@ Rules:
 
 def lookup_row(
     row: dict[str, str],
-    key_header: str,
+    object_type: str,
     missing_columns: list[str],
     question_columns: set[str],
 ) -> dict[str, Any]:
-    key = row.get(key_header, "").strip() or "[blank]"
+    key = row.get(object_type, "").strip() or "[blank]"
 
-    answer = query(_prompt_lookup(key_header, key, row, missing_columns, question_columns), model=E["lookup_model"])
+    answer = query(_prompt_lookup(object_type, key, row, missing_columns, question_columns), model=E["lookup_model"])
 
     try:
         data = answer.json

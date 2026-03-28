@@ -103,10 +103,8 @@ public struct ResearchListResponse: Decodable, Equatable, Sendable {
 }
 
 public struct TablePreview: Decodable, Equatable, Sendable {
-    public let sourceName: String
-    public let detectedFormat: String
+    public let format: String
     public let headers: [String]
-    public let keyHeader: String
     public let rowCount: Int
     public let questionColumns: [String]
     public let attributeColumns: [String]
@@ -114,20 +112,16 @@ public struct TablePreview: Decodable, Equatable, Sendable {
     public let objectType: String
 
     public init(
-        sourceName: String,
-        detectedFormat: String,
+        format: String,
         headers: [String],
-        keyHeader: String,
         rowCount: Int,
         questionColumns: [String],
         attributeColumns: [String],
         exampleKey: String,
         objectType: String
     ) {
-        self.sourceName = sourceName
-        self.detectedFormat = detectedFormat
+        self.format = format
         self.headers = headers
-        self.keyHeader = keyHeader
         self.rowCount = rowCount
         self.questionColumns = questionColumns
         self.attributeColumns = attributeColumns
@@ -136,10 +130,8 @@ public struct TablePreview: Decodable, Equatable, Sendable {
     }
 
     enum CodingKeys: String, CodingKey {
-        case sourceName = "source_name"
-        case detectedFormat = "detected_format"
+        case format = "format"
         case headers
-        case keyHeader = "key_header"
         case rowCount = "row_count"
         case questionColumns = "question_columns"
         case attributeColumns = "attribute_columns"
@@ -150,58 +142,39 @@ public struct TablePreview: Decodable, Equatable, Sendable {
 
 public struct ResearchTableResponse: Decodable, Equatable, Sendable {
     public let outputPath: String
-    public let detectedFormat: String
-    public let rowCount: Int
+    public let format: String
     public let headers: [String]
+    public let rowCount: Int
     public let questionColumns: [String]
     public let attributeColumns: [String]
+    public let exampleKey: String
+    public let objectType: String
 
     enum CodingKeys: String, CodingKey {
         case outputPath = "output_path"
-        case detectedFormat = "detected_format"
-        case rowCount = "row_count"
+        case format = "format"
         case headers
+        case rowCount = "row_count"
         case questionColumns = "question_columns"
         case attributeColumns = "attribute_columns"
+        case exampleKey = "example_key"
+        case objectType = "object_type"
     }
 }
 
-public struct SummarizeFilesResponse: Decodable, Equatable, Sendable {
-    public struct FileOutput: Decodable, Equatable, Identifiable, Sendable {
-        public let inputPath: String
-        public let contentsPath: String
-        public let summaryPath: String
-
-        public var id: String { summaryPath }
-
-        enum CodingKeys: String, CodingKey {
-            case inputPath = "input_path"
-            case contentsPath = "contents_path"
-            case summaryPath = "summary_path"
-        }
-    }
-
-    public struct Failure: Decodable, Equatable, Identifiable, Sendable {
-        public let inputPath: String
-        public let error: String
-
-        public var id: String { inputPath + error }
-
-        enum CodingKeys: String, CodingKey {
-            case inputPath = "input_path"
-            case error
-        }
-    }
-
-    public let files: [FileOutput]
-    public let failures: [Failure]
-}
-
-public struct SummarizeTextResponse: Decodable, Equatable, Sendable {
-    public let summaryMarkdown: String
+public struct SummarizeResponse: Decodable, Equatable, Sendable {
+    public let summary: String
+    public let content: String
+    public let tokenCount: Int
+    public let inputTokens: Int
+    public let outputTokens: Int
 
     enum CodingKeys: String, CodingKey {
-        case summaryMarkdown = "summary_markdown"
+        case summary = "summary"
+        case content = "content"
+        case tokenCount = "token_count"
+        case inputTokens = "input_tokens"
+        case outputTokens = "output_tokens"
     }
 }
 

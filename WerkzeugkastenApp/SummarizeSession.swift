@@ -7,8 +7,8 @@ final class SummarizeSession: ObservableObject {
     @Published var fileURLs: [URL] = []
     @Published var isRunning = false
     @Published var status = "Paste text for an in-app summary or drop one or more files."
-    @Published var summaryMarkdown = ""
-    @Published var fileResult: SummarizeFilesResponse?
+    @Published var summary = ""
+    @Published var result: SummarizeResponse?
     @Published var errorText: String?
 
     private let runner = EngineRunner()
@@ -21,7 +21,7 @@ final class SummarizeSession: ObservableObject {
 
     func clearFiles() {
         fileURLs.removeAll()
-        fileResult = nil
+        result = nil
         if inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             status = "Paste text for an in-app summary or drop one or more files."
         }
@@ -31,8 +31,8 @@ final class SummarizeSession: ObservableObject {
         do {
             let incomingURLs = try FinderActionHandoff.parseSummarizeURL(url)
             inputText = ""
-            summaryMarkdown = ""
-            fileResult = nil
+            summary = ""
+            result = nil
             fileURLs = incomingURLs
             status = "Received \(incomingURLs.count) file(s) from Finder. Starting summary..."
             errorText = nil
@@ -48,32 +48,31 @@ final class SummarizeSession: ObservableObject {
         Task {
             isRunning = true
             errorText = nil
-            summaryMarkdown = ""
-            fileResult = nil
+            summary = ""
+            result = nil
             defer { isRunning = false }
 
             do {
                 let configuration = try settings.configuration()
                 let trimmedText = inputText.trimmingCharacters(in: .whitespacesAndNewlines)
                 if !trimmedText.isEmpty {
-                    let response: SummarizeTextResponse = try await runner.run(
+                    let response: SummarizeResponse = try await runner.run(
                         .summarizeText,
                         payload: ["title": "Pasted text", "text": trimmedText],
                         configuration: configuration
                     )
-                    summaryMarkdown = response.summaryMarkdown
+                    summary = response.summary
+                    result = response
                     status = "Summary ready to copy."
                 } else {
-                    let response: SummarizeFilesResponse = try await runner.run(
+                    let response: SummarizeResponse = try await runner.run(
                         .summarizeFiles,
                         payload: ["paths": fileURLs.map(\.path)],
                         configuration: configuration
                     )
-                    fileResult = response
-                    status = "Processed \(response.files.count) file(s)"
-                    if !response.failures.isEmpty {
-                        errorText = response.failures.map { "\($0.inputPath): \($0.error)" }.joined(separator: "\n")
-                    }
+                    summary = response.summary
+                    result = response
+                    status = "Processed more file(s)"
                 }
             } catch {
                 errorText = error.localizedDescription

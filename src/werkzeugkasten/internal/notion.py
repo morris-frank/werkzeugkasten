@@ -253,7 +253,7 @@ def _infer_column_specs(
     headers: list[str],
     rows: list[dict[str, str]],
     *,
-    key_header: str,
+    object_type: str,
     sources_column: str | None,
     tags_column: str | None,
     nearest_column: str | None,
@@ -264,7 +264,7 @@ def _infer_column_specs(
 ) -> list[NotionColumnSpec]:
     specs: list[NotionColumnSpec] = []
     for header in headers:
-        if header == key_header:
+        if header == object_type:
             specs.append(NotionColumnSpec(name=header, kind="title", property_definition={"title": {}}))
             continue
         if header == nearest_column:
@@ -446,7 +446,7 @@ def export_dataset_to_notion(
     title: str,
     headers: list[str],
     rows: list[dict[str, str]],
-    key_header: str,
+    object_type: str,
     sources_column: str | None,
     source_raw_column: str | None,
     tags_column: str | None,
@@ -459,7 +459,7 @@ def export_dataset_to_notion(
     specs = _infer_column_specs(
         headers,
         rows,
-        key_header=key_header,
+        object_type=object_type,
         sources_column=sources_column,
         tags_column=tags_column,
         nearest_column=nearest_column,
@@ -540,7 +540,7 @@ def export_dataset_to_notion(
         page = _request_api("POST", "/pages", create_page_body)
         page_id = page.get("id")
         record_id = row.get(record_id_column or "", "").strip()
-        key_value = row.get(key_header, "").strip()
+        key_value = row.get(object_type, "").strip()
         if page_id and record_id:
             pages_by_record_id[record_id] = page_id
         if page_id and key_value:

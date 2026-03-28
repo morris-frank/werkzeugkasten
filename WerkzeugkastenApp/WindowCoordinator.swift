@@ -60,14 +60,19 @@ final class WindowCoordinator: ObservableObject {
 
     private func configure(_ window: NSWindow) {
         window.tabbingMode = .disallowed
-        window.styleMask.insert(.fullSizeContentView)
         window.titleVisibility = .hidden
         window.titlebarAppearsTransparent = true
+        window.styleMask.insert(.fullSizeContentView)
+
+        window.toolbar = nil
+        window.showsToolbarButton = false
+
+
         window.isOpaque = false
-        window.backgroundColor = .clear
         window.toolbar = nil
         window.isMovableByWindowBackground = false
-        window.hasShadow = false
+        window.hasShadow = true
+
         window.standardWindowButton(.closeButton)?.isHidden = true
         window.standardWindowButton(.miniaturizeButton)?.isHidden = true
         window.standardWindowButton(.zoomButton)?.isHidden = true

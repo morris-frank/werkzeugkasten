@@ -110,9 +110,14 @@ final class WerkzeugkastenCoreTests: XCTestCase {
     }
 
     func testDecodeResponse() throws {
-        let data = Data(#"{"data":{"summary_markdown":"Summary\nOk"}}"#.utf8)
-        let decoded = try EngineRunner.decode(EngineResponseEnvelope<SummarizeTextResponse>.self, from: data)
-        XCTAssertEqual(decoded.data.summaryMarkdown, "Summary\nOk")
+        let data = Data(#"{"data":{"summary":"Summary\nOk","content":"Content","token_count":100,"input_tokens":50,"output_tokens":50,"sources":null}}"#.utf8)
+        let decoded = try EngineRunner.decode(EngineResponseEnvelope<SummarizeResponse>.self, from: data)
+        XCTAssertEqual(decoded.data.summary, "Summary\nOk")
+        XCTAssertEqual(decoded.data.content, "Content")
+        XCTAssertEqual(decoded.data.tokenCount, 100)
+        XCTAssertEqual(decoded.data.inputTokens, 50)
+        XCTAssertEqual(decoded.data.outputTokens, 50)
+        XCTAssertEqual(decoded.data.sources, nil)
     }
 
     @MainActor
