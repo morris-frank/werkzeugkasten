@@ -27,7 +27,7 @@ Service = Literal[
 class EngineRequest(BaseModel):
     service: Service
     payload: dict[str, Any] = Field(default_factory=dict)
-    config: KastenConfig = Field(default_factory=KastenConfig)
+    config: dict[str, str] = Field(default_factory=dict)
 
 
 class EngineResponse(BaseModel):
