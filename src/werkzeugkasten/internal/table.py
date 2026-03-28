@@ -53,38 +53,6 @@ class Table:
         self._df = pd.read_csv(StringIO(csv), sep=None, engine="python", keep_default_na=False)
         self.format = "csv"
 
-    def __str__(self) -> str:
-        return self._df.to_markdown(index=False, tablefmt="github")
-
-    def __contains__(self, column: str, /) -> bool:
-        column = column.strip().lower()
-        return any(c.strip().lower() == column for c in self._df.columns)
-
-    def add_column(self, column: str, *, value: Any, policy: Policy = Policy.MERGE) -> None:
-        if column in self or policy == Policy.OVERWRITE:
-            self._df[column] = value
-        self._policies[column] = policy
-
-    def __iter__(self) -> Iterator[tuple[str, pd.Series]]:
-        index = 1
-        for index, row in self._df.iterrows():
-            key = str(index) or f"Row {index}"
-            index += 1
-            row[self.key_header] = key
-            yield index, row
-
-    def update_row(self, row: dict[str, str]) -> None:
-        self._df.loc[row[self.key_header]] = {column: row[column] for column in self._df.columns}
-
-    def __setitem__(self, key: tuple[str, str], value: Any) -> None:
-        row, column = key
-        match self._policies[column]:
-            case Policy.MERGE:
-                if is_empty(self._df.loc[row, column]):
-                    self._df.loc[row, column] = value
-            case Policy.OVERWRITE:
-                self._df.loc[row, column] = value
-
     @property
     def columns(self) -> list[str]:
         return self._df.columns.tolist()
@@ -93,31 +61,42 @@ class Table:
     def key_header(self) -> str:
         return as_object_type(self._df.index.name or "Key")
 
-    def rows(self) -> list[dict[str, str]]:
-        records: list[dict[str, str]] = []
-        for key, row in self._df.iterrows():
-            record = {self.key_header: str(key)}
-            record.update({column: str(row[column]) for column in self._df.columns})
-            records.append(record)
-        return records
-
-    def column(self, column: str, /) -> str | None:
-        column = column.strip().lower()
-        for c in self._df.columns:
-            if c.strip().lower() == column:
-                return c
-        return None
-
     @property
     def origin(self) -> str:
         return self._df.index.name
 
+    def __contains__(self, column: str, /) -> bool:
+        column = column.strip().lower()
+        return any(c.strip().lower() == column for c in self._df.columns)
+
+    def __iter__(self) -> Iterator[dict[str, str]]:
+        for key, row in self._df.iterrows():
+            yield {**row, self.key_header: str(key)}
+
+    def __setitem__(self, key: tuple[str, str] | str, value: Any | dict[str, str]) -> None:
+        if isinstance(key, str):
+            row = key
+            if not isinstance(value, dict):
+                raise ValueError("Value must be a dictionary if key is a string.")
+            for column, value in value.items():
+                self[row, column] = value
+        else:
+            row, column = key
+            match self._policies[column]:
+                case Policy.MERGE:
+                    if is_empty(self._df.loc[row, column]):
+                        self._df.loc[row, column] = value
+                case Policy.OVERWRITE:
+                    self._df.loc[row, column] = value
+
     def __len__(self) -> int:
         return len(self._df)
 
-    @property
-    def width(self) -> int:
-        return len(self._df.columns)
+    def add_column(self, column: str, *, value: Any, policy: Policy = Policy.MERGE) -> None:
+        if column in self or policy == Policy.OVERWRITE:
+            self._df[column] = value
+        self._policies[column] = policy
+        self._normalize_column(column)
 
     def _column_type(self, column: str, /) -> ColumnType:
         values = self._df[column].dropna()
@@ -161,5 +140,14 @@ class Table:
             case _:
                 pass
 
+    def _normalize_columns(self) -> None:
+        for column in self._df.columns:
+            self._normalize_column(column)
+
+    def __str__(self) -> str:
+        self._normalize_columns()
+        return self._df.to_markdown(index=False, tablefmt="github")
+
     def to_json(self, without: set[str] = set()) -> str:
+        self._normalize_columns()
         return json.dumps([row for row in self.rows() if not any(column in without for column in row.keys())], ensure_ascii=False, indent=2)

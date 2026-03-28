@@ -19,7 +19,7 @@ public final class EngineRunner {
         payload: [String: Any],
         configuration: EngineConfiguration
     ) throws -> PreparedCommand {
-        guard configuration.mock || !command.requiresAPIKey || !configuration.apiKey.isEmpty else {
+        guard configuration.mock || !command.requiresAPIKey || !configuration.openAIKey.isEmpty else {
             throw EngineError.missingAPIKey
         }
 
@@ -38,11 +38,11 @@ public final class EngineRunner {
             "service": command.rawValue,
             "payload": payload,
             "config": [
-                "api_key": configuration.apiKey,
+                "openai_api_key": configuration.openAIKey,
                 "jina_api_key": configuration.jinaAPIKey,
                 "notion_token": configuration.notionToken,
                 "notion_parent_page": configuration.notionParentPage,
-                "open_meteo_api_key": configuration.openMeteoAPIKey,
+                "open_meteo_key": configuration.openMeteoKey,
                 "research_model": configuration.researchModel,
                 "summary_model": configuration.summaryModel,
                 "lookup_model": configuration.lookupModel,

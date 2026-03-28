@@ -7,7 +7,7 @@ from typing import Any
 
 from ..internal import Source
 from ..internal.content import get_content
-from ..internal.env import primary_language, summary_model
+from ..internal.env import E
 from ..internal.openai import query
 
 MAX_SUMMARY_INPUT = 120_000
@@ -15,9 +15,11 @@ DOWNLOADED_SOURCE_DIR = Path(tempfile.gettempdir()) / "werkzeugkasten-source-dow
 
 
 def _prompt_languages_instruction() -> str:
-    if primary_language() == "English":
+    if E["primary_language"] == "English":
         return f"Always produce the summary in English. Translate to English if necessary."
-    return f"If the text is in {primary_language()}, produce the summary in that same language. Otherwise, produce the summary in English."
+    return (
+        f"If the text is in {E["primary_language"]}, produce the summary in that same language. Otherwise, produce the summary in English."
+    )
 
 
 def _prompt_summarize(content: str, /, filename: str | None = None, timestamp: str | None = None) -> str:
@@ -68,7 +70,7 @@ def summarize(sources: list[Source] | str, /) -> dict[str, Any]:
     safe_content = _truncate_for_upload(content)
     summary = query(
         _prompt_summarize(safe_content),
-        model=summary_model(),
+        model=E["summary_model"],
     )
     return {
         "summary": summary.text,

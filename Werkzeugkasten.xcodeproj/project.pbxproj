@@ -157,13 +157,6 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		45D4453731D6B8BD7802B036 /* werkzeugkasten_engine */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = werkzeugkasten_engine;
-			sourceTree = "<group>";
-		};
 		79337F03AB601D653996CE52 /* Products */ = {
 			isa = PBXGroup;
 			children = (
@@ -220,7 +213,6 @@
 		EA73F583289740E94D68CBBE = {
 			isa = PBXGroup;
 			children = (
-				45D4453731D6B8BD7802B036 /* werkzeugkasten_engine */,
 				80065861AC4D1AE603364A7E /* WerkzeugkastenActionExtension */,
 				9F1DA5432B82D1879F526FA8 /* WerkzeugkastenApp */,
 				A837BF4DEE9DD98603F39072 /* WerkzeugkastenCore */,
@@ -276,8 +268,8 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 9818429E99A93CF10F7BF567 /* Build configuration list for PBXNativeTarget "WerkzeugkastenCore" */;
 			buildPhases = (
+				894B6BA4B185DB9C4EDB180C /* Bundle Python Resources */,
 				9A69516D132CA0C36143DC72 /* Sources */,
-				CB0A5E87A02710E0A1100C7F /* Resources */,
 			);
 			buildRules = (
 			);
@@ -357,15 +349,26 @@
 		};
 /* End PBXProject section */
 
-/* Begin PBXResourcesBuildPhase section */
-		CB0A5E87A02710E0A1100C7F /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
+/* Begin PBXShellScriptBuildPhase section */
+		894B6BA4B185DB9C4EDB180C /* Bundle Python Resources */ = {
+			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Bundle Python Resources";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
 			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "set -euo pipefail\ndestination=\"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/src\"\nrm -rf \"$destination\"\nmkdir -p \"$destination\"\nrsync -a \\\n  --delete \\\n  --exclude '__pycache__' \\\n  --exclude '*.pyc' \\\n  \"$SRCROOT/src/\" \\\n  \"$destination/\"\n";
 		};
-/* End PBXResourcesBuildPhase section */
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		20737DB522B6D244C4FF5412 /* Sources */ = {
@@ -444,7 +447,7 @@
 				CODE_SIGN_IDENTITY = "Developer ID Application";
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
-				DEVELOPMENT_TEAM = 8GPF2CCDMW;
+				"DEVELOPMENT_TEAM[sdk=macosx*]" = 8GPF2CCDMW;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = "Config/WerkzeugkastenApp-Info.plist";
@@ -538,7 +541,7 @@
 				CODE_SIGN_IDENTITY = "Developer ID Application";
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
-				DEVELOPMENT_TEAM = 8GPF2CCDMW;
+				"DEVELOPMENT_TEAM[sdk=macosx*]" = 8GPF2CCDMW;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = "Config/WerkzeugkastenActionExtension-Info.plist";
@@ -549,7 +552,6 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.mauricefrank.werkzeugkasten.action;
 				PROVISIONING_PROFILE_SPECIFIER = "";
-				"PROVISIONING_PROFILE_SPECIFIER[sdk=macosx*]" = "";
 				SDKROOT = macosx;
 			};
 			name = Release;
@@ -562,7 +564,6 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEFINES_MODULE = YES;
-				DEVELOPMENT_TEAM = 8GPF2CCDMW;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
@@ -587,7 +588,6 @@
 				CODE_SIGN_IDENTITY = "Developer ID Application";
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
-				DEVELOPMENT_TEAM = 8GPF2CCDMW;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleShortVersionString = "$(MARKETING_VERSION)";
 				INFOPLIST_KEY_CFBundleVersion = "$(CURRENT_PROJECT_VERSION)";
@@ -609,7 +609,6 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEFINES_MODULE = YES;
-				DEVELOPMENT_TEAM = 8GPF2CCDMW;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
@@ -699,7 +698,6 @@
 				CODE_SIGN_IDENTITY = "Developer ID Application";
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
-				DEVELOPMENT_TEAM = 8GPF2CCDMW;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleShortVersionString = "$(MARKETING_VERSION)";
 				INFOPLIST_KEY_CFBundleVersion = "$(CURRENT_PROJECT_VERSION)";
@@ -721,7 +719,7 @@
 				CODE_SIGN_IDENTITY = "Developer ID Application";
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
-				DEVELOPMENT_TEAM = 8GPF2CCDMW;
+				"DEVELOPMENT_TEAM[sdk=macosx*]" = 8GPF2CCDMW;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = "Config/WerkzeugkastenApp-Info.plist";
@@ -743,7 +741,7 @@
 				CODE_SIGN_IDENTITY = "Developer ID Application";
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
-				DEVELOPMENT_TEAM = 8GPF2CCDMW;
+				"DEVELOPMENT_TEAM[sdk=macosx*]" = 8GPF2CCDMW;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = "Config/WerkzeugkastenActionExtension-Info.plist";
@@ -753,7 +751,6 @@
 					"@executable_path/../../../../Frameworks",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.mauricefrank.werkzeugkasten.action;
-				"PROVISIONING_PROFILE_SPECIFIER[sdk=macosx*]" = "";
 				SDKROOT = macosx;
 			};
 			name = Debug;

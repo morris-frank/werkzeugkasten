@@ -993,7 +993,7 @@ struct SettingsWindow: View {
                 SectionCard(title: "Shared Configuration") {
                     Grid(alignment: .leading, horizontalSpacing: 16, verticalSpacing: 12) {
                         SettingsFieldRow(title: "OpenAI API Key") {
-                            SecureField("sk-proj-...", text: $settings.apiKey)
+                            SecureField("sk-proj-...", text: $settings.openAIKey)
                                 .textFieldStyle(.roundedBorder)
                                 .controlSize(.large)
                         }
@@ -1008,7 +1008,7 @@ struct SettingsWindow: View {
                                 .controlSize(.large)
                         }
                         SettingsFieldRow(title: "Open-Meteo API Key") {
-                            SecureField("openmeteo_...", text: $settings.openMeteoAPIKey)
+                            SecureField("openmeteo_...", text: $settings.openMeteoKey)
                                 .textFieldStyle(.roundedBorder)
                                 .controlSize(.large)
                         }

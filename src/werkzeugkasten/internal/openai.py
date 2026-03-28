@@ -9,7 +9,7 @@ from typing import Any
 from openai import OpenAI
 from openai.types.responses import Response
 
-from ..internal.env import mock_enabled, openai_api_key
+from ..internal.env import E, E_bool, E_req
 from .value import as_json
 
 
@@ -64,29 +64,6 @@ class MockResponse:
     tool_choice: Any = None
 
 
-def _current_timezone() -> str:
-    tzinfo = datetime.now().astimezone().tzinfo
-    return tzinfo.key if hasattr(tzinfo, "key") else str(tzinfo)
-
-
-def _web_search_tool() -> dict[str, Any]:
-    return {
-        "type": "web_search",
-        "search_context_size": "medium",
-        "user_location": {
-            "type": "approximate",
-            "timezone": _current_timezone(),
-        },
-    }
-
-
-def _reasoning_for_model(model: str, *, decreased_effort: bool = False) -> dict[str, Any] | None:
-    normalized = model.strip().lower()
-    if normalized.startswith("gpt-5"):
-        return {"effort": "medium" if not decreased_effort else "low"}
-    return None
-
-
 def _mock_text(prompt_text: str) -> str:
     if "Return exactly these sections:" in prompt_text:
         body = prompt_text.split("Document content:", 1)[-1].strip()
@@ -131,6 +108,26 @@ def _mock_text(prompt_text: str) -> str:
     return ""
 
 
+def _web_search_tool() -> dict[str, Any]:
+    tzinfo = datetime.now().astimezone().tzinfo
+    timezone = tzinfo.key if hasattr(tzinfo, "key") else str(tzinfo)
+    return {
+        "type": "web_search",
+        "search_context_size": E["web_search_context_size", "medium"],
+        "user_location": {
+            "type": "approximate",
+            "timezone": timezone,
+        },
+    }
+
+
+def _reasoning_for_model(model: str, *, decreased_effort: bool = False) -> dict[str, Any] | None:
+    normalized = model.strip().lower()
+    if normalized.startswith("gpt-5"):
+        return {"effort": "medium" if not decreased_effort else "low"}
+    return None
+
+
 def query(
     prompt_text: str,
     /,
@@ -140,7 +137,7 @@ def query(
     include_web_sources: bool = False,
     decreased_effort: bool = False,
 ) -> QueryAnswer:
-    if mock_enabled():
+    if E_bool["mock"]:
         text = _mock_text(prompt_text)
         usage = MockUsage(
             total_tokens=len(prompt_text.split()) + len(text.split()),
@@ -149,7 +146,7 @@ def query(
         )
         return QueryAnswer(text=text, response=MockResponse(usage=usage, output=[]))
 
-    response = OpenAI(api_key=openai_api_key()).responses.create(
+    response = OpenAI(api_key=E_req["openai_api_key"]).responses.create(
         input=prompt_text,
         model=model,
         reasoning=_reasoning_for_model(model, decreased_effort=decreased_effort),

@@ -7,7 +7,7 @@ public enum WerkzeugkastenConstants {
     public static let openAIKeychainAccount = "openai_api_key"
     public static let jinaKeychainAccount = "jina_api_key"
     public static let notionKeychainAccount = "notion_api_token"
-    public static let openMeteoKeychainAccount = "open_meteo_api_key"
+    public static let openMeteoKeychainAccount = "open_meteo_key"
     public static let handoffURLScheme = "werkzeugkasten"
     public static var defaultPythonInterpreterPath: String {
         resolvedPythonInterpreterPath() ?? ""

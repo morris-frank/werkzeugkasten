@@ -10,17 +10,12 @@ from typing import Any
 import requests
 
 from ..internal import group_sources_by_domain
-from .env import notion_api_token, notion_parent_page
+from .env import E, E_req
 from .geocoding import geocode_place
 from .value import as_urls, is_location_type, normalize_list
 
-NOTION_API_BASE = "https://api.notion.com/v1"
-LATEST_NOTION_VERSION = "2026-03-11"
-# Notion rejects bodies around ~500KB; stay well under once JSON-escaped UTF-8 is applied.
-NOTION_REQUEST_BODY_SAFE_MAX_BYTES = 420_000
-NOTION_ABBREVIATION_NOTE = "\n\n_(Abbreviated for Notion export size limit.)_"
 
-
+# TODO: Merge into table.py -> integrate with parsing around tables
 @dataclass(frozen=True)
 class NotionColumnSpec:
     name: str
@@ -46,16 +41,14 @@ def _chunk_text(text: str, limit: int = 1800) -> list[str]:
 
 
 def _request_api(method: str, path: str, body: dict[str, Any] | None = None) -> dict[str, Any]:
-    if not notion_api_token():
-        raise ValueError("Set a Notion API Token in Settings to export to Notion.")
-    url = f"{NOTION_API_BASE}{path}"
+    url = E["notion_api_base", "https://api.notion.com/v1"] + path
     try:
         response = requests.request(
             method,
             url,
             headers={
-                "Authorization": f"Bearer {notion_api_token()}",
-                "Notion-Version": LATEST_NOTION_VERSION,
+                "Authorization": f"Bearer {E_req['notion_api_token']}",
+                "Notion-Version": E["notion_version", "2026-03-11"],
                 "Content-Type": "application/json",
             },
             json=body,
@@ -178,14 +171,14 @@ def _ensure_notion_safe_create_page_body(
     sources_column: str | None,
     source_raw_column: str | None,
 ) -> dict[str, Any]:
-    if _request_json_byte_length(create_page_body) <= NOTION_REQUEST_BODY_SAFE_MAX_BYTES:
+    if _request_json_byte_length(create_page_body) <= E["notion_request_body_safe_max_bytes"]:
         return create_page_body
 
     parent = create_page_body.get("parent")
     properties = create_page_body.get("properties") or {}
     base_only: dict[str, Any] = {"parent": parent, "properties": properties}
     for _ in range(96):
-        if _request_json_byte_length(base_only) <= NOTION_REQUEST_BODY_SAFE_MAX_BYTES:
+        if _request_json_byte_length(base_only) <= E["notion_request_body_safe_max_bytes"]:
             break
         prev = _request_json_byte_length(base_only)
         properties = _shrink_property_values_for_request_size(properties)
@@ -199,7 +192,7 @@ def _ensure_notion_safe_create_page_body(
         children = render_row_children(row, long_text_columns, sources_column, source_raw_column)
         if children:
             out["children"] = children
-        while _request_json_byte_length(out) > NOTION_REQUEST_BODY_SAFE_MAX_BYTES and out.get("children"):
+        while _request_json_byte_length(out) > E["notion_request_body_safe_max_bytes"] and out.get("children"):
             out.pop("children", None)
         return out
 
@@ -217,7 +210,7 @@ def _ensure_notion_safe_create_page_body(
             else:
                 truncated = _truncate_utf8_bytes(text, limit)
                 if len(truncated.encode("utf-8")) < size:
-                    segment_texts[seg_id] = truncated + NOTION_ABBREVIATION_NOTE
+                    segment_texts[seg_id] = truncated + "\n\n_(Abbreviated for Notion export size limit.)_"
                 else:
                     segment_texts[seg_id] = text
         adjusted_row = _apply_segment_texts_to_row(row, segment_texts, source_raw_column=source_raw_column)
@@ -232,7 +225,7 @@ def _ensure_notion_safe_create_page_body(
     for _ in range(56):
         mid = (low + high) / 2.0
         trial = _build_at_scale(mid)
-        if _request_json_byte_length(trial) <= NOTION_REQUEST_BODY_SAFE_MAX_BYTES:
+        if _request_json_byte_length(trial) <= E["notion_request_body_safe_max_bytes"]:
             best_trial = trial
             low = mid
         else:
@@ -240,31 +233,13 @@ def _ensure_notion_safe_create_page_body(
 
     trial = best_trial if best_trial is not None else _build_at_scale(0.0)
     scale = low
-    while _request_json_byte_length(trial) > NOTION_REQUEST_BODY_SAFE_MAX_BYTES and scale > 1e-12:
+    while _request_json_byte_length(trial) > E["notion_request_body_safe_max_bytes"] and scale > 1e-12:
         scale *= 0.88
         trial = _build_at_scale(scale)
     return trial
 
 
-def _rich_text_array(text: str, *, max_chars: int = 1800) -> list[dict[str, Any]]:
-    if not text:
-        return []
-    chunks = [text[i : i + max_chars] for i in range(0, len(text), max_chars)]
-    return [{"type": "text", "text": {"content": chunk}} for chunk in chunks[:100]]
-
-
-def _linked_rich_text(url: str, label: str | None = None) -> list[dict[str, Any]]:
-    return [
-        {
-            "type": "text",
-            "text": {
-                "content": label or url,
-                "link": {"url": url},
-            },
-        }
-    ]
-
-
+# TODO: Move to a values.py -> integrate with parsing around tables
 def _looks_numeric(value: str) -> bool:
     try:
         float(value.replace(",", ""))
@@ -273,6 +248,7 @@ def _looks_numeric(value: str) -> bool:
     return True
 
 
+# TODO: Move to a values.py -> integrate with parsing around tables
 def _infer_column_specs(
     headers: list[str],
     rows: list[dict[str, str]],
@@ -330,6 +306,7 @@ def _infer_column_specs(
     return specs
 
 
+# TODO: Move to a values.py -> integrate with parsing around tables
 def _property_value(
     spec: NotionColumnSpec,
     value: str,
@@ -389,6 +366,26 @@ def _toggle_block(title: str, children: list[dict[str, Any]], *, url: str | None
     }
 
 
+def _rich_text_array(text: str, *, max_chars: int = 1800) -> list[dict[str, Any]]:
+    if not text:
+        return []
+    chunks = [text[i : i + max_chars] for i in range(0, len(text), max_chars)]
+    return [{"type": "text", "text": {"content": chunk}} for chunk in chunks[:100]]
+
+
+def _linked_rich_text(url: str, label: str | None = None) -> list[dict[str, Any]]:
+    return [
+        {
+            "type": "text",
+            "text": {
+                "content": label or url,
+                "link": {"url": url},
+            },
+        }
+    ]
+
+
+# TODO: overlap with _iter_row_child_documents -> find intersection
 def render_row_children(
     row: dict[str, str], long_text_columns: set[str], sources_column: str | None, source_raw_column: str | None
 ) -> list[dict[str, Any]]:
@@ -397,7 +394,6 @@ def render_row_children(
         blocks.append(_heading_block("Sources", level=2))
         source_urls = as_urls(row[sources_column])
         raw_map = _parse_source_raw_map(row.get(source_raw_column, "")) if source_raw_column else {}
-        grouped, ungrouped = group_sources_by_domain(source_urls)
         for domain, urls in group_sources_by_domain(source_urls).items():
             blocks.append(_heading_block(domain, level=3))
             for url in urls:
@@ -419,6 +415,7 @@ def render_row_children(
     return blocks[:100]
 
 
+# TODO: overlap with _iter_row_child_documents -> find intersection
 def _iter_row_child_documents(
     row: dict[str, str],
     long_text_columns: set[str],
@@ -459,9 +456,6 @@ def export_dataset_to_notion(
     url_like_columns: set[str],
     long_text_columns: set[str],
 ) -> dict[str, Any]:
-    if not notion_parent_page():
-        raise ValueError("Set a Notion Parent Page ID or URL in Settings to export to Notion.")
-
     specs = _infer_column_specs(
         headers,
         rows,
@@ -478,7 +472,7 @@ def export_dataset_to_notion(
     properties = {spec.name: spec.property_definition for spec in specs if spec.property_definition is not None}
 
     create_body = {
-        "parent": {"type": "page_id", "page_id": notion_parent_page()},
+        "parent": {"type": "page_id", "page_id": E_req["notion_parent_page"]},
         "title": _rich_text_array(title[:180]),
         "initial_data_source": {
             "title": _rich_text_array(title[:180]),

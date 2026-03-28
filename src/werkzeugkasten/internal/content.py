@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import mimetypes
-import os
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import BinaryIO, Callable, Union
@@ -11,12 +10,12 @@ from urllib.request import url2pathname
 import requests
 from markitdown import MarkItDown
 
-from ..internal.env import jina_api_key, n_threads, url_timeout
-from .cache import LocalCache
+from ..internal.env import E, E_int
+from .cache import cache
 
-_CONTENT_SEPARATOR = "\n\n"
 Source = Union[str, requests.Response, Path, BinaryIO]
-_DOCUMENT_CONTENT_TYPES = {
+
+__DOCUMENT_CONTENT_TYPES = {
     "application/pdf",
     "application/msword",
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -32,10 +31,11 @@ _DOCUMENT_CONTENT_TYPES = {
 }
 
 
-def _maybe_web_content(s: Source) -> str | None:
-    if not isinstance(s, str):
+def _maybe_document_url(source: Source) -> str | None:
+    """Heuristically determine if the source is a URL pointing to a document. Without downloading the content."""
+    if not isinstance(source, str):
         return None
-    url = s.strip()
+    url = source.strip()
     if not url.startswith(("http:", "https:")):
         return None
 
@@ -43,18 +43,18 @@ def _maybe_web_content(s: Source) -> str | None:
     path = url2pathname(urlparse(url).path)
     extension = Path(path).suffix.lower()
     content_type, _ = mimetypes.guess_type(extension)
-    if content_type in _DOCUMENT_CONTENT_TYPES:
+    if content_type in __DOCUMENT_CONTENT_TYPES:
         return None
 
-    if url_timeout() <= 0:
+    if E_int["DOCUMENT_URL_TIMEOUT", 5] <= 0:
         return url
 
     # 2. Check by content type
     try:
-        r = requests.head(url, allow_redirects=True, timeout=url_timeout())
+        r = requests.head(url, allow_redirects=True, timeout=E_int["DOCUMENT_URL_TIMEOUT", 5])
         ct = r.headers.get("Content-Type")
         if ct:
-            if ct.split(";", 1)[0].strip() not in _DOCUMENT_CONTENT_TYPES:
+            if ct.split(";", 1)[0].strip() not in __DOCUMENT_CONTENT_TYPES:
                 return url
             return None
     except requests.RequestException:
@@ -63,45 +63,42 @@ def _maybe_web_content(s: Source) -> str | None:
 
 
 def _jina_fetch(url: str) -> str:
-    request_url = f"https://r.jina.ai/{url}"
+    request_url = E["JINA_REQUEST_URL", "https://r.jina.ai/{url}"]
     headers = {
-        "X-Engine": "direct",
+        "X-Engine": E["JINA_ENGINE", "direct"],
         "X-Retain-Images": "none",
         "X-Md-Link-Style": "referenced",
     }
-    if api_key := jina_api_key():
+    if api_key := E["jina_api_key"]:
         headers["Authorization"] = f"Bearer {api_key}"
-    response = requests.get(request_url, headers=headers, timeout=30)
+    response = requests.get(request_url.format(url=url), headers=headers, timeout=E_int["JINA_TIMEOUT", 30])
     body = response.text.strip()
     return body
 
 
-def _reference_converter(as_markdown: bool) -> Callable[[Source], str]:
-    def converter(source: Source) -> str:
+def _content_extractor(as_markdown: bool) -> Callable[[Source], str]:
+    def extractor(source: Source) -> str:
         if content := cache[source]:
             return content
-        if url := _maybe_web_content(source):
+        if url := _maybe_document_url(source):
             try:
                 content = _jina_fetch(url)
             except Exception as exc:
                 pass
         if content is None:
-            content = md.convert(source).markdown if as_markdown else source
+            content = MarkItDown().convert(source).markdown if as_markdown else source
         if as_markdown:
             cache[source] = content
         return content
 
-    cache = LocalCache()
-    md = MarkItDown()
-
-    return converter
+    return extractor
 
 
 def get_content(sources: list[Source], /, *, as_markdown: bool = True) -> str:
     if not sources:
         return ""
-    converter = _reference_converter(as_markdown)
-    with ThreadPoolExecutor(max_workers=min(n_threads(), len(sources))) as executor:
-        contents = list(executor.map(converter, sources))
+    extractor = _content_extractor(as_markdown)
+    with ThreadPoolExecutor(max_workers=min(E_int["CONTENT_THREADS", 4], len(sources))) as executor:
+        contents = list(executor.map(extractor, sources))
 
-    return _CONTENT_SEPARATOR.join(contents)
+    return E["CONTENT_SEPARATOR", "\n\n"].join(contents)

@@ -1,0 +1,2 @@
+[console_scripts]
+werkzeugkasten = werkzeugkasten.__main__:main

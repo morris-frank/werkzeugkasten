@@ -1,20 +1,11 @@
 from __future__ import annotations
 
 import json
-import os
-from dataclasses import dataclass
+from typing import Any
 
-from ..internal.env import lookup_model
+from ..internal.env import E
 from ..internal.openai import query
 from ..internal.value import as_object_type, maybe_question
-
-
-@dataclass(frozen=True)
-class LookupAnswer:
-    data: dict[str, str]
-    text: str
-    sources: list[str]
-    error: str | None = None
 
 
 def _prompt_make_explicit_question(header: str, key: str, object_type: str) -> str:
@@ -74,10 +65,10 @@ def lookup_row(
     key_header: str,
     missing_columns: list[str],
     question_columns: set[str],
-) -> LookupAnswer:
+) -> dict[str, Any]:
     key = row.get(key_header, "").strip() or "[blank]"
 
-    answer = query(_prompt_lookup(key_header, key, row, missing_columns, question_columns), model=lookup_model())
+    answer = query(_prompt_lookup(key_header, key, row, missing_columns, question_columns), model=E["lookup_model"])
 
     try:
         data = answer.json
@@ -87,6 +78,6 @@ def lookup_row(
         if not isinstance(updates, dict):
             raise ValueError("Response updates are missing.")
         normalized = {str(column): str(value or "").strip() for column, value in updates.items() if column in missing_columns}
-        return LookupAnswer(data=normalized, text=answer.text, sources=answer.sources)
+        return {"data": normalized, "text": answer.text, "sources": answer.sources}
     except (json.JSONDecodeError, ValueError) as exc:
-        return LookupAnswer(data={}, text=answer.text, sources=[], error=f"Structured validation failed: {exc}")
+        return {"data": {}, "text": answer.text, "sources": [], "error": f"Structured validation failed: {exc}"}

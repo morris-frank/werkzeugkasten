@@ -1,11 +1,11 @@
 import Foundation
 
 public struct EngineConfiguration: Equatable, Sendable {
-    public var apiKey: String
+    public var openAIKey: String
     public var jinaAPIKey: String
     public var notionToken: String
     public var notionParentPage: String
-    public var openMeteoAPIKey: String
+    public var openMeteoKey: String
     public var researchModel: String
     public var summaryModel: String
     public var lookupModel: String
@@ -14,11 +14,11 @@ public struct EngineConfiguration: Equatable, Sendable {
     public var pythonInterpreterPath: String
 
     public init(
-        apiKey: String,
+        openAIKey: String,
         jinaAPIKey: String,
         notionToken: String,
         notionParentPage: String,
-        openMeteoAPIKey: String,
+        openMeteoKey: String,
         researchModel: String,
         summaryModel: String,
         lookupModel: String,
@@ -26,11 +26,11 @@ public struct EngineConfiguration: Equatable, Sendable {
         mock: Bool,
         pythonInterpreterPath: String
     ) {
-        self.apiKey = apiKey
+        self.openAIKey = openAIKey
         self.jinaAPIKey = jinaAPIKey
         self.notionToken = notionToken
         self.notionParentPage = notionParentPage
-        self.openMeteoAPIKey = openMeteoAPIKey
+        self.openMeteoKey = openMeteoKey
         self.researchModel = researchModel
         self.summaryModel = summaryModel
         self.lookupModel = lookupModel

@@ -6,23 +6,22 @@ from typing import Any
 
 import requests
 
-from ..internal.env import open_meteo_api_key
+from ..internal.env import E
 
-_OPEN_METEO_GEOCODING_API = "https://geocoding-api.open-meteo.com/v1/search"
 _LAT_LON_RE = re.compile(r"(?P<lat>[+-]?\d{1,2}(?:\.\d+)?)\s*[,;/]\s*(?P<lon>[+-]?\d{1,3}(?:\.\d+)?)")
 
 
 def _geocode_with_open_meteo(value: str, /) -> dict[str, Any] | None:
-    if not open_meteo_api_key():
+    if not E["open_meteo_key"]:
         return None
     response = requests.get(
-        _OPEN_METEO_GEOCODING_API,
+        E["open_meteo_geocoding_api", "https://geocoding-api.open-meteo.com/v1/search"],
         params={
             "name": value,
             "count": "1",
             "language": "en",
             "format": "json",
-            "apikey": open_meteo_api_key(),
+            "apikey": E["open_meteo_key"],
         },
         headers={"Accept": "application/json"},
         timeout=30,
@@ -45,6 +44,7 @@ def _geocode_with_open_meteo(value: str, /) -> dict[str, Any] | None:
         return None
 
 
+# TODO: Move to a values.py as as_coordinates
 def _as_coordinates(value: str) -> dict[str, Any] | None:
     if not (match := _LAT_LON_RE.search(value)):
         return None

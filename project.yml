@@ -25,10 +25,19 @@ targets:
     platform: macOS
     sources:
       - path: WerkzeugkastenCore
-      - path: src
-        buildPhase: resources
-        excludes:
-          - __pycache__
+    preBuildScripts:
+      - name: Bundle Python Resources
+        script: |
+          set -euo pipefail
+          destination="$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/src"
+          rm -rf "$destination"
+          mkdir -p "$destination"
+          rsync -a \
+            --delete \
+            --exclude '__pycache__' \
+            --exclude '*.pyc' \
+            "$SRCROOT/src/" \
+            "$destination/"
     settings:
       base:
         GENERATE_INFOPLIST_FILE: YES

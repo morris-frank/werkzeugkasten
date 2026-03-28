@@ -4,10 +4,10 @@ import Security
 
 @MainActor
 public final class SettingsStore: ObservableObject {
-    @Published public var apiKey: String
+    @Published public var openAIKey: String
     @Published public var jinaAPIKey: String
     @Published public var notionToken: String
-    @Published public var openMeteoAPIKey: String
+    @Published public var openMeteoKey: String
     @Published public var notionParentPage: String
     @Published public var researchModel: String
     @Published public var summaryModel: String
@@ -53,13 +53,13 @@ public final class SettingsStore: ObservableObject {
         var resolvedKeychainIssue: String?
 
         do {
-            self.apiKey = try KeychainStore.load(
+            self.openAIKey = try KeychainStore.load(
                 service: keychainService,
                 account: openAIKeychainAccount,
                 accessGroup: keychainAccessGroup
             ) ?? ""
         } catch {
-            self.apiKey = ""
+            self.openAIKey = ""
             resolvedKeychainIssue = Self.describeKeychainFailure(
                 error,
                 accessGroup: keychainAccessGroup,
@@ -98,13 +98,13 @@ public final class SettingsStore: ObservableObject {
         }
 
         do {
-            self.openMeteoAPIKey = try KeychainStore.load(
+            self.openMeteoKey = try KeychainStore.load(
                 service: keychainService,
                 account: openMeteoKeychainAccount,
                 accessGroup: keychainAccessGroup
             ) ?? ""
         } catch {
-            self.openMeteoAPIKey = ""
+            self.openMeteoKey = ""
             resolvedKeychainIssue = Self.describeKeychainFailure(
                 error,
                 accessGroup: keychainAccessGroup,
@@ -127,51 +127,51 @@ public final class SettingsStore: ObservableObject {
     }
 
     public func save() throws {
-        let normalizedResearchModel = researchModel.trimmingCharacters(in: .whitespacesAndNewlines)
-        let normalizedSummaryModel = summaryModel.trimmingCharacters(in: .whitespacesAndNewlines)
-        let normalizedLookupModel = lookupModel.trimmingCharacters(in: .whitespacesAndNewlines)
-        let normalizedPrimaryLanguage = primaryLanguage.trimmingCharacters(in: .whitespacesAndNewlines)
-        let normalizedInterpreter = pythonInterpreterPath.trimmingCharacters(in: .whitespacesAndNewlines)
-        let normalizedAPIKey = apiKey.trimmingCharacters(in: .whitespacesAndNewlines)
-        let normalizedJinaAPIKey = jinaAPIKey.trimmingCharacters(in: .whitespacesAndNewlines)
-        let normalizedNotionToken = notionToken.trimmingCharacters(in: .whitespacesAndNewlines)
-        let normalizedOpenMeteoAPIKey = openMeteoAPIKey.trimmingCharacters(in: .whitespacesAndNewlines)
-        let normalizedNotionParentPage = notionParentPage.trimmingCharacters(in: .whitespacesAndNewlines)
+        let nInterpreter = pythonInterpreterPath.trimmingCharacters(in: .whitespacesAndNewlines)
+        let nPrimaryLanguage = primaryLanguage.trimmingCharacters(in: .whitespacesAndNewlines)
+        let nResearchModel = researchModel.trimmingCharacters(in: .whitespacesAndNewlines)
+        let nSummaryModel = summaryModel.trimmingCharacters(in: .whitespacesAndNewlines)
+        let nLookupModel = lookupModel.trimmingCharacters(in: .whitespacesAndNewlines)
+        let nOpenAIKey = openAIKey.trimmingCharacters(in: .whitespacesAndNewlines)
+        let nJinaAPIKey = jinaAPIKey.trimmingCharacters(in: .whitespacesAndNewlines)
+        let nNotionToken = notionToken.trimmingCharacters(in: .whitespacesAndNewlines)
+        let nOpenMeteoKey = openMeteoKey.trimmingCharacters(in: .whitespacesAndNewlines)
+        let nNotionParentPage = notionParentPage.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        defaults.set(normalizedResearchModel.isEmpty ? WerkzeugkastenConstants.defaultResearchModel : normalizedResearchModel, forKey: "researchModel")
-        defaults.set(normalizedSummaryModel.isEmpty ? WerkzeugkastenConstants.defaultSummaryModel : normalizedSummaryModel, forKey: "summaryModel")
+        defaults.set(nResearchModel.isEmpty ? WerkzeugkastenConstants.defaultResearchModel : nResearchModel, forKey: "researchModel")
+        defaults.set(nSummaryModel.isEmpty ? WerkzeugkastenConstants.defaultSummaryModel : nSummaryModel, forKey: "summaryModel")
         defaults.set(
-            normalizedLookupModel.isEmpty ? WerkzeugkastenConstants.defaultLookupModel : normalizedLookupModel,
+            nLookupModel.isEmpty ? WerkzeugkastenConstants.defaultLookupModel : nLookupModel,
             forKey: "lookupModel"
         )
-        defaults.set(normalizedPrimaryLanguage.isEmpty ? WerkzeugkastenConstants.defaultPrimaryLanguage : normalizedPrimaryLanguage, forKey: "primaryLanguage")
+        defaults.set(nPrimaryLanguage.isEmpty ? WerkzeugkastenConstants.defaultPrimaryLanguage : nPrimaryLanguage, forKey: "primaryLanguage")
         defaults.set(mock, forKey: "mock")
-        defaults.set(normalizedInterpreter.isEmpty ? WerkzeugkastenConstants.defaultPythonInterpreterPath : normalizedInterpreter, forKey: "pythonInterpreterPath")
-        defaults.set(normalizedNotionParentPage, forKey: "notionParentPage")
+        defaults.set(nInterpreter.isEmpty ? WerkzeugkastenConstants.defaultPythonInterpreterPath : nInterpreter, forKey: "pythonInterpreterPath")
+        defaults.set(nNotionParentPage, forKey: "notionParentPage")
 
         do {
-            if normalizedAPIKey.isEmpty {
+            if nOpenAIKey.isEmpty {
                 try KeychainStore.delete(service: keychainService, account: openAIKeychainAccount, accessGroup: keychainAccessGroup)
             } else {
-                try KeychainStore.save(value: normalizedAPIKey, service: keychainService, account: openAIKeychainAccount, accessGroup: keychainAccessGroup)
+                try KeychainStore.save(value: nOpenAIKey, service: keychainService, account: openAIKeychainAccount, accessGroup: keychainAccessGroup)
             }
 
-            if normalizedJinaAPIKey.isEmpty {
+            if nJinaAPIKey.isEmpty {
                 try KeychainStore.delete(service: keychainService, account: jinaKeychainAccount, accessGroup: keychainAccessGroup)
             } else {
-                try KeychainStore.save(value: normalizedJinaAPIKey, service: keychainService, account: jinaKeychainAccount, accessGroup: keychainAccessGroup)
+                try KeychainStore.save(value: nJinaAPIKey, service: keychainService, account: jinaKeychainAccount, accessGroup: keychainAccessGroup)
             }
 
-            if normalizedNotionToken.isEmpty {
+            if nNotionToken.isEmpty {
                 try KeychainStore.delete(service: keychainService, account: notionKeychainAccount, accessGroup: keychainAccessGroup)
             } else {
-                try KeychainStore.save(value: normalizedNotionToken, service: keychainService, account: notionKeychainAccount, accessGroup: keychainAccessGroup)
+                try KeychainStore.save(value: nNotionToken, service: keychainService, account: notionKeychainAccount, accessGroup: keychainAccessGroup)
             }
 
-            if normalizedOpenMeteoAPIKey.isEmpty {
+            if nOpenMeteoKey.isEmpty {
                 try KeychainStore.delete(service: keychainService, account: openMeteoKeychainAccount, accessGroup: keychainAccessGroup)
             } else {
-                try KeychainStore.save(value: normalizedOpenMeteoAPIKey, service: keychainService, account: openMeteoKeychainAccount, accessGroup: keychainAccessGroup)
+                try KeychainStore.save(value: nOpenMeteoKey, service: keychainService, account: openMeteoKeychainAccount, accessGroup: keychainAccessGroup)
             }
         } catch let error as EngineError {
             throw error
@@ -181,11 +181,11 @@ public final class SettingsStore: ObservableObject {
             )
         }
 
-        apiKey = normalizedAPIKey
-        jinaAPIKey = normalizedJinaAPIKey
-        notionToken = normalizedNotionToken
-        openMeteoAPIKey = normalizedOpenMeteoAPIKey
-        notionParentPage = normalizedNotionParentPage
+        openAIKey = nOpenAIKey
+        jinaAPIKey = nJinaAPIKey
+        notionToken = nNotionToken
+        openMeteoKey = nOpenMeteoKey
+        notionParentPage = nNotionParentPage
         researchModel = defaults.string(forKey: "researchModel") ?? WerkzeugkastenConstants.defaultResearchModel
         summaryModel = defaults.string(forKey: "summaryModel") ?? WerkzeugkastenConstants.defaultSummaryModel
         lookupModel = defaults.string(forKey: "lookupModel") ?? WerkzeugkastenConstants.defaultLookupModel
@@ -195,26 +195,26 @@ public final class SettingsStore: ObservableObject {
     }
 
     public func configuration() throws -> EngineConfiguration {
-        let normalizedInterpreter = pythonInterpreterPath.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard FileManager.default.isExecutableFile(atPath: normalizedInterpreter) else {
-            throw EngineError.missingInterpreter(normalizedInterpreter)
+        let nInterpreter = pythonInterpreterPath.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard FileManager.default.isExecutableFile(atPath: nInterpreter) else {
+            throw EngineError.missingInterpreter(nInterpreter)
         }
 
         let trimmedLanguage = primaryLanguage.trimmingCharacters(in: .whitespacesAndNewlines)
         let resolvedLanguage = trimmedLanguage.isEmpty ? WerkzeugkastenConstants.defaultPrimaryLanguage : trimmedLanguage
 
         return EngineConfiguration(
-            apiKey: apiKey.trimmingCharacters(in: .whitespacesAndNewlines),
+            openAIKey: openAIKey.trimmingCharacters(in: .whitespacesAndNewlines),
             jinaAPIKey: jinaAPIKey.trimmingCharacters(in: .whitespacesAndNewlines),
             notionToken: notionToken.trimmingCharacters(in: .whitespacesAndNewlines),
             notionParentPage: notionParentPage.trimmingCharacters(in: .whitespacesAndNewlines),
-            openMeteoAPIKey: openMeteoAPIKey.trimmingCharacters(in: .whitespacesAndNewlines),
+            openMeteoKey: openMeteoKey.trimmingCharacters(in: .whitespacesAndNewlines),
             researchModel: researchModel.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? WerkzeugkastenConstants.defaultResearchModel : researchModel.trimmingCharacters(in: .whitespacesAndNewlines),
             summaryModel: summaryModel.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? WerkzeugkastenConstants.defaultSummaryModel : summaryModel.trimmingCharacters(in: .whitespacesAndNewlines),
             lookupModel: lookupModel.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? WerkzeugkastenConstants.defaultLookupModel : lookupModel.trimmingCharacters(in: .whitespacesAndNewlines),
             primaryLanguage: resolvedLanguage,
             mock: mock,
-            pythonInterpreterPath: normalizedInterpreter
+            pythonInterpreterPath: nInterpreter
         )
     }
 

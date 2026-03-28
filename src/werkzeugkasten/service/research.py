@@ -3,21 +3,21 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Callable, Iterable, TypeVar
+from typing import Any, Iterable
 
 from ..internal import choose_output_path
-from ..internal.env import research_model
+from ..internal.env import E_req
 from ..internal.openai import query
 from ..internal.table import Table
 from ..internal.value import maybe_question
 from .lookup import lookup_row
 from .summarize import summarize
 
-SOURCE_COLUMN = "Sources"
-SOURCE_SUMMARY_COLUMN = "Sources[RAW]"
-TAG_COLUMN = "Tags"
 
-T = TypeVar("T")
+@dataclass(frozen=True)
+class ResearchRowResult:
+    row: dict[str, str] | None
+    failure: str | None = None
 
 
 @dataclass(frozen=True)
@@ -85,9 +85,9 @@ Return JSON only in this shape:
 }}
 
 Rows:
-{table.to_json(without={SOURCE_COLUMN, SOURCE_SUMMARY_COLUMN})}
+{table.to_json(without={E_req["source_column"], E_req["source_summary_column"]})}
 """
-    answer = query(prompt, model=research_model())
+    answer = query(prompt, model=E_req["research_model"])
     tags = answer.json.get("tags")
     assignments = answer.json.get("assignments")
     if not isinstance(tags, list) or not isinstance(assignments, dict):
@@ -123,9 +123,9 @@ Return JSON only in this shape:
 }}
 
 Rows:
-{table.to_json(without={SOURCE_COLUMN, SOURCE_SUMMARY_COLUMN})}
+{table.to_json(without={E_req["source_column"], E_req["source_summary_column"]})}
 """
-    answer = query(prompt, model=research_model())
+    answer = query(prompt, model=E_req["research_model"])
     neighbours = answer.json.get("neighbors")
     if not isinstance(neighbours, dict):
         return
@@ -145,12 +145,6 @@ Rows:
             if len(matches) == 3:
                 break
         table[int(row_id.split("-")[1]) - 1, column_name] = ", ".join(matches)
-
-
-@dataclass(frozen=True)
-class ResearchRowResult:
-    row: dict[str, str] | None
-    failure: str | None = None
 
 
 def _research_row(
@@ -176,25 +170,25 @@ def _research_row(
         row[column] = answer.data.get(column, row.get(column, ""))
 
     if include_sources:
-        row[SOURCE_COLUMN] = ", ".join(answer.sources)
+        row[E_req["source_column"]] = ", ".join(answer.sources)
     if summarize_sources:
-        row[SOURCE_SUMMARY_COLUMN] = summarize(answer.sources)
+        row[E_req["source_summary_column"]] = summarize(answer.sources)
     return ResearchRowResult(row=row)
 
 
-def _split_by(items: Iterable[T], pred: Callable[[T], bool]) -> tuple[list[T], list[T]]:
-    yes: list[T] = []
-    no: list[T] = []
-    for x in items:
-        (yes if pred(x) else no).append(x)
-    return yes, no
+def _questions_attributes(columns: Iterable[str], /) -> tuple[list[str], list[str]]:
+    questions: list[str] = []
+    attributes: list[str] = []
+    for column in columns:
+        (questions if maybe_question(column) else attributes).append(column)
+    return questions, attributes
 
 
 def inspect_table(
     table: Table | str,
 ) -> dict[str, Any]:
     table = Table(table)
-    questions, attributes = _split_by(table.columns, lambda header: maybe_question(header) is not None)
+    questions, attributes = _questions_attributes(table.columns)
 
     return {
         "sourceName": table.origin,
@@ -221,7 +215,7 @@ def research_table(
     output_path: str | Path | None = None,
 ) -> dict[str, Any]:
     table = Table(table)
-    questions, attributes = _split_by(table.columns, lambda header: maybe_question(header) is not None)
+    questions, attributes = _questions_attributes(table.columns)
 
     research_columns = questions + attributes
 
@@ -236,22 +230,22 @@ def research_table(
     failures: list[str] = []
 
     if include_sources:
-        table.add_column(SOURCE_COLUMN)
+        table.add_column(E_req["source_column"])
     if summarize_sources:
-        table.add_column(SOURCE_SUMMARY_COLUMN)
+        table.add_column(E_req["source_summary_column"])
 
-    for row in table.rows():
+    for row in table:
         result = _research_row(row, research_columns, questions, include_sources, summarize_sources, table.key_header)
         if result.failure:
             failures.append(result.failure)
         if result.row:
-            table.update_row(result.row)
+            table[result.row[table.key_header]] = result.row
 
     if auto_tagging:
-        table.add_column(TAG_COLUMN)
+        table.add_column(E_req["tags_column"])
         _apply_auto_tags(
             table,
-            column_name=TAG_COLUMN,
+            column_name=E_req["tags_column"],
         )
     if nearest_neighbour:
         nearest_column = f"Closest {table.key_header.title()}"
