@@ -58,6 +58,10 @@ class Table:
         return self._df.columns.tolist()
 
     @property
+    def objects(self) -> list[str]:
+        return self._df.index.tolist()
+
+    @property
     def object_type(self) -> str:
         return as_object_type(self._df.index.name or "Key")
 
@@ -79,7 +83,9 @@ class Table:
             if not isinstance(value, dict):
                 raise ValueError("Value must be a dictionary if key is a string.")
             for column, value in value.items():
-                self[row, column] = value
+                if column in self:
+                    self[row, column] = value
+
         else:
             row, column = key
             match self._policies[column]:
@@ -150,4 +156,4 @@ class Table:
 
     def to_json(self, without: set[str] = set()) -> str:
         self._normalize_columns()
-        return json.dumps([row for row in self.rows() if not any(column in without for column in row.keys())], ensure_ascii=False, indent=2)
+        return json.dumps([row for row in self if not any(column in without for column in row)], ensure_ascii=False, indent=2)

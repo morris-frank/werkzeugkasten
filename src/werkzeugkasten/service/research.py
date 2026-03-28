@@ -16,7 +16,7 @@ from .summarize import summarize
 
 @dataclass(frozen=True)
 class ResearchRowResult:
-    row: dict[str, str] | None
+    row: dict[str, str]
     failure: str | None = None
 
 
@@ -39,7 +39,7 @@ class ResearchResult:
         lines = [
             "# Research",
             "",
-            f"- Generated: {self.started_at.strftime('%Y-%m-%d %H:%M:%S %Z')}",
+            f"- Generated: {datetime.now().astimezone().strftime('%Y-%m-%d %H:%M:%S %Z')}",
             f"- Source: {self._table.origin}",
             f"- Detected format: {self._table.format}",
             f"- Rows: {len(self._table)}",
@@ -48,13 +48,13 @@ class ResearchResult:
             "",
             "Questions:",
         ]
-        lines.extend([f"- {column}" for column in self.questions] or ["- none"])
+        lines.extend([f"- {column}" for column in self.question_columns] or ["- none"])
         lines.extend(["", "Attributes:"])
-        lines.extend([f"- {column}" for column in self.attributes] or ["- none"])
+        lines.extend([f"- {column}" for column in self.attribute_columns] or ["- none"])
         lines.extend(["", "## Merged Table", ""])
         lines.extend(str(self._table))
         lines.extend(["", "## Failures", ""])
-        lines.extend([f"- {failure}" for failure in self.failures] or ["- none"])
+        # lines.extend([f"- {failure}" for failure in self.failures] or ["- none"])
         return "\n".join(lines).rstrip() + "\n"
 
 
@@ -97,12 +97,12 @@ Rows:
     if not isinstance(tags, list) or not isinstance(assignments, dict):
         return
     allowed_tags = {str(tag).strip() for tag in tags if str(tag).strip()}
-    for index, _ in table:
-        values = assignments.get(f"row-{index}", [])
+    for object in table.objects:
+        values = assignments.get(f"row-{object}", [])
         if not isinstance(values, list):
             continue
         normalized = [str(tag).strip() for tag in values if str(tag).strip() in allowed_tags]
-        table[index, column_name] = ", ".join(dict.fromkeys(normalized))
+        table[object, column_name] = ", ".join(dict.fromkeys(normalized))
 
 
 def _apply_nearest_neighbours(
@@ -133,22 +133,21 @@ Rows:
     neighbours = answer.json.get("neighbors")
     if not isinstance(neighbours, dict):
         return
-    labels = {f"row-{index}": row.get(table.object_type, "").strip() or f"Row {index}" for index, row in table}
-    for row_id, label in labels.items():
-        raw_matches = neighbours.get(row_id, [])
+    for label in table.objects:
+        raw_matches = neighbours.get(label, [])
         if not isinstance(raw_matches, list):
             continue
         matches: list[str] = []
         for match in raw_matches:
             match_id = str(match)
-            if match_id == row_id or match_id not in labels:
+            if match_id == label or match_id not in table.objects:
                 continue
-            candidate = labels[match_id]
+            candidate = table[match_id].get(table.object_type, "").strip() or f"Row {match_id}"
             if candidate != label and candidate not in matches:
                 matches.append(candidate)
             if len(matches) == 3:
                 break
-        table[int(row_id.split("-")[1]) - 1, column_name] = ", ".join(matches)
+        table[label, column_name] = ", ".join(matches)
 
 
 def _research_row(
@@ -168,15 +167,15 @@ def _research_row(
         missing_columns,
         questions,
     )
-    if answer.error:
-        return ResearchRowResult(failure=f"{row[object_type]}: {answer.error or 'No response.'}")
+    if error := answer.get("error"):
+        return ResearchRowResult(row=row, failure=f"{row[object_type]}: {error or 'No response.'}")
     for column in missing_columns:
-        row[column] = answer.data.get(column, row.get(column, ""))
+        row[column] = answer["data"].get(column, row.get(column, ""))
 
     if include_sources:
-        row[E_req["source_column"]] = ", ".join(answer.sources)
+        row[E_req["source_column"]] = ", ".join(answer["sources"])
     if summarize_sources:
-        row[E_req["source_summary_column"]] = summarize(answer.sources)
+        row[E_req["source_summary_column"]] = summarize(answer["sources"])
     return ResearchRowResult(row=row)
 
 
@@ -221,7 +220,6 @@ def research_table(
     source_raw_column_policy: Policy = Policy.MERGE,
     tag_column_policy: Policy = Policy.MERGE,
     nearest_column_policy: Policy = Policy.MERGE,
-    record_id_column_policy: Policy = Policy.MERGE,
 ) -> dict[str, Any]:
     table = Table(table)
     questions, attributes = _questions_attributes(table.columns)

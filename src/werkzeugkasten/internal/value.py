@@ -116,8 +116,9 @@ def _normalize_url(text: str | None, /) -> str:
 def collapse_markdown_link(text: str, collapse: MdLink, /) -> str:
     text = unwrap_text(text).strip("[]()")
     collapsed = _MARKDOWN_LINK_RE.sub(lambda match: match.group(collapse), text)
-    if collapse == MdLink.URL:
-        return _normalize_url(collapsed)
+    # FIXME: re-enable this
+    # if collapse == MdLink.URL:
+    #     return _normalize_url(collapsed)
     return collapsed
 
 

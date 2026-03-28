@@ -226,6 +226,25 @@ private enum GeneratedColumnPolicy: String, CaseIterable, Identifiable {
 }
 
 
+private struct CopyableText: View {
+    let text: String
+
+    var body: some View {
+        Text(text)
+            .textSelection(.enabled)
+            .lineLimit(nil)
+            .overlay(
+                Button {
+                    copyToPasteboard(text)
+                } label: {
+                    Image(systemName: "doc.on.doc", )
+                }
+                .buttonStyle(.plain)
+            )
+    }
+}
+
+
 private struct CopyableStringList: View {
     let title: String
     let values: [String]
@@ -575,10 +594,10 @@ struct ResearchListWindow: View {
                             ProgressView()
                         }
                         if let errorText {
-                            Text(errorText)
+                            CopyableText(text: errorText)
                                 .foregroundStyle(.red)
                         } else {
-                            Text(status)
+                            CopyableText(text: status)
                                 .foregroundStyle(.secondary)
                         }
                         HStack {
@@ -717,10 +736,10 @@ struct ResearchTableWindow: View {
                             ProgressView()
                         }
                         if let errorText {
-                            Text(errorText)
+                            CopyableText(text: errorText)
                                 .foregroundStyle(.red)
                         } else {
-                            Text(status)
+                            CopyableText(text: status)
                                 .foregroundStyle(.secondary)
                         }
                         HStack {
@@ -854,10 +873,10 @@ struct SummarizeWindow: View {
                             ProgressView()
                         }
                         if let errorText = session.errorText {
-                            Text(errorText)
+                            CopyableText(text: errorText)
                                 .foregroundStyle(.red)
                         } else {
-                            Text(session.status)
+                            CopyableText(text: session.status)
                                 .foregroundStyle(.secondary)
                         }
                         Button("Summarize") { session.run(using: settings) }
@@ -927,10 +946,10 @@ struct PrettifyCodexLogWindow: View {
                         ProgressView()
                     }
                     if let errorText {
-                        Text(errorText)
+                        CopyableText(text: errorText)
                             .foregroundStyle(.red)
                     } else {
-                        Text(status)
+                        CopyableText(text: status)
                             .foregroundStyle(.secondary)
                     }
                     HStack {
